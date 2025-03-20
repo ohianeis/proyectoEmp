@@ -1,0 +1,32 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('demandante_notificacione', function (Blueprint $table) {
+            $table->id();
+            $table->boolean('visto');
+            $table->unsignedBigInteger('notificacione_id');
+            $table->foreign('notificacione_id')->references('id')->on('notificaciones')->onDelete('cascade');
+            $table->unsignedBigInteger('demandante_id');
+            $table->foreign('demandante_id')->references('id')->on('demandantes')->onDelete('cascade');
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('demantante_notificacione');
+    }
+};

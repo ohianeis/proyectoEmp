@@ -2,13 +2,22 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Titulo extends Model
 {
     //
+    protected $fillable = [
+        'nombre',
+        'activado',
+        'nivele_id',
+        'centro_id',
+    ];
+    use HasFactory;
+    
     public function nivel(){
-        return $this->belongsTo(Nivele::class);
+        return $this->belongsTo(Nivele::class,'nivele_id');
     }
     public function centro(){
         return $this->belongsTo(Centro::class);

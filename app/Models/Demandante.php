@@ -27,8 +27,7 @@ class Demandante extends Model
         //->using(DemandanteOferta::class);
     }
     public function titulos(){
-        return $this->belongsToMany(Titulo::class)
-                    ->withTimestamps();
+        return $this->belongsToMany(Titulo::class, 'demandante_titulo')->withPivot('centro', 'año', 'cursando');
     }
             //relacion 1:1 polimorfica
             public function direccion(){

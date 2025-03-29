@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('empresas', function (Blueprint $table) {
             $table->id();
-            $table->boolean('alta');
             $table->string('cif',9)->unique();
             $table->string('nombre');
             $table->string('localidad',100);

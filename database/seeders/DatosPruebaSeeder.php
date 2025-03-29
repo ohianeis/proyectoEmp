@@ -43,6 +43,7 @@ class DatosPruebaSeeder extends Seeder
     User::factory()->create([
         'name' => 'administrador',
         'email' => 'admin@example.com',
+        'validado'=>true,
         'password'=>Hash::make('1234admin'),
         'role_id'=>1
     ]);
@@ -50,24 +51,28 @@ class DatosPruebaSeeder extends Seeder
         'name' => 'empresa',
         'email' => 'empresa@example.com',
         'password'=>Hash::make('1234empresa'),
+        'validado'=>false,
         'role_id'=>2
     ]);
     User::factory()->create([
         'name' => 'demandante',
         'email' => 'demandante@example.com',
         'password'=>Hash::make('1234demandante'),
+        'validado'=>false,
         'role_id'=>3
     ]);
     User::factory()->create([
         'name' => 'empresa2',
         'email' => 'empresa2@example.com',
         'password'=>Hash::make('1234empresa2'),
+        'validado'=>false,
         'role_id'=>2
     ]);
     User::factory()->create([
         'name' => 'demandante2',
         'email' => 'demandante2@example.com',
         'password'=>Hash::make('1234demandante2'),
+        'validado'=>false,
         'role_id'=>3
     ]);
 

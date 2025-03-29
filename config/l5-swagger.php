@@ -108,8 +108,8 @@ return [
              * @link https://zircote.github.io/swagger-php/reference/processors.html
              */
             'default_processors_configuration' => [
-            /** Example */
-            /**
+                /** Example */
+                /**
              * 'operationId.hash' => true,
              * 'pathFilter' => [
              * 'tags' => [
@@ -207,14 +207,18 @@ return [
                             "scopes" => []
                         ],
                     ],
-                ],
+                ],  */
                 'sanctum' => [ // Unique name of security
-                    'type' => 'apiKey', // Valid values are "basic", "apiKey" or "oauth2".
+                    'type' => 'http', // Cambiar "apiKey" a "http"
                     'description' => 'Enter token in format (Bearer <token>)',
-                    'name' => 'Authorization', // The name of the header or query parameter to be used.
-                    'in' => 'header', // The location of the API key. Valid values are "query" or "header".
+                    'scheme' => 'bearer', // Especifica que es un token Bearer
+                    'bearerFormat' => 'JWT', // Opcional, formato del token
+                    'name' => 'Authorization',
+                    'in' => 'header',
+                    'example' => 'Bearer 19|tBfCzyfhD1Ib3VA5HPyHfR6CjrIoyT5VPq7s0mMnb19cdfbe', 
+                   
                 ],
-                */
+
             ],
             'security' => [
                 /*
@@ -228,8 +232,7 @@ return [
                     ],
 
                     'passport' => []
-                    */
-                ],
+                    */],
             ],
         ],
 
@@ -313,6 +316,7 @@ return [
          */
         'constants' => [
             'L5_SWAGGER_CONST_HOST' => env('L5_SWAGGER_CONST_HOST', 'http://my-default-host.com'),
+           // 'API_AUTH_TOKEN'=>'Bearer 19|tBfCzyfhD1Ib3VA5HPyHfR6CjrIoyT5VPq7s0mMnb19cdfbe',
         ],
     ],
 ];

@@ -33,9 +33,9 @@ class DatabaseSeeder extends Seeder
         $this->call(SituacionSeeder::class);
         $this->call(NivelesSeeder::class);
         $this->call(PorcesosSeeder::class);//poner bien nombre seeder!!!
-    //creo empresa pruebas aqui por fallo en ordenes creacion migraciones y seeders
+    //creo empresa pruebas aqui por fallo en ordenes creacion migraciones y seeders ahora no creo empresas ni demandantes xk necesitan validacon por centro
     
-    Empresa::create([
+ /*   Empresa::create([
         'alta'=>1,
         'cif'=>'a0000000',
         'nombre'=>'empresa1',
@@ -50,8 +50,8 @@ class DatabaseSeeder extends Seeder
         'localidad'=>'pamplona',
         'user_id'=>4,
         'centro_id'=>1
-    ]);
-    Oferta::create([
+    ]);*/
+  /*  Oferta::create([
         'nombre'=>'prueba',
         'observacion'=>'prueba',
         'tipoContrato'=>'prueba',
@@ -82,9 +82,9 @@ class DatabaseSeeder extends Seeder
         'estado_id'=>1,
         'empresa_id'=>2
   
-    ]);
+    ]);*/
     //creo demandantes de ejemplos
-    Demandante::create([
+   /* Demandante::create([
         'nombre'=>'Demandante1',
         'telefono'=>111111111,
         'experienciaLaboral'=>'Cuatro años como desarrollador php',
@@ -99,7 +99,7 @@ class DatabaseSeeder extends Seeder
         'situacione_id'=>3,
         'centro_id'=>1,
         'user_id'=>3
-    ]);
+    ]);*/
     //creo algun titulo de prueba en la tabla
     Titulo::create([
         'nombre'=>'Fontanería',

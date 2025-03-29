@@ -7,7 +7,7 @@
     },
     "servers": [
         {
-            "url": "http://127.0.0.1/bolsaEmp/public"
+            "url": "http://127.0.0.1/laravel/bolsaEmp/public"
         }
     ],
     "paths": {
@@ -241,12 +241,1300 @@
                     }
                 }
             }
+        },
+        "/api/titulos": {
+            "get": {
+                "tags": [
+                    "Títulos"
+                ],
+                "summary": "Obtener todos los títulos",
+                "description": "Devuelve una lista de todos los títulos con su estado (activo/inactivo) y su nivel correspondiente.",
+                "operationId": "67e5169604282b92da35b9bb185e87ed",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de títulos recuperada con éxito.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "titulo": {
+                                                "type": "string",
+                                                "example": "Fontanería"
+                                            },
+                                            "estado": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "activo",
+                                                    "inactivo"
+                                                ],
+                                                "example": "activo"
+                                            },
+                                            "nivel": {
+                                                "type": "string",
+                                                "example": "grado básico"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no autorizado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No estás autenticado. Por favor, inicia sesión para continuar.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error al procesar la solicitud."
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Detalles del error interno."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Títulos"
+                ],
+                "summary": "Crear un nuevo título",
+                "description": "Crea un nuevo título en la base de datos. Requiere autorización mediante Sanctum.",
+                "operationId": "9e95c555b4f1cc8d28775e8f298b12fb",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Datos para crear un nuevo título",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "nombre": {
+                                        "description": "Nombre del título.",
+                                        "type": "string",
+                                        "example": "Ingeniería de software"
+                                    },
+                                    "nivel": {
+                                        "description": "ID del nivel asociado. Debe existir en la tabla niveles.",
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "centro": {
+                                        "description": "ID del centro asociado. Debe existir en la tabla centros.",
+                                        "type": "integer",
+                                        "example": 5
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Título creado correctamente.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                },
+                                "example": "Titulo creado correctamente"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No estás autenticado. Por favor, inicia sesión para continuar.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no autorizado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflicto: el título ya existe.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Título ya existente"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Errores de validación.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "errors": {
+                                            "type": "object",
+                                            "example": {
+                                                "nombre": [
+                                                    "El campo nombre es obligatorio."
+                                                ],
+                                                "nivel": [
+                                                    "El nivel no existe en la tabla niveles."
+                                                ],
+                                                "centro": [
+                                                    "El centro no existe en la tabla centros."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error al crear el título"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Detalles del error interno."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/titulos/{titulo}": {
+            "get": {
+                "tags": [
+                    "Títulos"
+                ],
+                "summary": "Obtener detalles de un título específico",
+                "description": "Devuelve los detalles de un título, incluyendo su nivel y el nombre del centro asociado. Excluye el campo 'activado' y formatea las fechas.",
+                "operationId": "d5aa77926109a10d8b5534f3a04de3ae",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    },
+                    {
+                        "name": "titulo",
+                        "in": "path",
+                        "description": "ID del título a recuperar",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detalles del título recuperados con éxito.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "nombre": {
+                                            "type": "string",
+                                            "example": "Desarrollo de aplicaciones web"
+                                        },
+                                        "nivel": {
+                                            "type": "string",
+                                            "example": "Grado superior"
+                                        },
+                                        "centro": {
+                                            "type": "string",
+                                            "example": "Centro de Formación Profesional"
+                                        },
+                                        "created_at": {
+                                            "type": "string",
+                                            "example": "19-03-2025 07:00:06"
+                                        },
+                                        "updated_at": {
+                                            "type": "string",
+                                            "example": "19-03-2025 07:00:06"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No estás autenticado. Por favor, inicia sesión para continuar.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no autorizado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "El título no fue encontrado.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Recurso no encontrado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Títulos"
+                ],
+                "summary": "Eliminar un título",
+                "description": "Elimina un título de la base de datos. Si tiene ofertas asociadas abiertas, cambia su estado a inactivo en lugar de borrarlo.",
+                "operationId": "472b6128e43f9fbd31c95bfb27db89ff",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    },
+                    {
+                        "name": "titulo",
+                        "in": "path",
+                        "description": "ID del título a eliminar",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Operación exitosa.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "No se puede borrar el título porque tiene ofertas asociadas a él. Se ha pasado a estado inactivo"
+                                        },
+                                        "mensage": {
+                                            "type": "string",
+                                            "example": "titulo borrado correctamente"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No estás autenticado. Por favor, inicia sesión para continuar.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no autorizado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Recurso no encontrado.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Recurso no encontrado."
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "El título especificado no existe."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "error al borrar el titulo"
+                                        },
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Detalles del error."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Títulos"
+                ],
+                "summary": "Actualizar un título",
+                "description": "Actualiza los datos de un título específico, incluyendo el nombre, nivel y centro. Requiere autorización mediante Sanctum.",
+                "operationId": "1b87e47afd3af002fdb04efa72226977",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    },
+                    {
+                        "name": "titulo",
+                        "in": "path",
+                        "description": "ID del título a actualizar",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Datos para actualizar el título",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "id": {
+                                        "description": "ID del título. Debe coincidir con el de la URL.",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "nombre": {
+                                        "description": "Nombre del título.",
+                                        "type": "string",
+                                        "example": "Fontanería"
+                                    },
+                                    "nivel": {
+                                        "description": "ID del nivel asociado. Debe existir en la tabla niveles.",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "centro": {
+                                        "description": "ID del centro asociado. Debe existir en la tabla centros.",
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Título actualizado correctamente.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "nombre": {
+                                            "type": "string",
+                                            "example": "Fontanería actualizado"
+                                        },
+                                        "nivele_id": {
+                                            "type": "integer",
+                                            "example": 2
+                                        },
+                                        "centro_id": {
+                                            "type": "integer",
+                                            "example": 5
+                                        },
+                                        "updated_at": {
+                                            "type": "string",
+                                            "example": "19-03-2025 07:30:00"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No estás autenticado. Por favor, inicia sesión para continuar.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no autorizado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Recurso no encontrado.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Recurso no encontrado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Errores de validación.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "errores": {
+                                            "type": "object",
+                                            "example": {
+                                                "id": [
+                                                    "El campo id no está en la lista de valores permitidos"
+                                                ],
+                                                "nombre": [
+                                                    "El campo nombre es obligatorio."
+                                                ],
+                                                "nivel": [
+                                                    "El campo nivel no existe."
+                                                ],
+                                                "centro": [
+                                                    "El campo centro no existe."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error al procesar la solicitud."
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Detalles del error interno."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/titulos/activos": {
+            "get": {
+                "tags": [
+                    "Títulos-Activos"
+                ],
+                "summary": "Obtener títulos activados ordenados por nombre",
+                "description": "Devuelve una lista de todos los títulos que están activados (activado=1) y ordenados alfabéticamente por su nombre.",
+                "operationId": "b4da2f8499d782770df4e119ef7d2483",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Títulos activados recuperados con éxito.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "nombre": {
+                                                "type": "string",
+                                                "example": "Fontanería"
+                                            },
+                                            "activado": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "nivele_id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "centro_id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "created_at": {
+                                                "type": "string",
+                                                "example": "2025-03-19 07:00:06"
+                                            },
+                                            "updated_at": {
+                                                "type": "string",
+                                                "example": "2025-03-19 07:00:06"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no autorizado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado. Es necesario enviar un token válido.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error al procesar la solicitud."
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Detalles del error interno."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/titulos/demandante": {
+            "post": {
+                "tags": [
+                    "Títulos-Demandante"
+                ],
+                "summary": "Asocia títulos al demandante autenticado",
+                "description": "Este endpoint permite asociar uno o varios títulos al demandante actual.",
+                "operationId": "b5d380ae3200f9d83c9cc5a32d1822d0",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "titulos": {
+                                        "description": "Lista de títulos con sus atributos",
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "id": {
+                                                    "description": "ID del título",
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "centro": {
+                                                    "description": "ID del centro",
+                                                    "type": "integer",
+                                                    "example": 101
+                                                },
+                                                "anio": {
+                                                    "description": "Año de creación del título",
+                                                    "type": "integer",
+                                                    "example": 2020
+                                                },
+                                                "cursando": {
+                                                    "description": "Si el demandante está cursando el título",
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Títulos asociados correctamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "mensaje": "Titulo/s creados correctamente"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Todos los títulos ya están vinculados al demandante",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "mensaje": "Todos los títulos ya están vinculados al demandante."
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No estás autenticado. Por favor, inicia sesión para continuar.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no autorizado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Errores de validación.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "errores": {
+                                            "type": "object",
+                                            "example": {
+                                                "titulos.0.id": [
+                                                    "El id del título no existe en la lista de valores permitidos."
+                                                ],
+                                                "titulos.1.año": [
+                                                    "El año debe estar entre 1900 y 2025."
+                                                ],
+                                                "titulos.2.centro": [
+                                                    "El campo centro es obligatorio."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "mensaje": "Error interno del servidor."
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/titulos/demandante": {
+            "get": {
+                "tags": [
+                    "Títulos-Demandante"
+                ],
+                "summary": "Obtener títulos del demandante autenticado",
+                "description": "Devuelve los títulos asociados al demandante actualmente autenticado mediante Sanctum.",
+                "operationId": "4f3132256003988643ad399d5f0e4888",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "29|nqrBfqXOPVLqKfOwZSa6uvpWMxWwz9UQYHcOzSCgce17c3cf"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de títulos asociados al demandante autenticado.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "nombre": {
+                                                "type": "string",
+                                                "example": "Título 1"
+                                            },
+                                            "centro": {
+                                                "type": "string",
+                                                "example": "Universidad de Navarra"
+                                            },
+                                            "año": {
+                                                "type": "integer",
+                                                "example": 2023
+                                            },
+                                            "cursando": {
+                                                "type": "boolean",
+                                                "example": 1
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No estás autenticado. Por favor, inicia sesión para continuar.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no autorizado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "recurso no encontrado.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "El demandante no existe."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error al procesar la solicitud."
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Detalles del error interno."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/titulos/demandante/{id}": {
+            "delete": {
+                "tags": [
+                    "Títulos-Demandante"
+                ],
+                "summary": "Eliminar un título del demandante autenticado",
+                "description": "Elimina un título asociado al demandante actualmente autenticado mediante Sanctum.",
+                "operationId": "49944c87e96dd57f7f2b7d12db25072f",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 29|nqrBfqXOPVLqKfOwZSa6uvpWMxWwz9UQYHcOzSCgce17c3cf"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del título que se desea eliminar",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "El título ha sido eliminado exitosamente.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "El título ha sido eliminado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No estás autenticado. Por favor, inicia sesión para continuar.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "El título no está asociado al demandante.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "El título no está asociado al demandante."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no autorizado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error al procesar la solicitud."
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Detalles del error interno."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
         }
     },
     "tags": [
         {
             "name": "Auth",
             "description": "Auth"
+        },
+        {
+            "name": "Títulos",
+            "description": "Títulos"
+        },
+        {
+            "name": "Títulos-Activos",
+            "description": "Títulos-Activos"
+        },
+        {
+            "name": "Títulos-Demandante",
+            "description": "Títulos-Demandante"
         }
-    ]
+    ],
+    "components": {
+        "securitySchemes": {
+            "sanctum": {
+                "type": "http",
+                "description": "Enter token in format (Bearer <token>)",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+                "name": "Authorization",
+                "in": "header",
+                "example": "Bearer 19|tBfCzyfhD1Ib3VA5HPyHfR6CjrIoyT5VPq7s0mMnb19cdfbe"
+            }
+        }
+    }
 }

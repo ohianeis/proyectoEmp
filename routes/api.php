@@ -13,11 +13,11 @@ use Illuminate\Support\Facades\Route;
 })->middleware('auth:sanctum');*/
 
 Route::get('ofertas', [OfertaController::class, 'index']);
-
+//Route::get('/validaciones',[ValidacionController::class,'index']);
 Route::post('/registro', [AuthController::class, 'registro']);
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 
-Route::middleware(['auth:sanctum'])->group(function () {
+Route::middleware(['auth:sanctum'],VerificarValidacion::class)->group(function () {
     Route::get('/titulos/activos', [TituloController::class,'titulosActivos'])->middleware(['ability:administrador,demandante,empresa']);//pueden acceder los tres roles
     Route::post('/titulos/demandante', [TituloController::class,'agregarTitulos'])->middleware(['ability:demandante']);//pueden acceder solo los demandantes
     Route::get('titulos/demandante',[TituloController::class,'titulosDemandante'])->middleware(['ability:demandante']);
@@ -31,6 +31,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::patch('/titulos/{titulo}', 'update');
         Route::post('/titulos', 'store');
         Route::delete('/titulos/{titulo}', 'destroy');
+    });
+    //rutas para las validaciones solo accesible por el centro
+    Route::controller(ValidacionController::class)->middleware('ability:administrador')->group(function(){
+       Route::get('/usuarios/validaciones','index');
+       Route::patch('/usuarios/validaciones/{user}','update');
+       Route::delete('/usuarios/validaciones/{user}','destroy');
     });
 
 });

@@ -3,6 +3,9 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+
+
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -46,6 +49,14 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+    protected function createdAt():Attribute{
+        return new Attribute(
+            get: function($value){
+                $value=\Carbon\Carbon::parse($value);//pasar el string formato fecha
+                return $value->format('d/m/Y');
+            }
+        );
     }
     public function rol(){
         return $this->belongsTo(Role::class,'role_id');

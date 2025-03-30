@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('empresas', function (Blueprint $table) {
             $table->id();
-            $table->string('cif',9)->unique();
+            $table->string('cif',9)->unique()->nullable();
             $table->string('nombre');
-            $table->string('localidad',100);
+            $table->string('localidad',100)->nullable();
             $table->unsignedBigInteger('user_id')->nullable();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('set null');
             $table->unsignedBigInteger('centro_id')->nullable();

@@ -14,9 +14,9 @@ return new class extends Migration
         Schema::create('demandantes', function (Blueprint $table) {
             $table->id();
             $table->string('nombre',100);
-            $table->integer('telefono');
+            $table->integer('telefono')->nullable();
             $table->text('experienciaLaboral')->nullable();
-            $table->unsignedBigInteger('situacione_id');
+            $table->unsignedBigInteger('situacione_id')->nullable();
             $table->foreign('situacione_id')->references('id')->on('situaciones');
             $table->unsignedBigInteger('centro_id')->nullable();
             $table->foreign('centro_id')->references('id')->on('centros')->onDelete('set null');

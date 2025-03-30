@@ -1504,6 +1504,381 @@
                     }
                 ]
             }
+        },
+        "/api/usuarios/validaciones": {
+            "get": {
+                "tags": [
+                    "Validaciones"
+                ],
+                "summary": "Obtiene los usuarios no validados",
+                "description": "Este endpoint devuelve la lista de usuarios que no están validados, junto con su rol ordenados por fecha registro.",
+                "operationId": "f1cdf25e65c47887a58a3c335db0a81f",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de usuarios no validados",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "description": "ID del usuario",
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "name": {
+                                                "description": "Nombre del usuario",
+                                                "type": "string",
+                                                "example": "Empresa"
+                                            },
+                                            "email": {
+                                                "description": "Correo electrónico",
+                                                "type": "string",
+                                                "example": "empresa@example.com"
+                                            },
+                                            "validado": {
+                                                "description": "Estado de validación del usuario",
+                                                "type": "integer",
+                                                "example": 0
+                                            },
+                                            "role_id": {
+                                                "description": "ID del rol asociado",
+                                                "type": "integer",
+                                                "example": 2
+                                            },
+                                            "created_at": {
+                                                "description": "Fecha de creación del usuario",
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "example": "29/03/2025"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No estás autenticado. Por favor, inicia sesión para continuar.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no autorizado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Recurso no encontrado. La ruta solicitada no existe.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Recurso no encontrado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Ocurrió un error inesperado. Por favor, inténtalo nuevamente."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/usuarios/validaciones/{user}": {
+            "delete": {
+                "tags": [
+                    "Validaciones"
+                ],
+                "summary": "Elimina un usuario del registro",
+                "description": "Este endpoint elimina a un usuario del sistema. Se utiliza cuando no se acepta su validación.",
+                "operationId": "f614d5cd06878158d56e57cfe8b5a816",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    },
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "description": "ID del usuario que será eliminado",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Usuario eliminado del registro correctamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Usuario eliminado del registro correctamente"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No estás autenticado. Por favor, inicia sesión para continuar.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no autorizado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Usuario no encontrado. Verifica el ID proporcionado.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no encontrado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Error al eliminar el usuario. Por favor, inténtelo de nuevo."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Validaciones"
+                ],
+                "summary": "Valida un usuario y lo registra como Empresa o Demandante",
+                "description": "Este endpoint valida a un usuario y lo registra en la tabla correspondiente (Empresa o Demandante) según su rol.",
+                "operationId": "cd032e629591157fe794ef0306c02af1",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    },
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "description": "ID del usuario que será validado",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Usuario validado correctamente y registrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Usuario validado correctamente y registrado"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No estás autenticado. Por favor, inicia sesión para continuar.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no autorizado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Recurso no encontrado. La ruta solicitada no existe.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Recurso no encontrado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Ocurrió un error inesperado. Por favor, inténtalo nuevamente."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
         }
     },
     "tags": [
@@ -1522,6 +1897,10 @@
         {
             "name": "Títulos-Demandante",
             "description": "Títulos-Demandante"
+        },
+        {
+            "name": "Validaciones",
+            "description": "Validaciones"
         }
     ],
     "components": {

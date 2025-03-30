@@ -6,6 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class Empresa extends Model
 {
+    protected $fillable = [
+        'cif',
+        'nombre',
+        'localidad',
+        'user_id',
+        'centro_id',
+    ];
     //
     public function centro(){
         return $this->belongsTo(Centro::class);

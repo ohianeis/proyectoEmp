@@ -7,6 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 class Demandante extends Model
 {
     //
+    protected $fillable = [
+        'nombre',
+        'telefono',
+        'experienciaLaboral',
+        'situacione_id',
+        'centro_id',
+        'user_id',
+    ];
     public function situacion(){
         return $this->belongsTo(Situacione::class,'situacione_id');
     }

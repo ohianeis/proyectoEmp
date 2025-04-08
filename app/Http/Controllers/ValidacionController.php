@@ -212,17 +212,28 @@ class ValidacionController extends Controller
             $user->validado = true;
             $user->save();
             if ($user->role_id == 2) {
-                Empresa::create([
-                    'nombre' => $user->name,
-                    'user_id' => $user->id,
-                    'centro_id' => $centro
-                ]);
+                $empresa=new Empresa();
+                $empresa->nombre=$user->name;
+                $empresa->user_id=$user->id;
+                $empresa->centro_id=$centro;
+             /*   Empresa::create([
+                    'nombre' => ,
+                    'user_id' => ,
+                    'centro_id' => 
+                ]);*/
+                $empresa->save();
             } else if ($user->role_id == 3) {
-                Demandante::create([
+                $demandante=new Demandante();
+                $demandante->nombre=$user->name;
+                $demandante->centro_id=$centro;
+                $demandante->user_id=$user->id;
+
+             /*   Demandante::create([
                     'nombre' => $user->name,
                     'centro_id' => $centro,
                     'user_id' => $user->id
-                ]);
+                ]);*/
+                $demandante->save();
             }
             return response()->json([
                 'mensaje' => 'Usuario validado correctamente y registrado'

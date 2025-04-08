@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Validator;
 use App\Models\User;
+use Exception;
 use Illuminate\Support\Facades\Hash;
 use \stdClass;
 /**
@@ -20,6 +22,48 @@ use \stdClass;
 class AuthController extends Controller
 {
     //
+    /**
+ * @OA\Get(
+ *     path="/api/registro/roles",
+ *     summary="Obtener lista de roles disponibles",
+ *     description="Devuelve una lista de roles excepto el administrador (ID 1).",
+ *     tags={"Auth"},
+ *     security={
+ *         {"bearerAuth": {}}
+ *     },
+ *     @OA\Response(
+ *         response=200,
+ *         description="Lista de roles obtenida correctamente.",
+ *         @OA\JsonContent(
+ *             type="array",
+ *             @OA\Items(
+ *                 type="object",
+ *                 @OA\Property(property="id", type="integer", example=2, description="ID del rol."),
+ *                 @OA\Property(property="rol", type="string", example="Empresa", description="Nombre del rol.")
+ *             )
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=500,
+ *         description="Error interno del servidor.",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="mensaje", type="string", example="Se produjo un error al obtener los roles.")
+ *         )
+ *     )
+ * )
+ */
+
+    public function roles(){
+        try{
+            $tiposRoles=Role::select('id','rol')->where('id','!=',1)->orderby('id')->get();
+            return response()->json($tiposRoles,200);
+        }catch(Exception $e){
+            return response()->json([
+                'mensaje'=>$e->getMessage()
+            ],500);
+        }
+    }
    /**
  * Registro a la aplicación
  * @OA\Post(
@@ -67,7 +111,7 @@ class AuthController extends Controller
             'name'=>'required|string|max:100',
             'email'=>'required|string|email|max:255|unique:users',
             'password'=>'required|string|min:6',
-            'role'=>'required|integer|exists:roles,id',
+            'role'=>'required|integer|in:2,3|exists:roles,id',
        ], [
                 'role.exists'=>'El rol seleccionado no es válido',
                 'email.email'=>'Por favor, introduce un correo electrónico válido',

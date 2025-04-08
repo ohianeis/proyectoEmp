@@ -11,6 +11,64 @@
         }
     ],
     "paths": {
+        "/api/registro/roles": {
+            "get": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Obtener lista de roles disponibles",
+                "description": "Devuelve una lista de roles excepto el administrador (ID 1).",
+                "operationId": "c9c23d89cef7a30e6528ce5e378bb195",
+                "responses": {
+                    "200": {
+                        "description": "Lista de roles obtenida correctamente.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "description": "ID del rol.",
+                                                "type": "integer",
+                                                "example": 2
+                                            },
+                                            "rol": {
+                                                "description": "Nombre del rol.",
+                                                "type": "string",
+                                                "example": "Empresa"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Se produjo un error al obtener los roles."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/registro": {
             "post": {
                 "tags": [
@@ -240,6 +298,2219 @@
                         }
                     }
                 }
+            }
+        },
+        "/api/ofertas": {
+            "get": {
+                "tags": [
+                    "Ofertas"
+                ],
+                "summary": "Obtener lista de ofertas de trabajo según el tipo de usuario",
+                "description": "Devuelve una lista de ofertas de trabajo filtradas según el tipo de usuario: \n     *     - Para demandantes, incluye ofertas relacionadas con sus títulos, solo si el estado de la oferta es 'Abierta' (estado_id = 1).\n     *     - Para empresas, muestra todas sus ofertas (tanto abiertas como cerradas).\n     *      Ordenadas por fecha de creación descendente.",
+                "operationId": "ce584e8b716b3be1fd19541c498f5e40",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de ofertas obtenida correctamente o mensaje si no hay ofertas disponibles.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "oneOf": [
+                                        {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "description": "ID de la oferta.",
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "nombre": {
+                                                        "description": "Título de la oferta.",
+                                                        "type": "string",
+                                                        "example": "Desarrollador Web"
+                                                    },
+                                                    "observacion": {
+                                                        "description": "Descripción general.",
+                                                        "type": "string",
+                                                        "example": "Se busca desarrollador con experiencia en Laravel."
+                                                    },
+                                                    "tipoContrato": {
+                                                        "description": "Tipo de contrato.",
+                                                        "type": "string",
+                                                        "example": "Indefinido"
+                                                    },
+                                                    "horario": {
+                                                        "description": "Horario laboral.",
+                                                        "type": "string",
+                                                        "example": "8:00 - 16:00"
+                                                    },
+                                                    "nPuestos": {
+                                                        "description": "Número de vacantes.",
+                                                        "type": "integer",
+                                                        "example": 2
+                                                    },
+                                                    "motivo": {
+                                                        "description": "Motivo de cierre de la oferta.",
+                                                        "type": "string",
+                                                        "example": "sin demandante de la bolsa"
+                                                    },
+                                                    "estado": {
+                                                        "description": "Estado de la oferta (Abierta/Cerrada).",
+                                                        "type": "string",
+                                                        "example": "Abierta"
+                                                    },
+                                                    "empresa_id": {
+                                                        "description": "ID de la empresa.",
+                                                        "type": "integer",
+                                                        "example": 5
+                                                    },
+                                                    "empresa_nombre": {
+                                                        "description": "Nombre de la empresa.",
+                                                        "type": "string",
+                                                        "example": "Tech Solutions S.A."
+                                                    },
+                                                    "created_at": {
+                                                        "description": "Fecha de publicación.",
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-04-02T08:00:00Z"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        {
+                                            "properties": {
+                                                "mensaje": {
+                                                    "type": "string",
+                                                    "example": "No hay ninguna oferta de trabajo actualmente."
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No estás autenticado. Por favor, inicia sesión para continuar.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no autorizado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Se produjo un error al obtener las ofertas de trabajo."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Ofertas"
+                ],
+                "summary": "Registrar una nueva oferta de trabajo",
+                "description": "Crea una nueva oferta de trabajo asociada a la empresa del usuario autenticado.",
+                "operationId": "f81dc87a06f2e838183b2183908724a3",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "nombre",
+                                    "observacion",
+                                    "tipoContrato",
+                                    "horario",
+                                    "nPuestos",
+                                    "titulo"
+                                ],
+                                "properties": {
+                                    "nombre": {
+                                        "description": "Nombre de la oferta.",
+                                        "type": "string",
+                                        "maxLength": 45,
+                                        "example": "Desarrollador Web"
+                                    },
+                                    "observacion": {
+                                        "description": "Descripción de la oferta.",
+                                        "type": "string",
+                                        "maxLength": 2000,
+                                        "example": "Se busca desarrollador con experiencia en Laravel."
+                                    },
+                                    "tipoContrato": {
+                                        "description": "Tipo de contrato.",
+                                        "type": "string",
+                                        "maxLength": 45,
+                                        "example": "Indefinido"
+                                    },
+                                    "horario": {
+                                        "description": "Horario de trabajo.",
+                                        "type": "string",
+                                        "maxLength": 45,
+                                        "example": "8:00 - 16:00"
+                                    },
+                                    "nPuestos": {
+                                        "description": "Número de vacantes disponibles.",
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "titulo": {
+                                        "description": "ID del título requerido para el puesto, debe existir en la tabla 'titulos'.",
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Oferta creada correctamente y vinculada con el título.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Oferta creada correctamente."
+                                        },
+                                        "id": {
+                                            "description": "ID de la oferta creada.",
+                                            "type": "integer",
+                                            "example": 10
+                                        },
+                                        "empresa_id": {
+                                            "description": "ID de la empresa asociada.",
+                                            "type": "integer",
+                                            "example": 5
+                                        },
+                                        "titulo_id": {
+                                            "description": "ID del título vinculado a la oferta.",
+                                            "type": "integer",
+                                            "example": 1
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Errores de validación.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "object",
+                                            "example": {
+                                                "nombre": [
+                                                    "El campo nombre es obligatorio."
+                                                ],
+                                                "observacion": [
+                                                    "El campo observacion es obligatorio."
+                                                ],
+                                                "titulo": [
+                                                    "El título seleccionado no es válido."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflicto: la oferta ya existe.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Título ya existente"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Se produjo un error al registrar la oferta."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/ofertas/{oferta}": {
+            "get": {
+                "tags": [
+                    "Ofertas"
+                ],
+                "summary": "Obtener detalles de una oferta de trabajo",
+                "description": "Devuelve la información completa de una oferta, validando permisos de empresa o titulación del demandante.",
+                "operationId": "7e9a1ea29be79976d9c9437ece2ad066",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 28|EDpCqsQH14heM01S88StGH7hDIhd4WMALSq9LflU5bd75bd5"
+                        }
+                    },
+                    {
+                        "name": "oferta",
+                        "in": "path",
+                        "description": "ID de la oferta a consultar.",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 5
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detalles de la oferta obtenidos correctamente.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 5
+                                        },
+                                        "nombre": {
+                                            "type": "string",
+                                            "example": "Desarrollador Full Stack"
+                                        },
+                                        "estado": {
+                                            "type": "string",
+                                            "example": "Abierta"
+                                        },
+                                        "empresa": {
+                                            "type": "string",
+                                            "example": "Empresa Tecnológica"
+                                        },
+                                        "motivo": {
+                                            "type": "string",
+                                            "example": "Expansión del equipo"
+                                        },
+                                        "inscrito": {
+                                            "type": "boolean",
+                                            "example": false
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para consultar esta oferta.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "No eres el propietario de esta oferta."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "El demandante no tiene los títulos requeridos para ver la oferta.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Este candidato no tiene ninguno de los títulos requeridos para esta oferta."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Oferta no encontrada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Recurso no encontrado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Se produjo un error al obtener la oferta."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/ofertas/{oferta}/apuntarse": {
+            "post": {
+                "tags": [
+                    "Ofertas"
+                ],
+                "summary": "Inscribirse en una oferta de trabajo",
+                "description": "Permite que un usuario demandante se inscriba en una oferta de trabajo si cumple con los títulos requeridos. Si el usuario no tiene los títulos adecuados, la inscripción será rechazada.",
+                "operationId": "fa274bfdec82022b37a47367d43cd453",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    },
+                    {
+                        "name": "oferta",
+                        "in": "path",
+                        "description": "ID de la oferta a la que el demandante quiere inscribirse.",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 3
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Inscripción realizada correctamente.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Te has inscrito correctamente a la oferta."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado. Es necesario enviar un token válido.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no autorizado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Recurso no encontrado.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Recurso no encontrado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "El demandante no cumple con los requisitos de la oferta.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "No tienes el título que requiere la oferta."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Se produjo un error al inscribirse en la oferta."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/ofertas/{oferta}/desapuntarse": {
+            "delete": {
+                "tags": [
+                    "Ofertas"
+                ],
+                "summary": "Cancelar inscripción en una oferta de trabajo",
+                "description": "Permite que un usuario demandante cancele su inscripción en una oferta de trabajo. Si no está inscrito, devuelve un mensaje de error.",
+                "operationId": "41a99bb77d162568a3331cec35b971df",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    },
+                    {
+                        "name": "oferta",
+                        "in": "path",
+                        "description": "ID de la oferta de la que el demandante quiere desapuntarse.",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 2
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Inscripción eliminada correctamente.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Te has desapuntado correctamente de la oferta."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado. Es necesario enviar un token válido.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no autorizado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Recurso no encontrado.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Recurso no encontrado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "El demandante no estaba inscrito en la oferta.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "No estás inscrito en esta oferta."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Se produjo un error al cancelar la inscripción en la oferta."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/ofertas/inscritas": {
+            "get": {
+                "tags": [
+                    "Ofertas"
+                ],
+                "summary": "Obtener lista de ofertas en las que el demandante está inscrito",
+                "description": "Devuelve la lista de ofertas de trabajo en las que un demandante está inscrito, incluyendo detalles de la empresa. \n     *     Si el demandante no está inscrito en ninguna oferta, devuelve un mensaje de error.",
+                "operationId": "be3e1b302096bb8311cdb7bcb15b3a0f",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de ofertas en las que el demandante está inscrito.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "description": "ID de la oferta.",
+                                                "type": "integer",
+                                                "example": 2
+                                            },
+                                            "nombre": {
+                                                "description": "Título de la oferta.",
+                                                "type": "string",
+                                                "example": "Desarrollador Web"
+                                            },
+                                            "observacion": {
+                                                "description": "Observaciones adicionales.",
+                                                "type": "string",
+                                                "example": "Experiencia mínima de 2 años."
+                                            },
+                                            "tipoContrato": {
+                                                "description": "Tipo de contrato.",
+                                                "type": "string",
+                                                "example": "Indefinido"
+                                            },
+                                            "horario": {
+                                                "description": "Horario de trabajo.",
+                                                "type": "string",
+                                                "example": "9:00 - 17:00"
+                                            },
+                                            "nPuestos": {
+                                                "description": "Número de puestos disponibles.",
+                                                "type": "integer",
+                                                "example": 3
+                                            },
+                                            "empresa_id": {
+                                                "description": "ID de la empresa.",
+                                                "type": "integer",
+                                                "example": 5
+                                            },
+                                            "empresa_nombre": {
+                                                "description": "Nombre de la empresa.",
+                                                "type": "string",
+                                                "example": "Tech Solutions S.A."
+                                            },
+                                            "created_at": {
+                                                "description": "Fecha de creación de la oferta.",
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "example": "2025-04-02T08:00:00Z"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado. Es necesario enviar un token válido.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no autorizado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "El demandante no tiene ofertas inscritas.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "No tienes ninguna oferta inscrita."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Se produjo un error al obtener la lista de ofertas inscritas."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/ofertas/{oferta}/candidatos": {
+            "get": {
+                "tags": [
+                    "Ofertas"
+                ],
+                "summary": "Obtener lista de candidatos inscritos en una oferta",
+                "description": "Devuelve la lista de demandantes inscritos en una oferta específica.",
+                "operationId": "e2cd9125601eff45d23c4501628ce76b",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    },
+                    {
+                        "name": "oferta",
+                        "in": "path",
+                        "description": "ID de la oferta de la cual se desean obtener los candidatos inscritos.",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 5
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de candidatos inscritos en la oferta.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "description": "ID del demandante.",
+                                                "type": "integer",
+                                                "example": 12
+                                            },
+                                            "nombre": {
+                                                "description": "Nombre completo del demandante.",
+                                                "type": "string",
+                                                "example": "Juan Pérez"
+                                            },
+                                            "email": {
+                                                "description": "Correo electrónico del demandante.",
+                                                "type": "string",
+                                                "example": "juan.perez@example.com"
+                                            },
+                                            "telefono": {
+                                                "description": "Teléfono de contacto del demandante.",
+                                                "type": "string",
+                                                "example": "+34 600 123 456"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado. Es necesario enviar un token válido.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no autorizado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Se produjo un error al obtener la lista de candidatos."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/ofertas/{oferta}/candidatos/{demandante}": {
+            "get": {
+                "tags": [
+                    "Ofertas"
+                ],
+                "summary": "Obtener detalles de un candidato vinculado a una oferta",
+                "description": "Devuelve la información detallada de un demandante que cumple los requisitos de titulación para una oferta específica.",
+                "operationId": "11fc1e06a25ebd0484a792eb2c6d439d",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    },
+                    {
+                        "name": "oferta",
+                        "in": "path",
+                        "description": "ID de la oferta para validar la elegibilidad del candidato.",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 3
+                        }
+                    },
+                    {
+                        "name": "demandante",
+                        "in": "path",
+                        "description": "ID del demandante cuyo detalle se desea obtener.",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 12
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Información detallada del demandante.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "description": "ID del demandante.",
+                                            "type": "integer",
+                                            "example": 12
+                                        },
+                                        "nombre": {
+                                            "description": "Nombre completo.",
+                                            "type": "string",
+                                            "example": "Juan Pérez"
+                                        },
+                                        "telefono": {
+                                            "description": "Teléfono de contacto.",
+                                            "type": "string",
+                                            "example": "+34 600 123 456"
+                                        },
+                                        "experienciaLaboral": {
+                                            "description": "Experiencia laboral.",
+                                            "type": "string",
+                                            "example": "5 años en desarrollo web"
+                                        },
+                                        "situacion_nombre": {
+                                            "description": "Situación laboral.",
+                                            "type": "string",
+                                            "example": "Desempleado"
+                                        },
+                                        "centro_nombre": {
+                                            "description": "Centro educativo.",
+                                            "type": "string",
+                                            "example": "Universidad de Madrid"
+                                        },
+                                        "direccion": {
+                                            "description": "Dirección del demandante (si es visible).",
+                                            "properties": {
+                                                "calle": {
+                                                    "type": "string",
+                                                    "example": "Calle Mayor 15"
+                                                },
+                                                "ciudad": {
+                                                    "type": "string",
+                                                    "example": "Madrid"
+                                                },
+                                                "codigo_postal": {
+                                                    "type": "string",
+                                                    "example": "28013"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "infoTitulos": {
+                                            "description": "Lista de títulos del demandante.",
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "titulo_id": {
+                                                        "description": "ID del título.",
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "nombre": {
+                                                        "description": "Nombre del título.",
+                                                        "type": "string",
+                                                        "example": "Ingeniería Informática"
+                                                    },
+                                                    "estado": {
+                                                        "description": "Estado del curso.",
+                                                        "type": "string",
+                                                        "example": "finalizado"
+                                                    },
+                                                    "año": {
+                                                        "description": "Año de finalización.",
+                                                        "type": "integer",
+                                                        "example": 2021
+                                                    },
+                                                    "centro": {
+                                                        "description": "Centro educativo donde se cursó.",
+                                                        "type": "string",
+                                                        "example": "Universidad Politécnica"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado. Es necesario enviar un token válido.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Este candidato no tiene la titulación requerida para esta oferta."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "El demandante no existe.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "El demandante no se encontró."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Se produjo un error al obtener el detalle del candidato."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/ofertas/{oferta}/noInscritos": {
+            "get": {
+                "tags": [
+                    "Ofertas"
+                ],
+                "summary": "Obtener lista de candidatos que cumplen los requisitos pero no están inscritos",
+                "description": "Devuelve la lista de demandantes que tienen títulos relacionados con la oferta, pero no están inscritos en ella.",
+                "operationId": "b8a4008835432526d8673e28633325ee",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    },
+                    {
+                        "name": "oferta",
+                        "in": "path",
+                        "description": "ID de la oferta para la que se buscan candidatos elegibles no inscritos.",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 3
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de candidatos no inscritos en la oferta.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "description": "ID del demandante.",
+                                                "type": "integer",
+                                                "example": 15
+                                            },
+                                            "nombre": {
+                                                "description": "Nombre completo del demandante.",
+                                                "type": "string",
+                                                "example": "Ana López"
+                                            },
+                                            "telefono": {
+                                                "description": "Teléfono de contacto del demandante.",
+                                                "type": "string",
+                                                "example": "+34 600 987 321"
+                                            },
+                                            "experienciaLaboral": {
+                                                "description": "Experiencia laboral.",
+                                                "type": "string",
+                                                "example": "3 años en análisis de datos"
+                                            },
+                                            "titulos": {
+                                                "description": "Lista de títulos que tiene el candidato y que coinciden con los requeridos por la oferta.",
+                                                "type": "array",
+                                                "items": {
+                                                    "properties": {
+                                                        "titulo_id": {
+                                                            "description": "ID del título.",
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "nombre": {
+                                                            "description": "Nombre del título.",
+                                                            "type": "string",
+                                                            "example": "Máster en Big Data"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Se produjo un error al obtener la lista de candidatos no inscritos."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/ofertas/{oferta}/candidatos/{demandante}/inscribir": {
+            "post": {
+                "tags": [
+                    "Ofertas"
+                ],
+                "summary": "Añadir un candidato a una oferta",
+                "description": "Permite inscribir a un demandante en una oferta de empleo, asegurando que no esté previamente inscrito.",
+                "operationId": "815689c4789421ecf22d2257c6dcdf75",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    },
+                    {
+                        "name": "oferta",
+                        "in": "path",
+                        "description": "ID de la oferta en la que se inscribirá el candidato.",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 5
+                        }
+                    },
+                    {
+                        "name": "demandante",
+                        "in": "path",
+                        "description": "ID del demandante que se inscribirá en la oferta.",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 12
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "El candidato ha sido inscrito correctamente en la oferta.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Candidato añadido correctamente a la oferta."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado. Es necesario enviar un token válido.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Este candidato no tiene la titulación requerida para esta oferta."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "El candidato ya estaba inscrito en la oferta.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "El candidato ya está inscrito en esta oferta."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Se produjo un error al inscribir el candidato."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/perfil": {
+            "get": {
+                "tags": [
+                    "Perfil"
+                ],
+                "summary": "Obtiene el perfil del usuario autenticado",
+                "description": "Este endpoint devuelve el perfil del usuario autenticado basado en su rol. Si el usuario tiene un rol de Empresa, devolverá su información como Empresa. Si el rol es Demandante, devolverá su información como Demandante.",
+                "operationId": "3a8e08fdf84c78a7b023e3f21fac88cb",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Perfil del usuario autenticado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "perfil": {
+                                            "description": "Datos del perfil del usuario",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "cif": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "nombre": {
+                                                    "type": "string",
+                                                    "example": "empresa"
+                                                },
+                                                "localidad": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "user_id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "centro_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "30/03/2025"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "30/03/2025"
+                                                },
+                                                "direccion": {
+                                                    "description": "Dirección asociada al perfil (puede ser null si no hay dirección disponible)",
+                                                    "properties": {
+                                                        "linea1": {
+                                                            "type": "string",
+                                                            "example": "probando direccion"
+                                                        },
+                                                        "linea2": {
+                                                            "type": "string",
+                                                            "example": null,
+                                                            "nullable": true
+                                                        },
+                                                        "ciudad": {
+                                                            "type": "string",
+                                                            "example": "pamplona"
+                                                        },
+                                                        "provincia": {
+                                                            "type": "string",
+                                                            "example": "navarra"
+                                                        },
+                                                        "codigoPostal": {
+                                                            "type": "integer",
+                                                            "example": 31600
+                                                        },
+                                                        "visible": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        },
+                                                        "created_at": {
+                                                            "type": "string",
+                                                            "format": "date",
+                                                            "example": "30/03/2025"
+                                                        },
+                                                        "updated_at": {
+                                                            "type": "string",
+                                                            "format": "date",
+                                                            "example": "30/03/2025"
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No estás autenticado. Por favor, inicia sesión para continuar.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no autorizado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Recurso no encontrado. La ruta solicitada no existe.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Recurso no encontrado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Ocurrió un error inesperado. Por favor, inténtalo nuevamente."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/perfil/direccion": {
+            "post": {
+                "tags": [
+                    "Perfil"
+                ],
+                "summary": "Crear dirección",
+                "description": "Crea una dirección si actualmente no está asociada con la empresa o el demandante del usuario autenticado.",
+                "operationId": "d105ef4335bd79bf94a6e976120ce39b",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "linea1",
+                                    "ciudad",
+                                    "provincia",
+                                    "codigoPostal",
+                                    "visible"
+                                ],
+                                "properties": {
+                                    "linea1": {
+                                        "description": "Primera línea de dirección.",
+                                        "type": "string",
+                                        "example": "Avenida Siempre Viva 123"
+                                    },
+                                    "linea2": {
+                                        "description": "Segunda línea de dirección, opcional.",
+                                        "type": "string",
+                                        "example": "Apartamento 45",
+                                        "nullable": true
+                                    },
+                                    "ciudad": {
+                                        "description": "Ciudad.",
+                                        "type": "string",
+                                        "example": "Pamplona"
+                                    },
+                                    "provincia": {
+                                        "description": "Provincia.",
+                                        "type": "string",
+                                        "example": "Navarra"
+                                    },
+                                    "codigoPostal": {
+                                        "description": "Código postal, debe tener 6 dígitos.",
+                                        "type": "integer",
+                                        "example": 31600
+                                    },
+                                    "visible": {
+                                        "description": "Visibilidad de la dirección (true o false).",
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Dirección creada correctamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Dirección creada correctamente"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no autorizado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No estás autenticado. Por favor, inicia sesión para continuar.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Errores de validación",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "object",
+                                            "example": {
+                                                "linea1": [
+                                                    "El campo linea1 es obligatorio."
+                                                ],
+                                                "ciudad": [
+                                                    "El campo ciudad es obligatorio."
+                                                ],
+                                                "codigoPostal": [
+                                                    "Debe tener exactamente 6 dígitos."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Se produjo un error al procesar la solicitud."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/perfil/direccion/{direccion}": {
+            "patch": {
+                "tags": [
+                    "Perfil"
+                ],
+                "summary": "Actualizar dirección",
+                "description": "Actualiza una dirección existente asociada a la empresa o el demandante del usuario autenticado. Si la dirección no existe, redirige al método que la crea.",
+                "operationId": "4a8c2fef28800b8d7f5f609ba6ed7827",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    },
+                    {
+                        "name": "direccion",
+                        "in": "path",
+                        "description": "ID de la dirección que se desea actualizar",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "linea1",
+                                    "ciudad",
+                                    "provincia",
+                                    "codigoPostal",
+                                    "visible"
+                                ],
+                                "properties": {
+                                    "linea1": {
+                                        "description": "Primera línea de dirección.",
+                                        "type": "string",
+                                        "example": "Calle Mayor 123"
+                                    },
+                                    "linea2": {
+                                        "description": "Segunda línea de dirección, opcional.",
+                                        "type": "string",
+                                        "example": "Piso 4B",
+                                        "nullable": true
+                                    },
+                                    "ciudad": {
+                                        "description": "Ciudad.",
+                                        "type": "string",
+                                        "example": "Pamplona"
+                                    },
+                                    "provincia": {
+                                        "description": "Provincia.",
+                                        "type": "string",
+                                        "example": "Navarra"
+                                    },
+                                    "codigoPostal": {
+                                        "description": "Código postal con 5 dígitos.",
+                                        "type": "integer",
+                                        "example": 31600
+                                    },
+                                    "visible": {
+                                        "description": "Indica si la dirección es visible (true o false).",
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Dirección actualizada correctamente.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Dirección actualizada correctamente."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no autorizado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No estás autenticado. Por favor, inicia sesión para continuar.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Recurso no encontrado.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Recurso no encontrado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Errores de validación en los datos proporcionados.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "object",
+                                            "example": {
+                                                "linea1": [
+                                                    "El campo linea1 es obligatorio."
+                                                ],
+                                                "ciudad": [
+                                                    "El campo ciudad es obligatorio."
+                                                ],
+                                                "codigoPostal": [
+                                                    "Debe tener exactamente 5 dígitos."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Se produjo un error al procesar la solicitud."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/perfil/editar": {
+            "patch": {
+                "tags": [
+                    "Perfil"
+                ],
+                "summary": "Actualizar el perfil del usuario autenticado",
+                "description": "Actualiza los datos del perfil del usuario según su rol. Si es una empresa, actualiza sus datos. Si es un demandante, actualiza los datos relacionados al demandante.",
+                "operationId": "d748d8cacbe3cc92233fa0e30b1fa57a",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "description": "Datos para actualizar el perfil, dependiendo del rol del usuario.",
+                                "properties": {
+                                    "cif": {
+                                        "description": "CIF único de la empresa (solo si el usuario es empresa)",
+                                        "type": "string",
+                                        "example": "B12345678",
+                                        "nullable": true
+                                    },
+                                    "nombre": {
+                                        "description": "Nombre de la empresa o demandante",
+                                        "type": "string",
+                                        "example": "Mi Empresa S.L. o Juan Pérez"
+                                    },
+                                    "localidad": {
+                                        "description": "Localidad de la empresa (solo para empresas)",
+                                        "type": "string",
+                                        "example": "Pamplona",
+                                        "nullable": true
+                                    },
+                                    "telefono": {
+                                        "description": "Teléfono del demandante (solo para demandantes)",
+                                        "type": "string",
+                                        "example": "678123456",
+                                        "nullable": true
+                                    },
+                                    "experienciaLaboral": {
+                                        "description": "Descripción de la experiencia laboral del demandante",
+                                        "type": "string",
+                                        "example": "10 años de experiencia en desarrollo web",
+                                        "nullable": true
+                                    },
+                                    "situacion": {
+                                        "description": "ID de la situación actual del demandante (debe existir en la tabla situaciones)",
+                                        "type": "integer",
+                                        "example": 3,
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "example": {
+                                "empresa": {
+                                    "cif": "B12345678",
+                                    "nombre": "Mi Empresa S.L.",
+                                    "localidad": "Pamplona"
+                                },
+                                "demandante": {
+                                    "nombre": "Juan Pérez",
+                                    "telefono": "678123456",
+                                    "experienciaLaboral": "10 años de experiencia en desarrollo web",
+                                    "situacion": 3
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Perfil actualizado correctamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Perfil actualizado correctamente"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No estás autenticado. Por favor, inicia sesión para continuar.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no autorizado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Recurso no encontrado.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Recurso no encontrado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Errores de validación.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "errores": {
+                                            "type": "object",
+                                            "example": {
+                                                "id": [
+                                                    "El campo id no está en la lista de valores permitidos"
+                                                ],
+                                                "nombre": [
+                                                    "El campo nombre es obligatorio."
+                                                ],
+                                                "nivel": [
+                                                    "El campo nivel no existe."
+                                                ],
+                                                "centro": [
+                                                    "El campo centro no existe."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Error en la actualización: Detalles del error"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
             }
         },
         "/api/titulos": {
@@ -514,6 +2785,108 @@
                 ]
             }
         },
+        "/api/titulos/niveles/listado": {
+            "get": {
+                "tags": [
+                    "Títulos"
+                ],
+                "summary": "Obtener niveles de títulos",
+                "description": "Devuelve una lista de niveles de títulos almacenados en la base de datos.",
+                "operationId": "bc96f957be681037d0753d42d1c3cd6d",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de niveles de títulos obtenida correctamente.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "description": "ID del nivel.",
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "nivel": {
+                                                "description": "Nombre del nivel.",
+                                                "type": "string",
+                                                "example": "Grado básico"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no autorizado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No estás autenticado. Por favor, inicia sesión para continuar.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Se produjo un error al obtener los niveles."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/titulos/{titulo}": {
             "get": {
                 "tags": [
@@ -614,7 +2987,7 @@
                         }
                     },
                     "404": {
-                        "description": "El título no fue encontrado.",
+                        "description": "Recurso no encontrado",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1885,6 +4258,14 @@
         {
             "name": "Auth",
             "description": "Auth"
+        },
+        {
+            "name": "Ofertas",
+            "description": "Ofertas"
+        },
+        {
+            "name": "Perfil",
+            "description": "Perfil"
         },
         {
             "name": "Títulos",

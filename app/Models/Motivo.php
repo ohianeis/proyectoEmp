@@ -11,4 +11,5 @@ class Motivo extends Model
     public function ofertas(){
         return $this->hasMany(Oferta::class);
     }
+    
 }

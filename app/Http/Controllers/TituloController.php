@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Demandante;
 use App\Models\DemandanteTitulo;
+use App\Models\Nivele;
 use App\Models\Titulo;
 
 use Exception;
@@ -135,6 +136,79 @@ class TituloController extends Controller
             ]);
         }
     }
+    /**
+     * @OA\Get(
+     *     path="/api/titulos/niveles/listado",
+     *     summary="Obtener niveles de títulos",
+     *     description="Devuelve una lista de niveles de títulos almacenados en la base de datos.",
+     *     tags={"Títulos"},
+     *     security={
+     *         {"sanctum": {}}
+     *     },
+     *  @OA\Parameter(
+     *         name="Authorization",
+     *         in="header",
+     *         required=true,
+     *         description="Token de autenticación en formato Bearer",
+     *         @OA\Schema(
+     *             type="string",
+     *             example="Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Lista de niveles de títulos obtenida correctamente.",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1, description="ID del nivel."),
+     *                 @OA\Property(property="nivel", type="string", example="Grado básico", description="Nombre del nivel.")
+     *             )
+     *         )
+     *     ),
+     * @OA\Response(
+     *         response=403,
+     *         description="Acceso denegado. No tienes permisos para realizar esta acción.",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             properties={
+     *                 @OA\Property(property="message", type="string", example="Usuario no autorizado.")
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="No estás autenticado. Por favor, inicia sesión para continuar.",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             properties={
+     *                 @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Error interno del servidor.",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="mensaje", type="string", example="Se produjo un error al obtener los niveles.")
+     *         )
+     *     )
+     * )
+     */
+
+    public function nivel()
+    {
+        try {
+            $nivelesTitulos = Nivele::select('id', 'nivel')->get();
+            return response()->json([$nivelesTitulos], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'mensaje' => $e->getMessage()
+            ], 500);
+        }
+    }
 
     /**
      * Show the form for creating a new resource.
@@ -215,7 +289,7 @@ class TituloController extends Controller
      *     ),
      *     @OA\Response(
      *         response=404,
-     *         description="El título no fue encontrado.",
+     *         description="Recurso no encontrado",
      *         @OA\JsonContent(
      *             type="object",
      *             @OA\Property(property="message", type="string", example="Recurso no encontrado.")

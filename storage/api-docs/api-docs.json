@@ -2326,15 +2326,6 @@
                         "schema": {
                             "type": "integer"
                         }
-                    },
-                    {
-                        "name": "motivo",
-                        "in": "path",
-                        "description": "ID del motivo de cierre",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
                     }
                 ],
                 "responses": {

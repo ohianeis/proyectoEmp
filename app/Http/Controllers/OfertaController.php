@@ -1307,13 +1307,6 @@ class OfertaController extends Controller
      *         description="ID de la oferta a cerrar",
      *         @OA\Schema(type="integer")
      *     ),
-     *     @OA\Parameter(
-     *         name="motivo",
-     *         in="path",
-     *         required=true,
-     *         description="ID del motivo de cierre",
-     *         @OA\Schema(type="integer")
-     *     ),
      *     @OA\Response(
      *         response=201,
      *         description="Oferta cerrada correctamente",

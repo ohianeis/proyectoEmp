@@ -884,12 +884,12 @@ class TituloController extends Controller
         try {
             $validacion = $request->validate([
                 'titulos' => 'required|array',
-                'titulos.*.id' => 'exists:titulos,id', // Validar que existe el ID en la tabla titulos
-                'titulos.*.centro' => 'required|exists:centros,id', // Validar que existe el centro
-                'titulos.*.año' => 'required|integer|min:1900|max:' . date('Y'), // Validar año válido
-                'titulos.*.cursando' => 'required|boolean', // Validar cursando como booleano
+                'titulos.*.id' => 'exists:titulos,id',
+                'titulos.*.centro' => 'required|exists:centros,id',
+                'titulos.*.anio' => 'required|integer|min:1900|max:' . date('Y'), // Cambiar "año" por "anio"
+                'titulos.*.cursando' => 'required|boolean',
             ]);
-
+            
             $titulosNoDuplicados = collect($validacion['titulos'])->filter(function ($titulo) use ($demandante) {
                 return !DemandanteTitulo::where('demandante_id', $demandante->id)
                     ->where('titulo_id', $titulo['id'])
@@ -903,7 +903,7 @@ class TituloController extends Controller
             foreach ($titulosNoDuplicados as $titulo) {
                 $demandante->titulos()->attach($titulo['id'], [
                     'centro' => $titulo['centro'],
-                    'año' => $titulo['año'],
+                    'año' => $titulo['anio'],
                     'cursando' => $titulo['cursando'],
                 ]);
             }

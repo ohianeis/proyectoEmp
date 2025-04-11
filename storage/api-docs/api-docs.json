@@ -1061,7 +1061,9 @@
                                     "titulo": {
                                         "description": "ID del título requerido para el puesto, debe existir en la tabla 'titulos'.",
                                         "type": "integer",
-                                        "example": 1
+                                        "example": [
+                                            1
+                                        ]
                                     }
                                 },
                                 "type": "object"

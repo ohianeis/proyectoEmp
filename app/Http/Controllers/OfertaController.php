@@ -372,7 +372,7 @@ class OfertaController extends Controller
      *             @OA\Property(property="tipoContrato", type="string", maxLength=45, example="Indefinido", description="Tipo de contrato."),
      *             @OA\Property(property="horario", type="string", maxLength=45, example="8:00 - 16:00", description="Horario de trabajo."),
      *             @OA\Property(property="nPuestos", type="integer", example=2, description="Número de vacantes disponibles."),
-     *             @OA\Property(property="titulo", type="integer", example=1, description="ID del título requerido para el puesto, debe existir en la tabla 'titulos'.")
+     *             @OA\Property(property="titulo", type="integer", example={1}, description="ID del título requerido para el puesto, debe existir en la tabla 'titulos'.")
      *         )
      *     ),
      *     @OA\Response(

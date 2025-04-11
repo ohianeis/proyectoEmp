@@ -4240,14 +4240,14 @@
                 ]
             }
         },
-        "/titulos/demandante": {
+        "api/titulos/demandante": {
             "post": {
                 "tags": [
                     "Títulos-Demandante"
                 ],
                 "summary": "Asocia títulos al demandante autenticado",
                 "description": "Este endpoint permite asociar uno o varios títulos al demandante actual.",
-                "operationId": "b5d380ae3200f9d83c9cc5a32d1822d0",
+                "operationId": "f1a8e82a6e933a5414e35422dbc939b4",
                 "parameters": [
                     {
                         "name": "Authorization",

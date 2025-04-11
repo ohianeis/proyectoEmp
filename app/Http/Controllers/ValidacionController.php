@@ -332,3 +332,97 @@ class ValidacionController extends Controller
         }
     }
 }
+    /**
+ * @OA\Patch(
+ *     path="/api/ofertas/{oferta}/cerrar/{motivo}",
+ *     summary="Cierra una oferta con un motivo específico",
+ *     description="Cambia el estado de la oferta y asigna un motivo de cierre.",
+ *     tags={"Ofertas"},
+*     security={{"sanctum": {}}},
+*    @OA\Parameter(
+*         name="Authorization",
+*         in="header",
+*         required=true,
+*         description="Token de autenticación en formato Bearer",
+*         @OA\Schema(
+*             type="string",
+*             example="Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+*         )
+*     ),
+ *     @OA\Parameter(
+ *         name="oferta",
+ *         in="path",
+ *         required=true,
+ *         description="ID de la oferta a cerrar",
+ *         @OA\Schema(type="integer")
+ *     ),
+ *     @OA\Parameter(
+ *         name="motivo",
+ *         in="path",
+ *         required=true,
+ *         description="ID del motivo de cierre",
+ *         @OA\Schema(type="integer")
+ *     ),
+ *     @OA\Response(
+ *         response=201,
+ *         description="Oferta cerrada correctamente",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="mensaje", type="string", example="Oferta cerrada correctamente")
+ *         )
+ *     ),
+*     @OA\Response(
+*         response=401,
+*         description="No autorizado. Es necesario enviar un token válido.",
+*         @OA\JsonContent(
+*             type="object",
+*             @OA\Property(property="message", type="string", example="Unauthenticated.")
+*         )
+*     ),
+*     @OA\Response(
+*         response=403,
+*         description="Acceso denegado. No tienes permisos para realizar esta acción.",
+*         @OA\JsonContent(
+*             type="object",
+*             @OA\Property(property="mensaje", type="string", example="Este candidato no tiene la titulación requerida para esta oferta.")
+*         )
+*     ),
+ *     @OA\Response(
+ *         response=409,
+ *         description="La oferta ya está cerrada",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="mensaje", type="string", example="La oferta ya está cerrada")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=500,
+ *         description="Error interno del servidor",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="mensaje", type="string", example="Error inesperado")
+ *         )
+ *     )
+ * )
+ */
+/*public function cerrarOferta(Oferta $oferta,Motivo $motivo)
+{
+    try {
+        if ($oferta->estado_id == 1) { // Suponiendo que '3' significa cerrada
+            return response()->json([
+                'mensaje' => 'La oferta ya está cerrada'
+            ], 409);
+        }
+        $motivoId=$motivo->id;
+        $oferta->motivo_id=$motivoId;
+        $oferta->estado_id=2;
+        $oferta->save();
+        return response()->json([
+            'mensaje'=>'oferta cerrada correctamente'
+        ],201);
+    } catch (Exception $e) {
+        return response()->json([
+            'mensaje' => $e->getMessage()
+        ], 500);
+    }
+}*/

@@ -103,37 +103,12 @@ class TituloController extends Controller
                         'nivel' => $titulo->nivel->nivel,
                     ];
                 });
-            /*       $titulos = \App\Models\Titulo::with('nivel') // Cargar la relación 'nivel'
-        ->get()
-        ->map(function ($titulo) {
-            return [
-                'nombre' => $titulo->nombre,
-                'estado' => $titulo->activado ? 'activo' : 'inactivo',
-                'nivel' => $titulo->nivel->nivel, // Obtener el nombre del nivel desde la relación
-            ];
-        });*/
-            /*    $titulos = \App\Models\Titulo::with(['nivel' => function ($query) {
-            $query->orderBy('nivel'); // Ordena la tabla 'niveles' por nombre
-        }])
-            ->get()
-            ->sortBy('nivel.nivel') // Ordena globalmente por 'nivel' en la colección
-            ->groupBy('nivele_id'); // Agrupa por 'nivele_id'
-
-        // Opcional: probar si me ordena por nivele_id y luego por nivel de la tabla niveles
-        $resultado = $titulos->map(function ($grupo) {
-            return $grupo->map(function ($titulo) {
-                return [
-                    'titulo' => $titulo->nombre,
-                    'estado' => $titulo->activado ? 'activo' : 'inactivo',
-                    'nivel' => $titulo->nivel->nivel,
-                ];
-            });
-        });*/
-            return response()->json($titulos);
+      
+            return response()->json($titulos,200);
         } catch (Exception $e) {
             return response()->json([
                 'mensaje' => $e->getMessage()
-            ]);
+            ],500);
         }
     }
     /**
@@ -210,20 +185,6 @@ class TituloController extends Controller
         }
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-
-    }
-
-
-
-    /**
-     * Display the specified resource.
-     */
 
     /**
      * @OA\Get(
@@ -299,7 +260,9 @@ class TituloController extends Controller
      */
     public function show(Titulo $titulo)
     {
-        //
+        try{
+
+        
         // Cargar las relaciones 'nivel' y 'centro'
         $titulo->load('nivel', 'centro');
 
@@ -321,8 +284,14 @@ class TituloController extends Controller
             'updated_at' => $titulo->updated_at->format('d-m-Y')  // Formato de fecha legible
         ];
 
-        return response()->json($response);
-    }
+        return response()->json($response,200);
+    }catch (Exception $e) {
+        return response()->json([
+            'mensaje' => $e->getMessage()
+        ], 500);
+    } 
+}
+    
     /**
      * Store a newly created resource in storage.
      */
@@ -532,21 +501,14 @@ class TituloController extends Controller
     {
         try {
             $titulos = Titulo::select('nombre')->where('activado', 1)->orderBy('nombre')->get();
-            return response()->json($titulos);
+            return response()->json($titulos,200);
         } catch (Exception $e) {
             return response()->json([
                 'mensaje' => $e->getMessage()
-            ]);
+            ],500);
         }
     }
-    /**
-     * Show the form for editing the specified resource.
-     */
-
-    public function edit(string $id)
-    {
-        //
-    }
+  
 
     /**
      * Update the specified resource in storage.
@@ -584,7 +546,6 @@ class TituloController extends Controller
      *         @OA\JsonContent(
      *             type="object",
      *             properties={
-     *                 @OA\Property(property="id", type="integer", example=1, description="ID del título. Debe coincidir con el de la URL."),
      *                 @OA\Property(property="nombre", type="string", example="Fontanería", description="Nombre del título."),
      *                 @OA\Property(property="nivel", type="integer", example=1, description="ID del nivel asociado. Debe existir en la tabla niveles."),
      *                 @OA\Property(property="centro", type="integer", example=1, description="ID del centro asociado. Debe existir en la tabla centros.")
@@ -592,7 +553,7 @@ class TituloController extends Controller
      *         )
      *     ),
      *     @OA\Response(
-     *         response=200,
+     *         response=201,
      *         description="Título actualizado correctamente.",
      *         @OA\JsonContent(
      *             type="object",
@@ -690,7 +651,7 @@ class TituloController extends Controller
                 $titulo->centro_id = $validacion['centro'];
             }
             $titulo->save();
-            return response()->json($titulo, 200);
+            return response()->json($titulo, 201);
         } catch (ValidationException $e) {
             return response()->json([
                 'errores' => $e->errors()
@@ -734,7 +695,7 @@ class TituloController extends Controller
      *         )
      *     ),
      *     @OA\Response(
-     *         response=200,
+     *         response=201,
      *         description="Operación exitosa.",
      *         @OA\JsonContent(
      *             type="object",
@@ -806,7 +767,7 @@ class TituloController extends Controller
             $titulo->delete();
             return response()->json([
                 'mensage' => 'titulo borrado correctamente',
-            ], 200);
+            ], 201);
         } catch (Exception $e) {
             return response()->json([
                 'error' => 'error al borrar el titulo',
@@ -855,7 +816,7 @@ class TituloController extends Controller
      * )
      *),
      *     @OA\Response(
-     *         response=200,
+     *         response=201,
      *         description="Títulos asociados correctamente",
      *         @OA\JsonContent(
      *             example={
@@ -946,7 +907,7 @@ class TituloController extends Controller
                     'cursando' => $titulo['cursando'],
                 ]);
             }
-            return response()->json('Titulo/s creados correctamente', 200);
+            return response()->json('Titulo/s creados correctamente', 201);
         } catch (ValidationException $e) {
             return response()->json([
                 'mensaje' => $e->errors()
@@ -1075,7 +1036,7 @@ class TituloController extends Controller
      *         )
      *     ),
      *     @OA\Response(
-     *         response=200,
+     *         response=201,
      *         description="El título ha sido eliminado exitosamente.",
      *         @OA\JsonContent(
      *             type="object",
@@ -1145,7 +1106,7 @@ class TituloController extends Controller
 
             if ($registro) {
                 $registro->delete(); // Eliminar exclusivamente de la tabla pivot
-                return response()->json(['mensaje' => 'El título ha sido eliminado del demandante.'], 200);
+                return response()->json(['mensaje' => 'El título ha sido eliminado del demandante.'], 201);
             }
 
             return response()->json(['mensaje' => 'Recurso no encontrado.'], 404);

@@ -16,12 +16,22 @@ class VerificarValidacion
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if(Auth::check()&& !Auth::user()->validado){
-            return response()->json([
-                'mensaje'=>'Tu cuenta aun no ha sido validada por parte del centro'
+        // Verificar que el usuario esté autenticado
+    if (!Auth::check()) {
+        return response()->json([
+            'mensaje' => 'No estás autenticado. Por favor, inicia sesión.'
+        ], 401);
+    }
 
-            ],422);
-        }
-        return $next($request);
+    $user = Auth::user();
+
+    // Verificar si el usuario ha sido validado por el centro
+    if (!$user->validado) {
+        return response()->json([
+            'mensaje' => 'Tu cuenta aún no ha sido validada por parte del centro.'
+        ], 422);
+    }
+
+    return $next($request);
     }
 }

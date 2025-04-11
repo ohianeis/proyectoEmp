@@ -33,73 +33,8 @@ class DatabaseSeeder extends Seeder
         $this->call(SituacionSeeder::class);
         $this->call(NivelesSeeder::class);
         $this->call(PorcesosSeeder::class);//poner bien nombre seeder!!!
-    //creo empresa pruebas aqui por fallo en ordenes creacion migraciones y seeders ahora no creo empresas ni demandantes xk necesitan validacon por centro
     
- /*   Empresa::create([
-        'alta'=>1,
-        'cif'=>'a0000000',
-        'nombre'=>'empresa1',
-        'localidad'=>'pamplona',
-        'user_id'=>2,
-        'centro_id'=>1
-    ]);
-    Empresa::create([
-        'alta'=>0,
-        'cif'=>'b1111111',
-        'nombre'=>'empresa2',
-        'localidad'=>'pamplona',
-        'user_id'=>4,
-        'centro_id'=>1
-    ]);*/
-  /*  Oferta::create([
-        'nombre'=>'prueba',
-        'observacion'=>'prueba',
-        'tipoContrato'=>'prueba',
-        'horario'=>'prueba',
-        'nPuestos'=>1,
-        'estado_id'=>1,
-        'empresa_id'=>1
-  
-    ]);
-    Oferta::create([
-        'nombre'=>'prueba2',
-        'observacion'=>'prueba2',
-        'tipoContrato'=>'prueba2',
-        'horario'=>'prueba2',
-        'nPuestos'=>1,
-        'estado_id'=>1,
-        'empresa_id'=>1
-  
-    ]);
-    Oferta::create([
-        'nombre'=>'prueba cierre oferta',
-        'observacion'=>'prueba, ver los estados cierre',
-        'tipoContrato'=>'prueba',
-        'horario'=>'prueba',
-        'fechaCierre'=>'2025-03-13',
-        'nPuestos'=>1,
-        'motivo_id'=>1,
-        'estado_id'=>1,
-        'empresa_id'=>2
-  
-    ]);*/
-    //creo demandantes de ejemplos
-   /* Demandante::create([
-        'nombre'=>'Demandante1',
-        'telefono'=>111111111,
-        'experienciaLaboral'=>'Cuatro años como desarrollador php',
-        'situacione_id'=>1,
-        'centro_id'=>1,
-        'user_id'=>3
-    ]);
-    Demandante::create([
-        'nombre'=>'Demandante2',
-        'telefono'=>222222222,
-        'experienciaLaboral'=>'fronted developed',
-        'situacione_id'=>3,
-        'centro_id'=>1,
-        'user_id'=>3
-    ]);*/
+ 
     //creo algun titulo de prueba en la tabla
     Titulo::create([
         'nombre'=>'Fontanería',
@@ -119,7 +54,7 @@ class DatabaseSeeder extends Seeder
         'nivele_id'=>3,
         'centro_id'=>1
     ]);
-    //añado titulos que poseen demandates demandante_titulo
+
     
     }
 }

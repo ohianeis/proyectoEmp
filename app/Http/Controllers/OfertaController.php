@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Demandante;
 use App\Models\DemandanteOferta;
+use App\Models\Motivo;
 use App\Models\Oferta;
+use App\Models\Proceso;
+use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
 use Exception;
 use Illuminate\Http\Request;
@@ -102,35 +105,34 @@ class OfertaController extends Controller
 
             $queUsuario = $user->role_id == 2 ? $user->empresa : $user->demandante;
             if ($user->role_id == 2) {
-                $ofertas = Oferta::
-                    Select(
-                        'ofertas.id',
-                        'ofertas.nombre',
-                        'ofertas.observacion',
-                        'ofertas.tipoContrato',
-                        'ofertas.horario',
-                        'ofertas.fechaCierre',
-                        'ofertas.nPuestos',
-                        'ofertas.estado_id',
-                        'empresas.nombre as empresa_nombre',
-                        'ofertas.created_at'
-                    )->join('empresas', 'ofertas.empresa_id', '=', 'empresas.id')->where('empresa_id', $queUsuario->id)->orderBy('created_at', 'desc')
+                $ofertas = Oferta::Select(
+                    'ofertas.id',
+                    'ofertas.nombre',
+                    'ofertas.observacion',
+                    'ofertas.tipoContrato',
+                    'ofertas.horario',
+                    'ofertas.fechaCierre',
+                    'ofertas.nPuestos',
+                    'ofertas.estado_id',
+                    'empresas.nombre as empresa_nombre',
+                    'ofertas.created_at'
+                )->join('empresas', 'ofertas.empresa_id', '=', 'empresas.id')->where('empresa_id', $queUsuario->id)->orderBy('created_at', 'desc')
                     ->get();     // Ocultar motivo_id si es null
-                   
+
 
                 //map para modificar motivo_id y estado_id con las relaciones creadas y mostrar info en vez de id
                 $ofertas = $ofertas->map(function ($oferta) {
                     // Asegurar que el estado está cargado y obtener solo el nombre
-                    $oferta->estado_id = $oferta->estado_id==1 ? 'Abierta':'Cerrada';
-                   if($oferta->fechaCierre==null){
+                    $oferta->estado_id = $oferta->estado_id == 1 ? 'Abierta' : 'Cerrada';
+                    if ($oferta->fechaCierre == null) {
                         unset($oferta->fechaCierre);
                     }
-             
+
 
                     return $oferta;
                 });
 
-              /*  foreach ($ofertas as $oferta) {
+                /*  foreach ($ofertas as $oferta) {
                     $oferta->titulos->each(function ($titulo) {
                         unset($titulo->pivot); // Elimina la propiedad pivot de cada título
                     });
@@ -182,169 +184,113 @@ class OfertaController extends Controller
         }
     }
     /**
- * @OA\Get(
- *     path="/api/ofertas/{oferta}",
- *     summary="Obtener detalles de una oferta de trabajo",
- *     description="Devuelve la información completa de una oferta, validando permisos de empresa o titulación del demandante.",
- *     tags={"Ofertas"},
- *     security={{"sanctum": {}}},
- *     @OA\Parameter(
- *         name="Authorization",
- *         in="header",
- *         required=true,
- *         description="Token de autenticación en formato Bearer",
- *         @OA\Schema(
- *             type="string",
- *             example="Bearer 28|EDpCqsQH14heM01S88StGH7hDIhd4WMALSq9LflU5bd75bd5"
- *         )
- *     ),
- *     @OA\Parameter(
- *         name="oferta",
- *         in="path",
- *         required=true,
- *         description="ID de la oferta a consultar.",
- *         @OA\Schema(
- *             type="integer",
- *             example=5
- *         )
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="Detalles de la oferta obtenidos correctamente.",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="id", type="integer", example=5),
- *             @OA\Property(property="nombre", type="string", example="Desarrollador Full Stack"),
- *             @OA\Property(property="estado", type="string", example="Abierta"),
- *             @OA\Property(property="empresa", type="string", example="Empresa Tecnológica"),
- *             @OA\Property(property="motivo", type="string", example="Expansión del equipo"),
- *             @OA\Property(property="inscrito", type="boolean", example=false)
- *         )
- *     ),
- *     @OA\Response(
- *         response=403,
- *         description="Acceso denegado. No tienes permisos para consultar esta oferta.",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="mensaje", type="string", example="No eres el propietario de esta oferta.")
- *         )
- *     ),
- *     @OA\Response(
- *         response=409,
- *         description="El demandante no tiene los títulos requeridos para ver la oferta.",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="mensaje", type="string", example="Este candidato no tiene ninguno de los títulos requeridos para esta oferta.")
- *         )
- *     ),
- *     @OA\Response(
- *         response=404,
- *         description="Oferta no encontrada.",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="mensaje", type="string", example="Recurso no encontrado.")
- *         )
- *     ),
- *     @OA\Response(
- *         response=500,
- *         description="Error interno del servidor.",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="mensaje", type="string", example="Se produjo un error al obtener la oferta.")
- *         )
- *     )
- * )
- */
-    public function show(Oferta $oferta){
-    //  return response()->json([$oferta]);
-        try{
-        $user = Auth::user();
+     * @OA\Get(
+     *     path="/api/ofertas/{oferta}",
+     *     summary="Obtener detalles de una oferta de trabajo",
+     *     description="Devuelve la información completa de una oferta, validando permisos de empresa o titulación del demandante.",
+     *     tags={"Ofertas"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="Authorization",
+     *         in="header",
+     *         required=true,
+     *         description="Token de autenticación en formato Bearer",
+     *         @OA\Schema(
+     *             type="string",
+     *             example="Bearer 28|EDpCqsQH14heM01S88StGH7hDIhd4WMALSq9LflU5bd75bd5"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="oferta",
+     *         in="path",
+     *         required=true,
+     *         description="ID de la oferta a consultar.",
+     *         @OA\Schema(
+     *             type="integer",
+     *             example=5
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Detalles de la oferta obtenidos correctamente.",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="id", type="integer", example=5),
+     *             @OA\Property(property="nombre", type="string", example="Desarrollador Full Stack"),
+     *             @OA\Property(property="estado", type="string", example="Abierta"),
+     *             @OA\Property(property="empresa", type="string", example="Empresa Tecnológica"),
+     *             @OA\Property(property="motivo", type="string", example="Expansión del equipo"),
+     *             @OA\Property(property="inscrito", type="boolean", example=false)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Acceso denegado. No tienes permisos para consultar esta oferta.",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="mensaje", type="string", example="No eres el propietario de esta oferta.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=409,
+     *         description="El demandante no tiene los títulos requeridos para ver la oferta.",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="mensaje", type="string", example="Este candidato no tiene ninguno de los títulos requeridos para esta oferta.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Oferta no encontrada.",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="mensaje", type="string", example="Recurso no encontrado.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Error interno del servidor.",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="mensaje", type="string", example="Se produjo un error al obtener la oferta.")
+     *         )
+     *     )
+     * )
+     */
+    public function show(Oferta $oferta)
+    {
+        //  return response()->json([$oferta]);
+        try {
+            $user = Auth::user();
 
-        $queUsuario = $user->role_id == 2 ? $user->empresa : $user->demandante;
+            $queUsuario = $user->role_id == 2 ? $user->empresa : $user->demandante;
 
-        if ($user->role_id == 2 ) {
-            if(!$queUsuario->id == $oferta->empresa_id){
-               return response()->json ([
-                'mensaje'=>'No eres el propietario de esta oferta'
-               ],409); 
-            }
-            //resumen cuantos inscritos en la oferta
-            $inscritosCount = $oferta->demandantes()->count();
+            if ($user->role_id == 2) {
+           
+            } else if ($user->role_id == 3) {
+              
+                // Verificar si el demandante cumple los requisitos de titulación para ver la oferta
+                $cumpleRequisitos = $oferta->titulos()->whereIn('titulo_id', $queUsuario->titulos->pluck('id'))->exists();
 
-            $ofertaInfo = Oferta::select(
-                'ofertas.id',
-                'ofertas.nombre',
-                'ofertas.observacion',
-                'ofertas.tipoContrato',
-                'ofertas.horario',
-                'ofertas.nPuestos',
-                'ofertas.estado_id',
-                'created_at'
-            )->find($oferta->id)->load('titulos:nombre,nivele_id', 'titulos.nivel:id,nivel', 'empresa', 'motivo', 'estado');
-            $titulosConNivel = $ofertaInfo->titulos->map(function ($titulo) {
-                return [
-                    'nombre' => $titulo->nombre,
-                    'nivele_id' => $titulo->nivele_id,
-                    'nivel' => $titulo->nivel->nivel ?? 'Sin nivel'
-                ];
-            });
-            unset($ofertaInfo->estado->id);
-            unset($ofertaInfo->estado->created_at);
-            unset($ofertaInfo->estado->updated_at);
-         
-          //  return response()->json($ofertaInfo,200);
-            return response()->json([
-                'id' => $ofertaInfo->id,
-                'nombre' => $ofertaInfo->nombre,
-                'observacion'=>$ofertaInfo->observacion,
-                'tipoContrato'=>$ofertaInfo->tipoContrato,
-                'nPuestos'=>$ofertaInfo->nPuestos,
-                'estado' => $ofertaInfo->estado,
-                'empresa' => $queUsuario->nombre,
-                'motivo' => $ofertaInfo->motivo->tipo ?? 'Sin motivo',
-                'titulos' => $titulosConNivel,
-                'demandantesInscritos'=>$inscritosCount
-            ], 200);
-            
-            
-            /* ->Select(
-                    'ofertas.id',
-                    'ofertas.nombre',
-                    'ofertas.observacion',
-                    'ofertas.tipoContrato',
-                    'ofertas.horario',
-                    'ofertas.nPuestos',
-                    'ofertas.motivo_id',
-                    'ofertas.estado_id',
-                    'ofertas.empresa_id',
-                    'empresas.nombre as empresa_nombre',
-                    'ofertas.created_at'
-                )->join('empresas', 'ofertas.empresa_id', '=', 'empresas.id')->where('empresa_id', $queUsuario->id)->orderBy('created_at', 'desc')
-                ->first();     // Ocultar motivo_id si es null*/
-
-            //map para modificar motivo_id y estado_id con las relaciones creadas y mostrar info en vez de id
-        
-                // Asegurar que el estado está cargado y obtener solo el nombre
-            /*    $ofertaInfo->estado_id = $oferta->estado->tipo;
-
-                if ($ofertaInfo->motivo) {
-                    $ofertaInfo->motivo_id = $oferta->motivo->tipo;
-                } else {
-                    unset($oferta->motivo_id); // Si motivo es null, eliminamos motivo_id ya que si esta abierta no hay motivo
+                if (!$cumpleRequisitos) {
+                    return response()->json([
+                        'mensaje' => 'Este candidato no tiene ninguno de los títulos requeridos para esta oferta.'
+                    ], 409);
                 }
-          
-                unset($ofertaInfo->titulos->pivot);*/
-        /*    foreach ($ofertas as $oferta) {
-                $oferta->titulos->each(function ($titulo) {
-                    unset($titulo->pivot); // Elimina la propiedad pivot de cada título
-                });
-            }*/
-        } else if ($user->role_id == 3) {
+                $inscripcion = $oferta->demandantes()
+                    ->where('demandante_id', $queUsuario->id)
+                    ->first();
 
 
-            $ofertas = Oferta::whereHas('titulos', function ($query) use ($queUsuario) {
-                $query->whereIn('titulo_id', $queUsuario->titulos->pluck('id'));
-            })
+                $fechaInscripcion = $inscripcion->pivot->fecha;
+                $estadoProceso = $inscripcion->pivot->proceso_id;
+                //no consigo cargar relación asi que hago consulta
+                $proceso = Proceso::find($estadoProceso);
+
+            
+            }
+            $inscritosCount = $oferta->demandantes()->count();
+            $ofertaInfo = Oferta::where('id', $oferta->id)
                 ->select(
                     'ofertas.id',
                     'ofertas.nombre',
@@ -352,47 +298,60 @@ class OfertaController extends Controller
                     'ofertas.tipoContrato',
                     'ofertas.horario',
                     'ofertas.nPuestos',
-                    'ofertas.empresa_id',
-                    'empresas.nombre as empresa_nombre',
-                    'ofertas.created_at'
+                    'ofertas.estado_id',
+                    'ofertas.created_at',
+                    'ofertas.updated_at'
+                )->first();
+            $ofertaInfo = Oferta::find($oferta->id)->load('empresa', 'titulos:nombre,nivele_id', 'titulos.nivel:id,nivel', 'motivo', 'estado');
+            $titulosConNivel = $ofertaInfo->titulos->map(function ($titulo) {
+                return [
+                    'nombre' => $titulo->nombre,
+                    'nivele_id' => $titulo->nivele_id,
+                    'nivel' => $titulo->nivel->nivel ?? 'Sin nivel'
+                ];
+            });
+            $fechaCierre = $ofertaInfo->estado->tipo === 'cerrada' ? $ofertaInfo->updated_at : null;
+            unset($ofertaInfo->estado);
+            // unset($ofertaInfo->estado->created_at);
+            // unset($ofertaInfo->estado->updated_at);
 
-                )
-                ->join('empresas', 'ofertas.empresa_id', '=', 'empresas.id') // no me funciona con with asi que join
-                ->where('estado_id', 1)
-                ->orderBy('created_at', 'desc')
-                ->get()
-                ->map(function ($oferta) use ($queUsuario) {
-                    // Verificar si el demandante ya está inscrito en la oferta
-                    $inscrito = $queUsuario->ofertas()->where('oferta_id', $oferta->id)->exists();
+            //  return response()->json($ofertaInfo,200);
+            $response = [
+                'id' => $ofertaInfo->id,
+                'estado' => $ofertaInfo->estado->tipo,
+                'fechaCierre' => $fechaCierre,
+                'empresa' => $ofertaInfo->empresa->nombre,
+                'motivo' => $ofertaInfo->motivo->tipo ?? 'Sin motivo',
+                'titulos' => $titulosConNivel,
+                'demandantesInscritos' => $inscritosCount,
 
-                    // Agregar el campo 'inscrito' al array de la oferta
-                    $oferta->inscrito = $inscrito;
-                    return $oferta;
-                });
-        if (!$ofertas) {
+            ];
+            //dar el id del candidato si se ha asignado la oferta
+            if($user->role_id ==2){
+                $response['candidatoAsignado'] = ($oferta->estado_id == 2 && $oferta->motivo_id == 1) 
+                ? $oferta->demandantes()->wherePivot('proceso_id', 3)->first()?->id 
+                : null;            }
+            // Si el usuario es demandante, agregamos la info adicional
+            if ($user->role_id == 3) {
+                $response['infoDemandante'] = [
+                    'fechaInscripcion' => $fechaInscripcion,
+                    'estadoProceso' => $proceso->estado
+                ];
+            }
+
+            return response()->json($response, 200);
+        } catch (Exception $e) {
             return response()->json([
-                'mensaje' => 'No hay ninguna oferta de trabajo actualmente'
-            ], 200);
-        } else {
-            return response()->json($ofertas, 200);
+                'mensaje' => $e->getMessage()
+            ], 500);
         }
-
-        }
-
-
-
-    } catch (Exception $e) {
-        return response()->json([
-            'mensaje' => $e->getMessage()
-        ], 500);
-    }
     }
     /**
      * @OA\Post(
      *     path="/api/ofertas",
      *     summary="Registrar una nueva oferta de trabajo",
      *     description="Crea una nueva oferta de trabajo asociada a la empresa del usuario autenticado.",
-     *     tags={"Ofertas"},
+     *     tags={"Ofertas/Empresa"},
      *     security={{"sanctum": {}}},
      *     @OA\Parameter(
      *         name="Authorization",
@@ -521,7 +480,7 @@ class OfertaController extends Controller
      *     path="/api/ofertas/{oferta}/apuntarse",
      *     summary="Inscribirse en una oferta de trabajo",
      *     description="Permite que un usuario demandante se inscriba en una oferta de trabajo si cumple con los títulos requeridos. Si el usuario no tiene los títulos adecuados, la inscripción será rechazada.",
-     *     tags={"Ofertas"},
+     *     tags={"Ofertas/Demandante"},
      *     security={{"sanctum": {}}},
      *    @OA\Parameter(
      *         name="Authorization",
@@ -649,7 +608,7 @@ class OfertaController extends Controller
      *     path="/api/ofertas/{oferta}/desapuntarse",
      *     summary="Cancelar inscripción en una oferta de trabajo",
      *     description="Permite que un usuario demandante cancele su inscripción en una oferta de trabajo. Si no está inscrito, devuelve un mensaje de error.",
-     *     tags={"Ofertas"},
+     *     tags={"Ofertas/Demandante"},
      *     security={{"sanctum": {}}},
      *    @OA\Parameter(
      *         name="Authorization",
@@ -747,11 +706,11 @@ class OfertaController extends Controller
     }
     /**
      * @OA\Get(
-     *     path="/api/ofertas/inscritas",
+     *     path="/api/ofertas/inscritas/listado",
      *     summary="Obtener lista de ofertas en las que el demandante está inscrito",
      *     description="Devuelve la lista de ofertas de trabajo en las que un demandante está inscrito, incluyendo detalles de la empresa. 
      *     Si el demandante no está inscrito en ninguna oferta, devuelve un mensaje de error.",
-     *     tags={"Ofertas"},
+     *     tags={"Ofertas/Demandante"},
      *     security={{"sanctum": {}}},
      *    @OA\Parameter(
      *         name="Authorization",
@@ -862,7 +821,7 @@ class OfertaController extends Controller
      *     path="/api/ofertas/{oferta}/candidatos",
      *     summary="Obtener lista de candidatos inscritos en una oferta",
      *     description="Devuelve la lista de demandantes inscritos en una oferta específica.",
-     *     tags={"Ofertas"},
+     *     tags={"Ofertas/Empresa"},
      *     security={{"sanctum": {}}},
      *    @OA\Parameter(
      *         name="Authorization",
@@ -940,27 +899,6 @@ class OfertaController extends Controller
 
                     unset($candidato->pivot);
 
-                    /*  if($candidato->direccion->visible==0){
-                    unset($candidato->direccion);
-                }else{
-                    unset($candidato->direccion->visible);
-                    unset($candidato->direccion->created_at);
-                    unset($candidato->direccion->updated_at);
-
-
-                }
-              
-                $candidato->infoTitulos = $candidato->titulos->map(function ($titulo) {
-                    return [
-                        'titulo_id' => $titulo->id,
-                        'nombre' => $titulo->nombre,
-                        'estado' => $titulo->pivot->cursando == 0 ? 'finalizado' : 'en curso',
-                        'año'=>$titulo->pivot->año,
-                        'centro'=>$titulo->pivot->centro
-                    ];
-                });
-                unset($candidato->titulos);*/
-
                     return $candidato;
                 });
 
@@ -976,7 +914,7 @@ class OfertaController extends Controller
      *     path="/api/ofertas/{oferta}/candidatos/{demandante}",
      *     summary="Obtener detalles de un candidato vinculado a una oferta",
      *     description="Devuelve la información detallada de un demandante que cumple los requisitos de titulación para una oferta específica.",
-     *     tags={"Ofertas"},
+     *     tags={"Ofertas/Empresa"},
      *     security={{"sanctum": {}}},
      *    @OA\Parameter(
      *         name="Authorization",
@@ -1093,40 +1031,35 @@ class OfertaController extends Controller
             }
 
 
-            //  Cargar relaciones
-            /*   $candidato = $demandante->load(
-                'situacion:id,situacion',
-                'centro:id,nombre',
-                'direccion',
-                'titulos:id,nombre'
-            );*/
-            // ✅ Obtener solo los campos seleccionados del demandante
+            //  Obtener solo los campos seleccionados del demandante
             $candidato = Demandante::where('id', $demandante->id)
                 ->select('id', 'nombre', 'telefono', 'experienciaLaboral', 'created_at as alta')
                 ->with([
-                    'situacion:id,nombre',
-                    'centro:id,nombre',
                     'direccion',
                     'titulos:id,nombre'
                 ])
                 ->first();
+            $situacion = Demandante::where('id', $demandante->id)->with('situacion')->first(); // Cargar la relación sin filtrar campos ->first();
+            $centro = Demandante::where('id', $demandante->id)->with('centro')->first(); // Cargar la relación sin filtrar campos ->first();
 
             if ($candidato) {
-                // ✅ Limpiar datos innecesarios
+                //  Limpiar datos innecesarios
                 unset($candidato->situacione_id);
                 unset($candidato->pivot);
 
-                // ✅ Ocultar dirección si no es visible
+                // Ocultar dirección si no es visible
                 if ($candidato->direccion && $candidato->direccion->visible == 0) {
                     unset($candidato->direccion);
                 } else {
                     unset($candidato->direccion->visible, $candidato->direccion->created_at, $candidato->direccion->updated_at);
                 }
+                $candidato->situacion = $situacion->situacion->situacion;
+                $candidato->centro = $centro->centro->nombre;
 
-                // ✅ Reformatear la información de los títulos
+                // Reformatear la información de los títulos
                 $candidato->infoTitulos = $candidato->titulos->map(function ($titulo) {
                     return [
-                        'titulo_id' => $titulo->id,
+
                         'nombre' => $titulo->nombre,
                         'estado' => $titulo->pivot->cursando == 0 ? 'finalizado' : 'en curso',
                         'año' => $titulo->pivot->año,
@@ -1156,7 +1089,7 @@ class OfertaController extends Controller
      *     path="/api/ofertas/{oferta}/noInscritos",
      *     summary="Obtener lista de candidatos que cumplen los requisitos pero no están inscritos",
      *     description="Devuelve la lista de demandantes que tienen títulos relacionados con la oferta, pero no están inscritos en ella.",
-     *     tags={"Ofertas"},
+     *     tags={"Ofertas/Empresa"},
      *     security={{"sanctum": {}}},
      *    @OA\Parameter(
      *         name="Authorization",
@@ -1238,7 +1171,7 @@ class OfertaController extends Controller
      *     path="/api/ofertas/{oferta}/candidatos/{demandante}/inscribir",
      *     summary="Añadir un candidato a una oferta",
      *     description="Permite inscribir a un demandante en una oferta de empleo, asegurando que no esté previamente inscrito.",
-     *     tags={"Ofertas"},
+     *     tags={"Ofertas/Empresa"},
      *     security={{"sanctum": {}}},
      *    @OA\Parameter(
      *         name="Authorization",
@@ -1319,31 +1252,236 @@ class OfertaController extends Controller
             $yaInscrito = $demandante->ofertas()->where('oferta_id', $oferta->id)->exists();
             //controlar que demandante tenga titulo que requiere oferta
 
-           
+
             if ($yaInscrito) {
                 return response()->json([
                     'mensaje' => 'El candidato ya está inscrito en esta oferta.'
                 ], 409); // 
             }
-               //  Obtener los títulos requeridos para la oferta
-        $titulosRequeridos = $oferta->titulos()->pluck('titulo_id');
+            //  Obtener los títulos requeridos para la oferta
+            $titulosRequeridos = $oferta->titulos()->pluck('titulo_id');
 
-        //  Verificar si el demandante tiene alguno de esos títulos
-        $tieneTitulo = $demandante->titulos()->whereIn('titulo_id', $titulosRequeridos)->exists();
+            //  Verificar si el demandante tiene alguno de esos títulos
+            $tieneTitulo = $demandante->titulos()->whereIn('titulo_id', $titulosRequeridos)->exists();
 
-        if (!$tieneTitulo) {
-            return response()->json([
-                'mensaje' => 'Este candidato no tiene ninguno de los títulos requeridos para esta oferta.'
-            ], 403);
-        }
+            if (!$tieneTitulo) {
+                return response()->json([
+                    'mensaje' => 'Este candidato no tiene ninguno de los títulos requeridos para esta oferta.'
+                ], 403);
+            }
             $demandante->ofertas()->attach($oferta->id, [
                 'fecha' => now(),
                 'proceso_id' => 1
             ]);
-           
+
             return response()->json([
                 'mensaje' => 'Candidato añadido correctamente a la oferta',
             ], 201);
+        } catch (Exception $e) {
+            return response()->json([
+                'mensaje' => $e->getMessage()
+            ], 500);
+        }
+    }
+    /**
+     * @OA\Patch(
+     *     path="/api/ofertas/{oferta}/cerrar",
+     *     summary="Cierra una oferta con un motivo específico",
+     *     description="Cambia el estado de la oferta y asigna un motivo de cierre.",
+     *     tags={"Ofertas/Empresa"},
+     *     security={{"sanctum": {}}},
+     *    @OA\Parameter(
+     *         name="Authorization",
+     *         in="header",
+     *         required=true,
+     *         description="Token de autenticación en formato Bearer",
+     *         @OA\Schema(
+     *             type="string",
+     *             example="Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="oferta",
+     *         in="path",
+     *         required=true,
+     *         description="ID de la oferta a cerrar",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="motivo",
+     *         in="path",
+     *         required=true,
+     *         description="ID del motivo de cierre",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Oferta cerrada correctamente",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="mensaje", type="string", example="Oferta cerrada correctamente")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="No autorizado. Es necesario enviar un token válido.",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Acceso denegado. No tienes permisos para realizar esta acción.",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="mensaje", type="string", example="Este candidato no tiene la titulación requerida para esta oferta.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=409,
+     *         description="La oferta ya está cerrada",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="mensaje", type="string", example="La oferta ya está cerrada")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Error interno del servidor",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="mensaje", type="string", example="Error inesperado")
+     *         )
+     *     )
+     * )
+     */
+    public function cerrarOferta(Oferta $oferta)
+    {
+        try {
+            if ($oferta->estado_id == 2) { // Suponiendo que '3' significa cerrada
+                return response()->json([
+                    'mensaje' => 'La oferta ya está cerrada'
+                ], 409);
+            }
+
+            $oferta->forceFill([
+                'motivo_id' => 2,
+                'estado_id' => 2,
+                'fechaCierre' => Carbon::now()->toDateString()
+            ])->save();
+            $demandantes = $oferta->demandantes;
+
+            foreach ($demandantes as $demandante) {
+                // Actualizar el proceso_id en la tabla demandante_oferta
+                $oferta->demandantes()->updateExistingPivot($demandante->id, [
+                    'proceso_id' => 2 // Asumiendo que el ID 3 corresponde al estado 'cerrada'
+                ]);
+            }
+
+            return response()->json([
+                'mensaje' => 'oferta cerrada correctamente'
+            ], 201);
+        } catch (Exception $e) {
+            return response()->json([
+                'mensaje' => $e->getMessage()
+            ], 500);
+        }
+    }
+    /**
+     * @OA\Patch(
+     *     path="/api/ofertas/{oferta}/asignar/{demandante}",
+     *     summary="Asigna un candidato a una oferta y actualiza el proceso",
+     *     description="Este endpoint permite asignar un demandante a una oferta y actualizar el estado de otros demandantes.",
+     *     operationId="asignarCandidato",
+     *     tags={"Ofertas/Empresa"},
+     *     security={{"sanctum": {}}},
+     *    @OA\Parameter(
+     *         name="Authorization",
+     *         in="header",
+     *         required=true,
+     *         description="Token de autenticación en formato Bearer",
+     *         @OA\Schema(
+     *             type="string",
+     *             example="Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="oferta",
+     *         in="path",
+     *         description="ID de la oferta",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="demandante",
+     *         in="path",
+     *         description="ID del demandante asignado",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Candidato asignado correctamente y proceso actualizado",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="mensaje", type="string", example="Candidato asignado correctamente y proceso actualizado")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="No autorizado. Es necesario enviar un token válido.",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Acceso denegado. No tienes permisos para realizar esta acción.",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="mensaje", type="string", example="Este candidato no tiene la titulación requerida para esta oferta.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Recurso no encontrado",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="mensaje", type="string", example="Recurso no encontrado")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Error interno del servidor",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="mensaje", type="string", example="Error en la asignación del candidato")
+     *         )
+     *     )
+     * )
+     */
+    public function asignarCandidato(Oferta $oferta, Demandante $demandante)
+    {
+        try {
+            if (!$oferta || !$demandante) {
+                return response()->json(['mensaje' => 'Oferta o Demandante no encontrado'], 404);
+            }
+
+            // Asignar el proceso '3' (adjudicada) al demandante seleccionado
+            $oferta->demandantes()->updateExistingPivot($demandante->id, [
+                'proceso_id' => 3
+            ]);
+
+            // Cambiar el proceso de los demás demandantes a '2' (cerrada)
+            $oferta->demandantes()
+                ->where('demandante_id', '!=', $demandante->id)
+                ->update(['proceso_id' => 2]);
+
+            $oferta->estado_id = 2; // Estado 'cerrada'
+            $oferta->motivo_id = 1; // Motivo 'asignada'
+          
+            $oferta->save();
+
+            return response()->json(['mensaje' => 'Candidato asignado correctamente y proceso actualizado'], 201);
         } catch (Exception $e) {
             return response()->json([
                 'mensaje' => $e->getMessage()

@@ -147,13 +147,6 @@ class PerfilController extends Controller
         ], 200);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
 
     /**
      * Crear dirección si esta null ,la primera vez.
@@ -191,7 +184,7 @@ class PerfilController extends Controller
      *         )
      *     ),
      *     @OA\Response(
-     *         response=200,
+     *         response=201,
      *         description="Dirección creada correctamente",
      *         @OA\JsonContent(
      *             type="object",
@@ -279,7 +272,7 @@ class PerfilController extends Controller
                 $direccion->save();
                 return response()->json([
                     'mensaje' => 'Dirección creada correctamente'
-                ], 200);
+                ], 201);
             } else {
                 return $this->actualizarDireccion($request, $direccion);
             }
@@ -337,7 +330,7 @@ class PerfilController extends Controller
      *         )
      *     ),
      *     @OA\Response(
-     *         response=200,
+     *         response=201,
      *         description="Dirección actualizada correctamente.",
      *         @OA\JsonContent(
      *             type="object",
@@ -433,7 +426,7 @@ class PerfilController extends Controller
             $direccion->save();
             return response()->json([
                 'mensaje' => 'Direccion actualizada correctamente'
-            ], 200);
+            ], 201);
         } catch (ValidationException $e) {
             return response()->json([
                 'mensaje' => $e->errors()
@@ -444,24 +437,8 @@ class PerfilController extends Controller
             ], 500);
         }
 
-        /*   if (Auth::user()->role_id == 2) {
-            $usuario = Auth::user()->empresa->id;
-        } else if (Auth::user()->role_id == 3) {
-            $usuario = Auth::user()->demandante->id;
-        }*/
-    }
-    public function show(string $id)
-    {
-        //
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
 
     /**
      * Update the specified resource in storage.
@@ -545,7 +522,7 @@ class PerfilController extends Controller
      *     )
      *     ),
      *     @OA\Response(
-     *         response=200,
+     *         response=201,
      *         description="Perfil actualizado correctamente",
      *         @OA\JsonContent(
      *             type="object",
@@ -669,7 +646,7 @@ class PerfilController extends Controller
             }
             return response()->json([
                 'mensaje' => 'Perfil actualizado correctamente'
-            ], 200);
+            ], 201);
         } catch (Exception $e) {
             return response()->json([
                 'mensaje' => $e->getMessage()
@@ -677,11 +654,4 @@ class PerfilController extends Controller
         }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
-    }
 }

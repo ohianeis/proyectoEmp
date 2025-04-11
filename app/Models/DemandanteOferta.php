@@ -37,8 +37,17 @@ class DemandanteOferta extends Pivot
             }
         );
     }
+    protected function fecha(): Attribute
+    {
+        return new Attribute(
+            get: function ($value) {
+                $value = \Carbon\Carbon::parse($value); //pasar el string formato fecha
+                return $value->format('d/m/Y');
+            }
+        );
+    }
     //relacion tabla proceso
-    public function proceso(){
-        return $this->belongsTo(Proceso::class);
+    public function proceso() {
+        return $this->belongsTo(Proceso::class, 'proceso_id');
     }
 }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\InformeController;
 use App\Http\Controllers\OfertaController;
 use App\Http\Controllers\PerfilController;
 use App\Http\Controllers\TituloController;
@@ -22,23 +23,49 @@ Route::post('/registro', [AuthController::class, 'registro']);
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::get('/registro/roles',[AuthController::class,'roles']);
 
-Route::middleware(['auth:sanctum'],VerificarValidacion::class)->group(function () {
-    //ofertas
-    Route::get('/ofertas', [OfertaController::class, 'index']);
-    Route::get('ofertas/{oferta}',[OfertaController::class,'show']);
-Route::post('/ofertas/{oferta}/candidatos/{demandante}/inscribir',[OfertaController::class,'añadirCandidato']);
+Route::middleware(['auth:sanctum', \App\Http\Middleware\VerificarValidacion::class])->group(function () {
 
-    Route::post('/ofertas', [OfertaController::class, 'store']);
-    Route::post('/ofertas/{oferta}/apuntarse',[OfertaController::class,'apuntarseOferta']);
-    Route::delete('ofertas/{oferta}/desapuntarse',[OfertaController::class,'desapuntarseOferta']);
-    Route::get('ofertas/inscritas',[OfertaController::class,'ofertasInscritas']);
-    Route::get('ofertas/{oferta}/candidatos',[OfertaController::class,'candidatosInscritos']);
-    Route::get('ofertas/{oferta}/candidatos/{demandante}',[OfertaController::class,'detalleCandidato']);
-    Route::get('/ofertas/{oferta}/noInscritos',[OfertaController::class,'candidatosNoInscritos']);
+    //rutas ofertas accesible por empresa y demandate
+    Route::controller(OfertaController::class)->middleware(['ability:empresa,demandante'])->group(function () {
+        Route::get('/ofertas', 'index');
+        Route::get('ofertas/{oferta}','show');
+    });
+    //rutas accesibles por empresa
+    Route::controller(OfertaController::class)->middleware(['ability:empresa'])->group(function () {
+        Route::post('/ofertas', 'store');
+        Route::get('ofertas/{oferta}/candidatos','candidatosInscritos');
+        Route::get('ofertas/{oferta}/candidatos/{demandante}','detalleCandidato');
+        Route::get('/ofertas/{oferta}/noInscritos','candidatosNoInscritos');
+        Route::post('/ofertas/{oferta}/candidatos/{demandante}/inscribir','añadirCandidato');
+        Route::patch('ofertas/{oferta}/cerrar','cerrarOferta');
+        Route::patch('ofertas/{oferta}/asignar/{demandante}','asignarCandidato');
+
+    });
+    //rutas accesibles por demandante
+    Route::controller(OfertaController::class)->middleware(['ability:demandante'])->group(function () {
+        Route::post('/ofertas/{oferta}/apuntarse','apuntarseOferta');
+        Route::delete('ofertas/{oferta}/desapuntarse','desapuntarseOferta');
+        Route::get('ofertas/inscritas/listado','ofertasInscritas');
+
+    });
+    //ofertas
+   // Route::get('/ofertas', [OfertaController::class, 'index']);
+  //  Route::get('ofertas/{oferta}',[OfertaController::class,'show']);
+//Route::post('/ofertas/{oferta}/candidatos/{demandante}/inscribir',[OfertaController::class,'añadirCandidato']);
+
+   // Route::post('/ofertas', [OfertaController::class, 'store']);
+    //Route::post('/ofertas/{oferta}/apuntarse',[OfertaController::class,'apuntarseOferta']);
+    //Route::delete('ofertas/{oferta}/desapuntarse',[OfertaController::class,'desapuntarseOferta']);
+   // Route::get('ofertas/inscritas/listado',[OfertaController::class,'ofertasInscritas']);
+   // Route::get('ofertas/{oferta}/candidatos',[OfertaController::class,'candidatosInscritos']);
+    //Route::get('ofertas/{oferta}/candidatos/{demandante}',[OfertaController::class,'detalleCandidato']);
+  //  Route::get('/ofertas/{oferta}/noInscritos',[OfertaController::class,'candidatosNoInscritos']);
+   // Route::patch('ofertas/{oferta}/cerrar',[OfertaController::class,'cerrarOferta']);
+   // Route::patch('ofertas/{oferta}/asignar/{demandante}',[OfertaController::class,'asignarCandidato']);
 
     //rutas perfiles
-       Route::get('/perfil',[PerfilController::class,'index'])->middleware('ability:administrador,empresa,demandante');
-       Route::patch('/perfil/editar',[PerfilController::class,'update'])->middleware('ability:administrador,empresa,demandante');
+       Route::get('/perfil',[PerfilController::class,'index'])->middleware('ability:empresa,demandante');
+       Route::patch('/perfil/editar',[PerfilController::class,'update'])->middleware('ability:empresa,demandante');
     Route::post('perfil/direccion', [PerfilController::class,'store'])->middleware('ability:empresa,demandante');
     Route::patch('perfil/direccion/{direccion}', [PerfilController::class,'actualizarDireccion'])->middleware('ability:empresa,demandante');
 
@@ -64,6 +91,25 @@ Route::post('/ofertas/{oferta}/candidatos/{demandante}/inscribir',[OfertaControl
        Route::patch('/usuarios/validaciones/{user}','update');
        Route::delete('/usuarios/validaciones/{user}','destroy');
     });
+    //rutas para informes accesible por el centro
+    Route::controller(InformeController::class)->middleware('ability:administrador')->group(function(){
+        Route::get('/informes/ofertasAsignadas','ofertasAsignadas');
+        Route::get('informes/detalleOfertasAsignadas','detalleOfertasAsignadas');
+        Route::get('informes/ofertasCerradas','ofertasCerradas');
+        Route::get('informes/ofertasAbiertas','ofertasAbiertas');
+        Route::get('informes/detalleOfertasAsignadas','detallesOfertasAsignadas');
+        Route::get('informes/totalDemandantes','totalDemandantes');
+        Route::get('informes/totalEmpresas','totalEmpresas');
+        Route::get('informes/titulosEstado','titulosEstado');
+        Route::get('informes/empresasSinOfertas','empresasSinOfertas');
+        Route::get('informes/ofertasSinPostulantes','ofertasSinPostulantes');
+
+
+
+
+
+
+     });
 
 });
 //controlador titulos

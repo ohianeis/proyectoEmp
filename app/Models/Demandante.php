@@ -63,8 +63,9 @@ class Demandante extends Model
     }
     public function centro()
     {
-        return $this->belongsTo(Centro::class);
+        return $this->belongsTo(Centro::class, 'centro_id'); // Confirma que 'centro_id' es la clave correcta
     }
+    
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -90,4 +91,5 @@ class Demandante extends Model
     {
         return $this->morphOne(Direccione::class, 'direccioneable');
     }
+    
 }

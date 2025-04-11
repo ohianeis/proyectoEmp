@@ -300,6 +300,542 @@
                 }
             }
         },
+        "/api/informes/ofertasAsignadas": {
+            "get": {
+                "tags": [
+                    "Informes"
+                ],
+                "summary": "Obtener el total de ofertas asignadas",
+                "description": "Devuelve el número total de ofertas asignadas a demandantes.",
+                "operationId": "ofertasAsignadas",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Número de ofertas asignadas"
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no autorizado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Recurso no encontrado.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Recurso no encontrado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/informes/ofertasCerradas": {
+            "get": {
+                "tags": [
+                    "Informes"
+                ],
+                "summary": "Obtener el total de ofertas cerradas",
+                "description": "Devuelve la cantidad y detalles de ofertas cerradas.",
+                "operationId": "ofertasCerradas",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de ofertas cerradas"
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no autorizado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Recurso no encontrado.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Recurso no encontrado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/informes/ofertasAbiertas": {
+            "get": {
+                "tags": [
+                    "Informes"
+                ],
+                "summary": "Obtener ofertas abiertas",
+                "description": "Devuelve el número total y detalles de ofertas abiertas.",
+                "operationId": "ofertasAbiertas",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de ofertas abiertas"
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no autorizado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Recurso no encontrado.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Recurso no encontrado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/informes/totalDemandantes": {
+            "get": {
+                "tags": [
+                    "Informes"
+                ],
+                "summary": "Obtener el total de demandantes registrados",
+                "description": "Devuelve el número total de demandantes registrados en la plataforma.",
+                "operationId": "totalDemandantes",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Total de demandantes"
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no autorizado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Recurso no encontrado.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Recurso no encontrado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/informes/totalEmpresas": {
+            "get": {
+                "tags": [
+                    "Informes"
+                ],
+                "summary": "Obtener el total de empresas registradas",
+                "description": "Devuelve el número total de empresas registradas y su estado.",
+                "operationId": "totalEmpresas",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Total de empresas y sus detalles"
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no autorizado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Recurso no encontrado.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Recurso no encontrado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/informes/titulosEstado": {
+            "get": {
+                "tags": [
+                    "Informes"
+                ],
+                "summary": "Obtener el estado de los títulos",
+                "description": "Devuelve cuántos títulos están activos e inactivos.",
+                "operationId": "titulosEstado",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Total de títulos por estado"
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no autorizado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Recurso no encontrado.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Recurso no encontrado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/informes/empresasSinOfertas": {
+            "get": {
+                "tags": [
+                    "Informes"
+                ],
+                "summary": "Obtener empresas sin ofertas publicadas",
+                "description": "Devuelve la lista de empresas que no tienen ofertas activas.",
+                "operationId": "empresasSinOfertas",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de empresas sin ofertas"
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no autorizado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Recurso no encontrado.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Recurso no encontrado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/informes/ofertasSinPostulantes": {
+            "get": {
+                "tags": [
+                    "Informes"
+                ],
+                "summary": "Obtener ofertas sin postulantes",
+                "description": "Devuelve la lista de ofertas que no tienen demandantes inscritos.",
+                "operationId": "ofertasSinPostulantes",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de ofertas sin postulantes"
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no autorizado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Recurso no encontrado.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Recurso no encontrado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/ofertas": {
             "get": {
                 "tags": [
@@ -462,7 +998,7 @@
             },
             "post": {
                 "tags": [
-                    "Ofertas"
+                    "Ofertas/Empresa"
                 ],
                 "summary": "Registrar una nueva oferta de trabajo",
                 "description": "Crea una nueva oferta de trabajo asociada a la empresa del usuario autenticado.",
@@ -773,7 +1309,7 @@
         "/api/ofertas/{oferta}/apuntarse": {
             "post": {
                 "tags": [
-                    "Ofertas"
+                    "Ofertas/Demandante"
                 ],
                 "summary": "Inscribirse en una oferta de trabajo",
                 "description": "Permite que un usuario demandante se inscriba en una oferta de trabajo si cumple con los títulos requeridos. Si el usuario no tiene los títulos adecuados, la inscripción será rechazada.",
@@ -908,7 +1444,7 @@
         "/api/ofertas/{oferta}/desapuntarse": {
             "delete": {
                 "tags": [
-                    "Ofertas"
+                    "Ofertas/Demandante"
                 ],
                 "summary": "Cancelar inscripción en una oferta de trabajo",
                 "description": "Permite que un usuario demandante cancele su inscripción en una oferta de trabajo. Si no está inscrito, devuelve un mensaje de error.",
@@ -1040,14 +1576,14 @@
                 ]
             }
         },
-        "/api/ofertas/inscritas": {
+        "/api/ofertas/inscritas/listado": {
             "get": {
                 "tags": [
-                    "Ofertas"
+                    "Ofertas/Demandante"
                 ],
                 "summary": "Obtener lista de ofertas en las que el demandante está inscrito",
                 "description": "Devuelve la lista de ofertas de trabajo en las que un demandante está inscrito, incluyendo detalles de la empresa. \n     *     Si el demandante no está inscrito en ninguna oferta, devuelve un mensaje de error.",
-                "operationId": "be3e1b302096bb8311cdb7bcb15b3a0f",
+                "operationId": "443725a913518f087c624ba1ec86f7f4",
                 "parameters": [
                     {
                         "name": "Authorization",
@@ -1197,7 +1733,7 @@
         "/api/ofertas/{oferta}/candidatos": {
             "get": {
                 "tags": [
-                    "Ofertas"
+                    "Ofertas/Empresa"
                 ],
                 "summary": "Obtener lista de candidatos inscritos en una oferta",
                 "description": "Devuelve la lista de demandantes inscritos en una oferta específica.",
@@ -1319,7 +1855,7 @@
         "/api/ofertas/{oferta}/candidatos/{demandante}": {
             "get": {
                 "tags": [
-                    "Ofertas"
+                    "Ofertas/Empresa"
                 ],
                 "summary": "Obtener detalles de un candidato vinculado a una oferta",
                 "description": "Devuelve la información detallada de un demandante que cumple los requisitos de titulación para una oferta específica.",
@@ -1526,7 +2062,7 @@
         "/api/ofertas/{oferta}/noInscritos": {
             "get": {
                 "tags": [
-                    "Ofertas"
+                    "Ofertas/Empresa"
                 ],
                 "summary": "Obtener lista de candidatos que cumplen los requisitos pero no están inscritos",
                 "description": "Devuelve la lista de demandantes que tienen títulos relacionados con la oferta, pero no están inscritos en ella.",
@@ -1635,7 +2171,7 @@
         "/api/ofertas/{oferta}/candidatos/{demandante}/inscribir": {
             "post": {
                 "tags": [
-                    "Ofertas"
+                    "Ofertas/Empresa"
                 ],
                 "summary": "Añadir un candidato a una oferta",
                 "description": "Permite inscribir a un demandante en una oferta de empleo, asegurando que no esté previamente inscrito.",
@@ -1746,6 +2282,260 @@
                                         "mensaje": {
                                             "type": "string",
                                             "example": "Se produjo un error al inscribir el candidato."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/ofertas/{oferta}/cerrar": {
+            "patch": {
+                "tags": [
+                    "Ofertas/Empresa"
+                ],
+                "summary": "Cierra una oferta con un motivo específico",
+                "description": "Cambia el estado de la oferta y asigna un motivo de cierre.",
+                "operationId": "f758dbffdb767ad9bc59e7e4d8a3761e",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    },
+                    {
+                        "name": "oferta",
+                        "in": "path",
+                        "description": "ID de la oferta a cerrar",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "motivo",
+                        "in": "path",
+                        "description": "ID del motivo de cierre",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Oferta cerrada correctamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Oferta cerrada correctamente"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado. Es necesario enviar un token válido.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Este candidato no tiene la titulación requerida para esta oferta."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "La oferta ya está cerrada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "La oferta ya está cerrada"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Error inesperado"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/ofertas/{oferta}/asignar/{demandante}": {
+            "patch": {
+                "tags": [
+                    "Ofertas/Empresa"
+                ],
+                "summary": "Asigna un candidato a una oferta y actualiza el proceso",
+                "description": "Este endpoint permite asignar un demandante a una oferta y actualizar el estado de otros demandantes.",
+                "operationId": "asignarCandidato",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    },
+                    {
+                        "name": "oferta",
+                        "in": "path",
+                        "description": "ID de la oferta",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "demandante",
+                        "in": "path",
+                        "description": "ID del demandante asignado",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Candidato asignado correctamente y proceso actualizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Candidato asignado correctamente y proceso actualizado"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autorizado. Es necesario enviar un token válido.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Este candidato no tiene la titulación requerida para esta oferta."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Recurso no encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Recurso no encontrado"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Error en la asignación del candidato"
                                         }
                                     },
                                     "type": "object"
@@ -2021,7 +2811,7 @@
                     }
                 },
                 "responses": {
-                    "200": {
+                    "201": {
                         "description": "Dirección creada correctamente",
                         "content": {
                             "application/json": {
@@ -2200,7 +2990,7 @@
                     }
                 },
                 "responses": {
-                    "200": {
+                    "201": {
                         "description": "Dirección actualizada correctamente.",
                         "content": {
                             "application/json": {
@@ -2396,7 +3186,7 @@
                     }
                 },
                 "responses": {
-                    "200": {
+                    "201": {
                         "description": "Perfil actualizado correctamente",
                         "content": {
                             "application/json": {
@@ -3039,7 +3829,7 @@
                     }
                 ],
                 "responses": {
-                    "200": {
+                    "201": {
                         "description": "Operación exitosa.",
                         "content": {
                             "application/json": {
@@ -3174,11 +3964,6 @@
                         "application/json": {
                             "schema": {
                                 "properties": {
-                                    "id": {
-                                        "description": "ID del título. Debe coincidir con el de la URL.",
-                                        "type": "integer",
-                                        "example": 1
-                                    },
                                     "nombre": {
                                         "description": "Nombre del título.",
                                         "type": "string",
@@ -3201,7 +3986,7 @@
                     }
                 },
                 "responses": {
-                    "200": {
+                    "201": {
                         "description": "Título actualizado correctamente.",
                         "content": {
                             "application/json": {
@@ -3524,7 +4309,7 @@
                     }
                 },
                 "responses": {
-                    "200": {
+                    "201": {
                         "description": "Títulos asociados correctamente",
                         "content": {
                             "application/json": {
@@ -3786,7 +4571,7 @@
                     }
                 ],
                 "responses": {
-                    "200": {
+                    "201": {
                         "description": "El título ha sido eliminado exitosamente.",
                         "content": {
                             "application/json": {
@@ -4260,8 +5045,20 @@
             "description": "Auth"
         },
         {
+            "name": "Informes",
+            "description": "Informes"
+        },
+        {
             "name": "Ofertas",
             "description": "Ofertas"
+        },
+        {
+            "name": "Ofertas/Empresa",
+            "description": "Ofertas/Empresa"
+        },
+        {
+            "name": "Ofertas/Demandante",
+            "description": "Ofertas/Demandante"
         },
         {
             "name": "Perfil",

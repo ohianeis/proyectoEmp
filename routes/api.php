@@ -11,14 +11,8 @@ use App\Http\Middleware\VerificarValidacion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-/*Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');*/
 
-/*Route::controller(AuthController::class)->middleware(authValidacion::class)->group(function(){
-    Route::post('/registro', 'registro');
-    Route::post('/login', 'login')->name('login');
-});*/
+
 Route::post('/registro', [AuthController::class, 'registro']);
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::get('/registro/roles',[AuthController::class,'roles']);
@@ -48,20 +42,8 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\VerificarValidacion::cla
         Route::get('ofertas/inscritas/listado','ofertasInscritas');
 
     });
-    //ofertas
-   // Route::get('/ofertas', [OfertaController::class, 'index']);
-  //  Route::get('ofertas/{oferta}',[OfertaController::class,'show']);
-//Route::post('/ofertas/{oferta}/candidatos/{demandante}/inscribir',[OfertaController::class,'añadirCandidato']);
-
-   // Route::post('/ofertas', [OfertaController::class, 'store']);
-    //Route::post('/ofertas/{oferta}/apuntarse',[OfertaController::class,'apuntarseOferta']);
-    //Route::delete('ofertas/{oferta}/desapuntarse',[OfertaController::class,'desapuntarseOferta']);
-   // Route::get('ofertas/inscritas/listado',[OfertaController::class,'ofertasInscritas']);
-   // Route::get('ofertas/{oferta}/candidatos',[OfertaController::class,'candidatosInscritos']);
-    //Route::get('ofertas/{oferta}/candidatos/{demandante}',[OfertaController::class,'detalleCandidato']);
-  //  Route::get('/ofertas/{oferta}/noInscritos',[OfertaController::class,'candidatosNoInscritos']);
-   // Route::patch('ofertas/{oferta}/cerrar',[OfertaController::class,'cerrarOferta']);
-   // Route::patch('ofertas/{oferta}/asignar/{demandante}',[OfertaController::class,'asignarCandidato']);
+   
+ 
 
     //rutas perfiles
        Route::get('/perfil',[PerfilController::class,'index'])->middleware('ability:empresa,demandante');
@@ -112,12 +94,3 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\VerificarValidacion::cla
      });
 
 });
-//controlador titulos
-
-
-
-/*Route::middleware(['auth:sanctum'])->group(function () {
- 
-});
-Route::middleware(['auth:sanctum'])->get('/titulos',[TituloController::class,'index']);*/
- //  Route::get('/titulos/activos', [TituloController::class, 'titulosActivos']);

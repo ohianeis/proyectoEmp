@@ -4240,14 +4240,144 @@
                 ]
             }
         },
-        "api/titulos/demandante": {
+        "/api/titulos/demandante": {
+            "get": {
+                "tags": [
+                    "Títulos-Demandante"
+                ],
+                "summary": "Obtener títulos del demandante autenticado",
+                "description": "Devuelve los títulos asociados al demandante actualmente autenticado mediante Sanctum.",
+                "operationId": "4f3132256003988643ad399d5f0e4888",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "29|nqrBfqXOPVLqKfOwZSa6uvpWMxWwz9UQYHcOzSCgce17c3cf"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de títulos asociados al demandante autenticado.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "nombre": {
+                                                "type": "string",
+                                                "example": "Título 1"
+                                            },
+                                            "centro": {
+                                                "type": "string",
+                                                "example": "Universidad de Navarra"
+                                            },
+                                            "año": {
+                                                "type": "integer",
+                                                "example": 2023
+                                            },
+                                            "cursando": {
+                                                "type": "boolean",
+                                                "example": 1
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No estás autenticado. Por favor, inicia sesión para continuar.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no autorizado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "recurso no encontrado.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "El demandante no existe."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error al procesar la solicitud."
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Detalles del error interno."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
             "post": {
                 "tags": [
                     "Títulos-Demandante"
                 ],
                 "summary": "Asocia títulos al demandante autenticado",
                 "description": "Este endpoint permite asociar uno o varios títulos al demandante actual.",
-                "operationId": "f1a8e82a6e933a5414e35422dbc939b4",
+                "operationId": "a2f4311be37b43c54d41eca89735ad85",
                 "parameters": [
                     {
                         "name": "Authorization",
@@ -4389,138 +4519,6 @@
                                 "schema": {},
                                 "example": {
                                     "mensaje": "Error interno del servidor."
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            }
-        },
-        "/api/titulos/demandante": {
-            "get": {
-                "tags": [
-                    "Títulos-Demandante"
-                ],
-                "summary": "Obtener títulos del demandante autenticado",
-                "description": "Devuelve los títulos asociados al demandante actualmente autenticado mediante Sanctum.",
-                "operationId": "4f3132256003988643ad399d5f0e4888",
-                "parameters": [
-                    {
-                        "name": "Authorization",
-                        "in": "header",
-                        "description": "Token de autenticación en formato Bearer",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "example": "29|nqrBfqXOPVLqKfOwZSa6uvpWMxWwz9UQYHcOzSCgce17c3cf"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Lista de títulos asociados al demandante autenticado.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "properties": {
-                                            "id": {
-                                                "type": "integer",
-                                                "example": 1
-                                            },
-                                            "nombre": {
-                                                "type": "string",
-                                                "example": "Título 1"
-                                            },
-                                            "centro": {
-                                                "type": "string",
-                                                "example": "Universidad de Navarra"
-                                            },
-                                            "año": {
-                                                "type": "integer",
-                                                "example": 2023
-                                            },
-                                            "cursando": {
-                                                "type": "boolean",
-                                                "example": 1
-                                            }
-                                        },
-                                        "type": "object"
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "No estás autenticado. Por favor, inicia sesión para continuar.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Unauthenticated."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Usuario no autorizado."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "recurso no encontrado.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "El demandante no existe."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Error interno del servidor.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "string",
-                                            "example": "Error al procesar la solicitud."
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Detalles del error interno."
-                                        }
-                                    },
-                                    "type": "object"
                                 }
                             }
                         }

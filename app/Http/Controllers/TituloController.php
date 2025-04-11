@@ -778,7 +778,7 @@ class TituloController extends Controller
 
     /**
      * @OA\Post(
-     *     path="api/titulos/demandante",
+     *     path="/api/titulos/demandante",
      *     summary="Asocia títulos al demandante autenticado",
      *     description="Este endpoint permite asociar uno o varios títulos al demandante actual.",
      *     tags={"Títulos-Demandante"},

@@ -50,12 +50,15 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\VerificarValidacion::cla
        Route::patch('/perfil/editar',[PerfilController::class,'update'])->middleware('ability:empresa,demandante');
     Route::post('perfil/direccion', [PerfilController::class,'store'])->middleware('ability:empresa,demandante');
     Route::patch('perfil/direccion/{direccion}', [PerfilController::class,'actualizarDireccion'])->middleware('ability:empresa,demandante');
+    Route::get('/perfil/situaciones',[PerfilController::class,'listarSituaciones'])->middleware('ability:demandante');
+
 
 
     Route::get('/titulos/activos', [TituloController::class,'titulosActivos'])->middleware(['ability:administrador,demandante,empresa']);//pueden acceder los tres roles
     Route::post('/titulos/demandante', [TituloController::class,'agregarTitulos'])->middleware(['ability:demandante']);//pueden acceder solo los demandantes
     Route::get('/titulos/demandante',[TituloController::class,'titulosDemandante'])->middleware(['ability:demandante']);
     Route::delete('/titulos/demandante/{id}',[TituloController::class,'tituloDemandante'])->middleware(['ability:demandante']);
+    
 
     //grupo rutas titulos solo accesible por administrador (el centro)
     Route::controller(TituloController::class)->middleware(['ability:administrador'])->group(function () {

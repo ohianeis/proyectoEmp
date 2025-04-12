@@ -455,11 +455,7 @@ class TituloController extends Controller
      *                 properties={
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="nombre", type="string", example="Fontanería"),
-     *                     @OA\Property(property="activado", type="integer", example=1),
-     *                     @OA\Property(property="nivele_id", type="integer", example=1),
-     *                     @OA\Property(property="centro_id", type="integer", example=1),
-     *                     @OA\Property(property="created_at", type="string", example="2025-03-19 07:00:06"),
-     *                     @OA\Property(property="updated_at", type="string", example="2025-03-19 07:00:06")
+     *                    
      *                 }
      *             )
      *         )
@@ -500,7 +496,7 @@ class TituloController extends Controller
     public function titulosActivos()
     {
         try {
-            $titulos = Titulo::select('nombre')->where('activado', 1)->orderBy('nombre')->get();
+            $titulos = Titulo::select('id', 'nombre')->where('activado', 1)->orderBy('nombre')->get();
             return response()->json($titulos,200);
         } catch (Exception $e) {
             return response()->json([

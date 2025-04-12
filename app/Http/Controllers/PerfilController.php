@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Demandante;
 use App\Models\Direccione;
 use App\Models\Empresa;
+use App\Models\Situacione;
 use App\Models\User;
 use Illuminate\Validation\ValidationException;
 use Exception;
@@ -240,7 +241,7 @@ class PerfilController extends Controller
 
             $usuario = Auth::user();
             $direccion = $usuario->role_id == 2 ? $usuario->empresa->direccion : $usuario->demandante->direccion;
-            
+
             if (is_null($direccion)) {
 
 
@@ -393,7 +394,7 @@ class PerfilController extends Controller
     public function actualizarDireccion(Request $request, Direccione $direccion)
     {
 
-       
+
         if (is_null($direccion)) {
             return $this->store($request);
         }
@@ -408,18 +409,18 @@ class PerfilController extends Controller
             ]);
             //  $direccion = Direccione::find($usuario);
 
-        // Obtener los campos actuales de la dirección
-        $camposActuales = $direccion->only(['linea1', 'linea2', 'ciudad', 'provincia', 'codigoPostal', 'visible']);
+            // Obtener los campos actuales de la dirección
+            $camposActuales = $direccion->only(['linea1', 'linea2', 'ciudad', 'provincia', 'codigoPostal', 'visible']);
 
-        // Comparar los datos validados con los actuales
-        $diferencias = array_diff_assoc($validacion, $camposActuales);
+            // Comparar los datos validados con los actuales
+            $diferencias = array_diff_assoc($validacion, $camposActuales);
 
-        // Verificar si hay cambios
-        if (empty($diferencias)) {
-            return response()->json([
-                'mensaje' => 'No se realizaron cambios porque los datos son idénticos.'
-            ], 200);
-        }
+            // Verificar si hay cambios
+            if (empty($diferencias)) {
+                return response()->json([
+                    'mensaje' => 'No se realizaron cambios porque los datos son idénticos.'
+                ], 200);
+            }
             foreach ($validacion as $dato => $valor) {
                 $direccion->$dato = $valor;
             }
@@ -436,7 +437,6 @@ class PerfilController extends Controller
                 'mensaje' => $e->getMessage()
             ], 500);
         }
-
     }
 
 
@@ -447,7 +447,7 @@ class PerfilController extends Controller
      * @OA\Patch(
      *     path="/api/perfil/editar",
      *     summary="Actualizar el perfil del usuario autenticado",
-     *     description="Actualiza los datos del perfil del usuario según su rol. Si es una empresa, actualiza sus datos. Si es un demandante, actualiza los datos relacionados al demandante.",
+     *     description="Actualiza los datos del perfil del usuario según su rol. Si es una empresa, actualiza sus datos. Si es un demandante, actualiza los datos relacionados al demandante. Quitar array empesa o demandante es solo para el ejemplo",
      *     tags={"Perfil"},
      *     security={{"sanctum": {}}},
      *     @OA\Parameter(
@@ -600,7 +600,7 @@ class PerfilController extends Controller
                 $empresa = Empresa::find($idUsuario);
                 $validacion = $request->validate([
                     'cif' => 'nullable|string|size:9|unique:empresas,cif,' . $empresa->id,
-                    'nombre' => 'required|string|regex:/^[a-zA-Z\s]+$/|max:255',
+                    'nombre' => 'required|string|regex:/^[a-zA-Z\s.]+$/|max:255',
                     'localidad' => 'nullable|string|max:100'
                 ]);
 
@@ -653,5 +653,87 @@ class PerfilController extends Controller
             ], 500);
         }
     }
-
+    /**
+     * @OA\Get(
+     *     path="/api/perfil/situaciones",
+     *     summary="Obtener todas las situaciones disponibles",
+     *     description="Devuelve una lista con las situaciones posibles de los demandantes, como 'Desempleado', 'Empleado', 'En búsqueda activa'.",
+     *     operationId="listarSituaciones",
+     *     tags={"Perfil"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="Authorization",
+     *         in="header",
+     *         required=true,
+     *         description="Token de autenticación en formato Bearer",
+     *         @OA\Schema(
+     *             type="string",
+     *             example="Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Lista de situaciones obtenida con éxito",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="nombre", type="string", example="Desempleado")
+     *             )
+     *         )
+     *     ),
+     *    @OA\Response(
+     *         response=401,
+     *         description="No estás autenticado. Por favor, inicia sesión para continuar.",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             properties={
+     *                 @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *             }
+     *         )
+     *     ),
+     *    @OA\Response(
+     *         response=403,
+     *         description="Acceso denegado. No tienes permisos para realizar esta acción.",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             properties={
+     *                 @OA\Property(property="message", type="string", example="Usuario no autorizado.")
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Recurso no encontrado.",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             properties={
+     *                 @OA\Property(property="error", type="string", example="Recurso no encontrado.")
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Error interno al obtener las situaciones",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="mensaje", type="string", example="Error al obtener las situaciones."),
+     *             @OA\Property(property="error", type="string", example="SQLSTATE[42000]: Syntax error...")
+     *         )
+     *     )
+     * )
+     */
+    public function listarSituaciones()
+    {
+        try {
+            $situaciones = Situacione::obtenerTodas();
+            return response()->json($situaciones, 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'mensaje' => 'Error al obtener las situaciones.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

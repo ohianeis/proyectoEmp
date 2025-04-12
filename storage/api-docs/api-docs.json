@@ -3103,7 +3103,7 @@
                     "Perfil"
                 ],
                 "summary": "Actualizar el perfil del usuario autenticado",
-                "description": "Actualiza los datos del perfil del usuario según su rol. Si es una empresa, actualiza sus datos. Si es un demandante, actualiza los datos relacionados al demandante.",
+                "description": "Actualiza los datos del perfil del usuario según su rol. Si es una empresa, actualiza sus datos. Si es un demandante, actualiza los datos relacionados al demandante. Quitar array empesa o demandante es solo para el ejemplo",
                 "operationId": "d748d8cacbe3cc92233fa0e30b1fa57a",
                 "parameters": [
                     {
@@ -3281,6 +3281,126 @@
                                         "mensaje": {
                                             "type": "string",
                                             "example": "Error en la actualización: Detalles del error"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/perfil/situaciones": {
+            "get": {
+                "tags": [
+                    "Perfil"
+                ],
+                "summary": "Obtener todas las situaciones disponibles",
+                "description": "Devuelve una lista con las situaciones posibles de los demandantes, como 'Desempleado', 'Empleado', 'En búsqueda activa'.",
+                "operationId": "listarSituaciones",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Token de autenticación en formato Bearer",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de situaciones obtenida con éxito",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "nombre": {
+                                                "type": "string",
+                                                "example": "Desempleado"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No estás autenticado. Por favor, inicia sesión para continuar.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Acceso denegado. No tienes permisos para realizar esta acción.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario no autorizado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Recurso no encontrado.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Recurso no encontrado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno al obtener las situaciones",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "mensaje": {
+                                            "type": "string",
+                                            "example": "Error al obtener las situaciones."
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "SQLSTATE[42000]: Syntax error..."
                                         }
                                     },
                                     "type": "object"
@@ -4152,26 +4272,6 @@
                                             "nombre": {
                                                 "type": "string",
                                                 "example": "Fontanería"
-                                            },
-                                            "activado": {
-                                                "type": "integer",
-                                                "example": 1
-                                            },
-                                            "nivele_id": {
-                                                "type": "integer",
-                                                "example": 1
-                                            },
-                                            "centro_id": {
-                                                "type": "integer",
-                                                "example": 1
-                                            },
-                                            "created_at": {
-                                                "type": "string",
-                                                "example": "2025-03-19 07:00:06"
-                                            },
-                                            "updated_at": {
-                                                "type": "string",
-                                                "example": "2025-03-19 07:00:06"
                                             }
                                         },
                                         "type": "object"

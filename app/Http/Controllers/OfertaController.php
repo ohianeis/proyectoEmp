@@ -279,13 +279,17 @@ class OfertaController extends Controller
                 }
                 $inscripcion = $oferta->demandantes()
                     ->where('demandante_id', $queUsuario->id)
-                    ->first();
+                    ->exists();
 
-
-                $fechaInscripcion = $inscripcion->pivot->fecha;
-                $estadoProceso = $inscripcion->pivot->proceso_id;
+                if($inscripcion){
+                    $datosInscripcion = $oferta->demandantes()->where('demandante_id', $queUsuario->id)->first();
+                $fechaInscripcion = $datosInscripcion->pivot->fecha;
+                $estadoProceso = $datosInscripcion->pivot->proceso_id;
                 //no consigo cargar relación asi que hago consulta
                 $proceso = Proceso::find($estadoProceso);
+
+                }
+               
 
             
             }
@@ -332,7 +336,7 @@ class OfertaController extends Controller
                 ? $oferta->demandantes()->wherePivot('proceso_id', 3)->first()?->id 
                 : null;            }
             // Si el usuario es demandante, agregamos la info adicional
-            if ($user->role_id == 3) {
+            if ($user->role_id == 3 && $inscripcion) {
                 $response['infoDemandante'] = [
                     'fechaInscripcion' => $fechaInscripcion,
                     'estadoProceso' => $proceso->estado

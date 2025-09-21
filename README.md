@@ -57,7 +57,7 @@ El objetivo es aplicar buenas prácticas de desarrollo backend con **Laravel** y
    
 11. **Levantar servidor**
     
-   `php artisan serve`
+    `php artisan serve`
    
 📖 **Documentación de la API**
 

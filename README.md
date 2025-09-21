@@ -29,7 +29,7 @@ El objetivo es aplicar buenas prácticas de desarrollo backend con **Laravel** y
    
 5. **Configurar variables de entorno**
    
-   cp .env.example .env
+   `cp .env.example .env`
    
    editar .env con los datos de tu base de datos local
    
@@ -49,15 +49,15 @@ El objetivo es aplicar buenas prácticas de desarrollo backend con **Laravel** y
    
 7. **Generar clave de la aplicación**
    
-   php artisan key:generate
+   `php artisan key:generate`
    
 9. **Ejecutar migraciones y seeders**
     
-   php artisan migrate --seed
+   `php artisan migrate --seed`
    
 11. **Levantar servidor**
     
-   php artisan serve
+   `php artisan serve`
    
 📖 **Documentación de la API**
 

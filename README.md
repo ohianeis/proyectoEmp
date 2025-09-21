@@ -43,7 +43,7 @@ El objetivo es aplicar buenas prácticas de desarrollo backend con **Laravel** y
    
    DB_DATABASE=proyecto_emp
    
-   DB_USERNAME=root
+   DB_USERNAME=`root`
    
    DB_PASSWORD=
    

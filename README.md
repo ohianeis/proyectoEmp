@@ -22,9 +22,12 @@ El objetivo es aplicar buenas prácticas de desarrollo backend con **Laravel** y
    git clone https://github.com/ohianeis/proyectoEmp.git
    cd proyectoEmp
 2. **Instalar dependencias**
+ 
    composer install
+   
    npm install
-3. **Configurar variables de entorno**
+   
+5. **Configurar variables de entorno**
    cp .env.example .env
    editar .env con los datos de tu base de datos local
    `ejemplo`
@@ -34,11 +37,11 @@ El objetivo es aplicar buenas prácticas de desarrollo backend con **Laravel** y
    DB_DATABASE=proyecto_emp
    DB_USERNAME=root
    DB_PASSWORD=
-4. **Generar clave de la aplicación**
+6. **Generar clave de la aplicación**
    php artisan key:generate
-5. **Ejecutar migraciones y seeders**
+7. **Ejecutar migraciones y seeders**
    php artisan migrate --seed
-6. **Levantar servidor**
+8. **Levantar servidor**
    php artisan serve
    
 📖 **Documentación de la API**

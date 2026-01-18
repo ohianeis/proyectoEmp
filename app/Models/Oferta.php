@@ -26,7 +26,7 @@ class Oferta extends Model
         'estado_id',
         'empresa_id'
     ];
-    protected $hidden = ['pivot'];
+    //protected $hidden = ['pivot'];
 
     protected function createdAt(): Attribute
     {
@@ -64,7 +64,7 @@ class Oferta extends Model
     //relacion muchos a muchos
     public function demandantes(){
         return $this->belongsToMany(Demandante::class)
-        ->withPivot('fecha','proceso_id')
+        ->withPivot('fecha','proceso_id','revisado','estado_candidato_id','notas_reclutador')
         ->withTimestamps();
         //->using(DemandanteOferta::class);
     }

@@ -17,7 +17,7 @@ use \stdClass;
  *              description="Listado de URI'S para el proyecto bolsa empleo"
  * )
  * 
- * @OA\Server(url="http://127.0.0.1/laravel/bolsaEmp/public")//url para la docum de wagger añadir /api/documentation en url
+ * @OA\Server(url="http://localhost:8000")//url para la docum de wagger añadir /api/documentation en url
  */
 class AuthController extends Controller
 {
@@ -209,6 +209,7 @@ class AuthController extends Controller
         return response()->json([
             'mensaje'=>true,
             'usuario'=>$user->name,
+            'rol'=>$user->role_id,
             'token'=>$token,
             'token_type'=>'Bearer'
         ]);

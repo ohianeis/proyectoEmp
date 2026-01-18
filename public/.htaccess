@@ -1,3 +1,14 @@
+# 1. Permitir el origen de tu Angular
+Header set Access-Control-Allow-Origin "http://localhost:4200"
+Header set Access-Control-Allow-Methods "POST, GET, OPTIONS, DELETE, PUT"
+Header set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With, X-XSRF-TOKEN"
+Header set Access-Control-Allow-Credentials "true"
+
+# 2. Responder rápido a la petición "Preflight" (OPTIONS)
+RewriteEngine On
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=200,L]
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes

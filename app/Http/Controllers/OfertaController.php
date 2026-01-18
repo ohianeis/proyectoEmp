@@ -266,9 +266,8 @@ class OfertaController extends Controller
             $queUsuario = $user->role_id == 2 ? $user->empresa : $user->demandante;
 
             if ($user->role_id == 2) {
-           
             } else if ($user->role_id == 3) {
-              
+
                 // Verificar si el demandante cumple los requisitos de titulación para ver la oferta
                 $cumpleRequisitos = $oferta->titulos()->whereIn('titulo_id', $queUsuario->titulos->pluck('id'))->exists();
 
@@ -281,17 +280,13 @@ class OfertaController extends Controller
                     ->where('demandante_id', $queUsuario->id)
                     ->exists();
 
-                if($inscripcion){
+                if ($inscripcion) {
                     $datosInscripcion = $oferta->demandantes()->where('demandante_id', $queUsuario->id)->first();
-                $fechaInscripcion = $datosInscripcion->pivot->fecha;
-                $estadoProceso = $datosInscripcion->pivot->proceso_id;
-                //no consigo cargar relación asi que hago consulta
-                $proceso = Proceso::find($estadoProceso);
-
+                    $fechaInscripcion = $datosInscripcion->pivot->fecha;
+                    $estadoProceso = $datosInscripcion->pivot->proceso_id;
+                    //no consigo cargar relación asi que hago consulta
+                    $proceso = Proceso::find($estadoProceso);
                 }
-               
-
-            
             }
             $inscritosCount = $oferta->demandantes()->count();
             $ofertaInfo = Oferta::where('id', $oferta->id)
@@ -321,20 +316,26 @@ class OfertaController extends Controller
 
             //  return response()->json($ofertaInfo,200);
             $response = [
-                'id' => $ofertaInfo->id,
-                'estado' => $ofertaInfo->estado->tipo,
-                'fechaCierre' => $fechaCierre,
-                'empresa' => $ofertaInfo->empresa->nombre,
-                'motivo' => $ofertaInfo->motivo->tipo ?? 'Sin motivo',
-                'titulos' => $titulosConNivel,
+                'id'           => $ofertaInfo->id,
+                'nombre'       => $ofertaInfo->nombre,      
+                'observacion'  => $ofertaInfo->observacion, 
+                'tipoContrato' => $ofertaInfo->tipoContrato, 
+                'horario'      => $ofertaInfo->horario,    
+                'nPuestos'     => $ofertaInfo->nPuestos,    
+                'estado'       => $ofertaInfo->estado->tipo,
+                'fechaCierre'  => $fechaCierre,
+                'empresa'      => $ofertaInfo->empresa->nombre,
+                'motivo'       => $ofertaInfo->motivo->tipo ?? 'Sin motivo',
+                'titulos'      => $titulosConNivel,
                 'demandantesInscritos' => $inscritosCount,
-
+                'created_at'   => $ofertaInfo->created_at, // <--- Añadido para consistencia
             ];
             //dar el id del candidato si se ha asignado la oferta
-            if($user->role_id ==2){
-                $response['candidatoAsignado'] = ($oferta->estado_id == 2 && $oferta->motivo_id == 1) 
-                ? $oferta->demandantes()->wherePivot('proceso_id', 3)->first()?->id 
-                : null;            }
+            if ($user->role_id == 2) {
+                $response['candidatoAsignado'] = ($oferta->estado_id == 2 && $oferta->motivo_id == 1)
+                    ? $oferta->demandantes()->wherePivot('proceso_id', 3)->first()?->id
+                    : null;
+            }
             // Si el usuario es demandante, agregamos la info adicional
             if ($user->role_id == 3 && $inscripcion) {
                 $response['infoDemandante'] = [
@@ -343,7 +344,7 @@ class OfertaController extends Controller
                 ];
             }
 
-            return response()->json($response, 200);
+            return response()->json(['data' => $response], 200);
         } catch (Exception $e) {
             return response()->json([
                 'mensaje' => $e->getMessage()
@@ -906,7 +907,9 @@ class OfertaController extends Controller
                     return $candidato;
                 });
 
-            return response()->json($candidatos, 200);
+           return response()->json([
+            'data' => $candidatos
+            ], 200);
         } catch (Exception $e) {
             return response()->json([
                 'mensaje' => $e->getMessage()
@@ -1076,7 +1079,10 @@ class OfertaController extends Controller
                 unset($candidato->user_id);
 
 
-                return response()->json($candidato, 200);
+                
+                   return response()->json([
+            'data' => $candidato
+            ], 200);
             }
 
             return response()->json([
@@ -1475,7 +1481,7 @@ class OfertaController extends Controller
 
             $oferta->estado_id = 2; // Estado 'cerrada'
             $oferta->motivo_id = 1; // Motivo 'asignada'
-          
+
             $oferta->save();
 
             return response()->json(['mensaje' => 'Candidato asignado correctamente y proceso actualizado'], 201);

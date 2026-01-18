@@ -1,66 +1,115 @@
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+# 📌 Proyecto Empresa – Aplicación de Gestión
 
-## About Laravel
+Aplicación web desarrollada como proyecto formativo en el ciclo **DAW/DAM**, orientada a la gestión de incidencias, usuarios y tareas en un entorno empresarial simulado.  
+El objetivo es aplicar buenas prácticas de desarrollo backend con **Laravel** y documentar la API con **Swagger**.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 🚀 Tecnologías utilizadas
+- **Backend:** Laravel (PHP)
+- **Base de datos:** MySQL
+- **Documentación API:** Swagger
+- **Control de versiones:** Git y GitHub
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## ⚙️ Instalación y configuración
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+1. **Clonar el repositorio**
+   ```bash
+   git clone https://github.com/ohianeis/proyectoEmp.git
+   cd proyectoEmp
+2. **Instalar dependencias**
+ 
+   composer install
+   
+   npm install
+   
+5. **Configurar variables de entorno**
+   
+   `cp .env.example .env`
+   
+   editar .env con los datos de tu base de datos local
+   
+   `ejemplo`
+   
+   DB_CONNECTION=mysql
+   
+   DB_HOST=127.0.0.1
+   
+   DB_PORT=3306
+   
+   DB_DATABASE=proyecto_emp
+   
+   DB_USERNAME=`root`
+   
+   DB_PASSWORD=
+   
+7. **Generar clave de la aplicación**
+   
+   `php artisan key:generate`
+   
+9. **Ejecutar migraciones y seeders**
+    
+   `php artisan migrate --seed`
+   
+11. **Levantar servidor**
+    
+    `php artisan serve`
+   
+📖 **Documentación de la API**
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+Este proyecto incluye documentación interactiva con Swagger.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+<img width="492" height="288" alt="screenEnlaceSwagger" src="https://github.com/user-attachments/assets/dfab6010-4b09-46bd-8aa1-5ad7fbb66f9a" />
 
-## Laravel Sponsors
+<img width="2560" height="1239" alt="screenApiSwagger" src="https://github.com/user-attachments/assets/38952d68-fb5e-45c0-aeb9-1866407c3496" />
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
 
-### Premium Partners
+✨ **Funcionalidades principales**
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+La aplicación implementa un sistema de gestión con diferentes roles de usuario:
 
-## Contributing
+### 🔑 Autenticación e inicio
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+- Registro e inicio de sesión con roles diferenciados: **Administrador**, **Empresa** y **Demandante**.
+- 
+- Control de acceso según permisos.
 
-## Code of Conduct
+### 👤 Rol Administrador
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+- Validación y gestión de usuarios registrados.
+  
+- Administración de títulos del centro (para relacionar con ofertas y demandantes).
+  
+- Visualización de informes globales.
+  
 
-## Security Vulnerabilities
+### 🏢 Rol Empresa
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+- Edición de perfil de empresa.
+  
+- Creación, edición y cierre de ofertas de empleo.
+  
+- Visualización de demandantes que poseen los títulos requeridos por sus ofertas (aunque no estén inscritos).
+  
+- Asignación de demandantes a ofertas.
 
-## License
+### 🙋 Rol Demandante
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- Edición de perfil personal.
+  
+- Asignación de títulos disponibles en el centro para relacionarlos con ofertas.
+  
+- Visualización de ofertas según sus títulos.
+  
+- Inscripción en ofertas disponibles.
+
+
+
+
+
+
+

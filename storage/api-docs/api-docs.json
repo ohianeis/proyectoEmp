@@ -300,6 +300,25 @@
                 }
             }
         },
+        "/api/empresa/stats": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Estadísticas para el dashboard de la empresa",
+                "operationId": "a6583aff9af62fa2332736d41da1c565",
+                "responses": {
+                    "200": {
+                        "description": "Estadísticas obtenidas"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/informes/ofertasAsignadas": {
             "get": {
                 "tags": [
@@ -2535,6 +2554,110 @@
                                 }
                             }
                         }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/ofertas/{oferta}/candidatos/{demandante}/seguimiento": {
+            "patch": {
+                "tags": [
+                    "Ofertas/Empresa"
+                ],
+                "summary": "Actualizar el seguimiento de un candidato",
+                "description": "Permite marcar como revisado, cambiar el estado del proceso o añadir notas a un candidato específico en una oferta.",
+                "operationId": "a878680096b5d29c69d3e9d250eb714b",
+                "parameters": [
+                    {
+                        "name": "oferta",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "demandante",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "revisado": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "estado_candidato_id": {
+                                        "type": "integer",
+                                        "example": 3
+                                    },
+                                    "notas_reclutador": {
+                                        "type": "string",
+                                        "example": "Candidato muy interesante para entrevista presencial."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Actualizado correctamente"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/ofertas/estados-candidatos": {
+            "get": {
+                "tags": [
+                    "Ofertas/Empresa"
+                ],
+                "summary": "Obtener lista de estados posibles para un candidato",
+                "description": "Devuelve los estados (Inscrito, Entrevista, Seleccionado, etc.) definidos en la base de datos.",
+                "operationId": "a51b136787395b06446906ae09e8f0a9",
+                "responses": {
+                    "200": {
+                        "description": "Lista de estados obtenida correctamente.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "nombre": {
+                                                "type": "string",
+                                                "example": "Entrevista"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
                     }
                 },
                 "security": [
@@ -5134,6 +5257,10 @@
         {
             "name": "Auth",
             "description": "Auth"
+        },
+        {
+            "name": "Dashboard",
+            "description": "Dashboard"
         },
         {
             "name": "Informes",

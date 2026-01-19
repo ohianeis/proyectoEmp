@@ -19,9 +19,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         //aplicar cors para comunicacion con fronted
-        $middleware->api(append: [
+   /*     $middleware->api(append: [
             HandleCors::class,
-        ]);
+        ]);*/
         //
         $middleware->alias([
             'abilities'=>CheckAbilities::class,

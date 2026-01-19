@@ -12,6 +12,7 @@ use Illuminate\Validation\ValidationException;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 use function PHPUnit\Framework\isEmpty;
 
@@ -317,11 +318,11 @@ class OfertaController extends Controller
             //  return response()->json($ofertaInfo,200);
             $response = [
                 'id'           => $ofertaInfo->id,
-                'nombre'       => $ofertaInfo->nombre,      
-                'observacion'  => $ofertaInfo->observacion, 
-                'tipoContrato' => $ofertaInfo->tipoContrato, 
-                'horario'      => $ofertaInfo->horario,    
-                'nPuestos'     => $ofertaInfo->nPuestos,    
+                'nombre'       => $ofertaInfo->nombre,
+                'observacion'  => $ofertaInfo->observacion,
+                'tipoContrato' => $ofertaInfo->tipoContrato,
+                'horario'      => $ofertaInfo->horario,
+                'nPuestos'     => $ofertaInfo->nPuestos,
                 'estado'       => $ofertaInfo->estado->tipo,
                 'fechaCierre'  => $fechaCierre,
                 'empresa'      => $ofertaInfo->empresa->nombre,
@@ -593,7 +594,9 @@ class OfertaController extends Controller
                 }
                 $demandante->ofertas()->attach($oferta->id, [
                     'fecha' => now(),
-                    'proceso_id' => 1
+                    'proceso_id' => 1,
+                    'estado_candidato_id' => 1,
+                    'revisado' => false
                 ]);
 
 
@@ -896,19 +899,20 @@ class OfertaController extends Controller
         try {
             $candidatos = $oferta->demandantes()
                 ->select('demandantes.id', 'demandantes.nombre', 'demandantes.telefono', 'demandantes.experienciaLaboral',  'demandantes.created_at as alta')
-                ->withPivot('fecha') //  Accede a fecha de inscripción
+                ->withPivot('fecha', 'revisado','estado_candidato_id') //  Accede a fecha de inscripción
                 ->orderBy('fecha', 'asc') //  Ordena por fecha  la relación sin duplicados
                 ->get()
                 ->map(function ($candidato) {
                     $candidato->fecha_inscripcion = optional($candidato->pivot)->fecha; // ✅ Acceder correctamente a la fecha desde pivot
-
+                    $candidato->revisado = (bool)$candidato->pivot->revisado;
+                    $candidato->estado_candidato_id = $candidato->pivot->estado_candidato_id;
                     unset($candidato->pivot);
 
                     return $candidato;
                 });
 
-           return response()->json([
-            'data' => $candidatos
+            return response()->json([
+                'data' => $candidatos
             ], 200);
         } catch (Exception $e) {
             return response()->json([
@@ -1046,6 +1050,19 @@ class OfertaController extends Controller
                     'titulos:id,nombre'
                 ])
                 ->first();
+            //  RECUPERAR DATOS DEL SEGUIMIENTO (PIVOT)
+            // Buscamos la relación específica para esta oferta
+            $seguimiento = $demandante->ofertas()
+                ->where('oferta_id', $oferta->id)
+                ->first();
+
+            if ($seguimiento) {
+                $candidato->revisado = (bool)$seguimiento->pivot->revisado;
+                $candidato->estado_candidato_id = $seguimiento->pivot->estado_candidato_id;
+                $candidato->notas_reclutador = $seguimiento->pivot->notas_reclutador;
+                $candidato->fecha_inscripcion = $seguimiento->pivot->fecha;
+            }
+
             $situacion = Demandante::where('id', $demandante->id)->with('situacion')->first(); // Cargar la relación sin filtrar campos ->first();
             $centro = Demandante::where('id', $demandante->id)->with('centro')->first(); // Cargar la relación sin filtrar campos ->first();
 
@@ -1079,10 +1096,10 @@ class OfertaController extends Controller
                 unset($candidato->user_id);
 
 
-                
-                   return response()->json([
-            'data' => $candidato
-            ], 200);
+
+                return response()->json([
+                    'data' => $candidato
+                ], 200);
             }
 
             return response()->json([
@@ -1164,12 +1181,10 @@ class OfertaController extends Controller
             })->whereDoesntHave('ofertas', function ($query) use ($oferta) {
                 $query->where('ofertas.id', $oferta->id);
             })->get();
-            if ($candidatos->isEmpty()) {
-                return response()->json([
-                    'info' => 'Ningún candidato disponible con la titulación requerida sin inscribir'
+           
+            return response()->json($candidatos, 200);    return response()->json([
+                    'data' => $candidatos
                 ], 200);
-            }
-            return response()->json($candidatos, 200);
         } catch (Exception $e) {
             return response()->json([
                 'mensaje' => $e->getMessage()
@@ -1281,7 +1296,9 @@ class OfertaController extends Controller
             }
             $demandante->ofertas()->attach($oferta->id, [
                 'fecha' => now(),
-                'proceso_id' => 1
+                'proceso_id' => 1,
+                'estado_candidato_id' => 2,
+                'revisado' => true
             ]);
 
             return response()->json([
@@ -1471,24 +1488,128 @@ class OfertaController extends Controller
 
             // Asignar el proceso '3' (adjudicada) al demandante seleccionado
             $oferta->demandantes()->updateExistingPivot($demandante->id, [
-                'proceso_id' => 3
+                'proceso_id' => 3,
+                'estado_candidato_id' => 7
             ]);
 
-            // Cambiar el proceso de los demás demandantes a '2' (cerrada)
+// 2. Contar cuántos candidatos han sido ya seleccionados (proceso_id = 3)
+        $seleccionadosCount = $oferta->demandantes()->wherePivot('proceso_id', 3)->count();
+
+        // 3. Comparar con el número de puestos disponibles (nPuestos)
+        if ($seleccionadosCount >= $oferta->nPuestos) {
+            
+            // SI SE HAN LLENADO TODAS LAS VACANTES:
+            
+            // Cambiar a proceso '2' (Cerrada/No seleccionado) a los que sobran
             $oferta->demandantes()
-                ->where('demandante_id', '!=', $demandante->id)
-                ->update(['proceso_id' => 2]);
+                ->wherePivot('proceso_id', '!=', 3) // Los que no han ganado la plaza
+                ->updateExistingPivot(null, ['proceso_id' => 2]); // Nota: updateExistingPivot con null afecta al query builder anterior
 
-            $oferta->estado_id = 2; // Estado 'cerrada'
-            $oferta->motivo_id = 1; // Motivo 'asignada'
-
+            // Actualizar estado de la oferta
+            $oferta->estado_id = 2; // Cerrada
+            $oferta->motivo_id = 1; // Asignada/Cubierta
             $oferta->save();
 
-            return response()->json(['mensaje' => 'Candidato asignado correctamente y proceso actualizado'], 201);
-        } catch (Exception $e) {
             return response()->json([
-                'mensaje' => $e->getMessage()
-            ], 500);
+                'mensaje' => 'Última vacante cubierta. Oferta cerrada correctamente.',
+                'quedan_vacantes' => false
+            ], 200);
+        }
+
+        // SI AÚN QUEDAN VACANTES:
+        return response()->json([
+            'mensaje' => 'Candidato asignado. Aún quedan vacantes disponibles (' . ($oferta->nPuestos - $seleccionadosCount) . ')',
+            'quedan_vacantes' => true
+        ], 200);
+
+    } catch (Exception $e) {
+        return response()->json(['mensaje' => $e->getMessage()], 500);
+    }
+    }
+    /**
+     * Actualiza el estado o seguimiento de un candidato en una oferta
+     */
+    /**
+     * @OA\Patch(
+     * path="/api/ofertas/{oferta}/candidatos/{demandante}/seguimiento",
+     * summary="Actualizar el seguimiento de un candidato",
+     * description="Permite marcar como revisado, cambiar el estado del proceso o añadir notas a un candidato específico en una oferta.",
+     * tags={"Ofertas/Empresa"},
+     * security={{"sanctum": {}}},
+     * @OA\Parameter(name="oferta", in="path", required=true, @OA\Schema(type="integer")),
+     * @OA\Parameter(name="demandante", in="path", required=true, @OA\Schema(type="integer")),
+     * @OA\RequestBody(
+     * @OA\JsonContent(
+     * @OA\Property(property="revisado", type="boolean", example=true),
+     * @OA\Property(property="estado_candidato_id", type="integer", example=3),
+     * @OA\Property(property="notas_reclutador", type="string", example="Candidato muy interesante para entrevista presencial.")
+     * )
+     * ),
+     * @OA\Response(response=200, description="Actualizado correctamente")
+     * )
+     */
+    public function actualizarSeguimiento(Request $request, Oferta $oferta, Demandante $demandante)
+    {
+        try {
+            // Validamos que los datos que llegan son correctos
+            $request->validate([
+                'estado_candidato_id' => 'nullable|exists:estado_candidatos,id',
+                'revisado'            => 'nullable|boolean',
+                'notas_reclutador'    => 'nullable|string|max:1000'
+            ]);
+
+            // Preparamos los datos a actualizar (solo los que vengan en el request)
+            $datosUpdate = [];
+            if ($request->has('estado_candidato_id')) $datosUpdate['estado_candidato_id'] = $request->estado_candidato_id;
+            if ($request->has('revisado'))            $datosUpdate['revisado'] = $request->revisado;
+            if ($request->has('notas_reclutador'))    $datosUpdate['notas_reclutador'] = $request->notas_reclutador;
+
+            // Actualizamos la tabla pivote
+            $oferta->demandantes()->updateExistingPivot($demandante->id, $datosUpdate);
+
+            return response()->json([
+                'mensaje' => 'Seguimiento actualizado correctamente',
+                'data'    => $datosUpdate
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json(['mensaje' => $e->getMessage()], 500);
         }
     }
+    /**
+ * @OA\Get(
+ * path="/api/ofertas/estados-candidatos",
+ * summary="Obtener lista de estados posibles para un candidato",
+ * description="Devuelve los estados (Inscrito, Entrevista, Seleccionado, etc.) definidos en la base de datos.",
+ * tags={"Ofertas/Empresa"},
+ * security={{"sanctum": {}}},
+ * @OA\Response(
+ * response=200,
+ * description="Lista de estados obtenida correctamente.",
+ * @OA\JsonContent(
+ * type="array",
+ * @OA\Items(
+ * type="object",
+ * @OA\Property(property="id", type="integer", example=1),
+ * @OA\Property(property="nombre", type="string", example="Entrevista")
+ * )
+ * )
+ * ),
+ * @OA\Response(response=401, description="No autenticado")
+ * )
+ */
+public function getEstadosCandidato()
+{
+    try {
+        // Obtenemos los estados de la tabla que creamos en el Seeder
+        $estados = DB::table('estado_candidatos')
+            ->select('id', 'nombre')
+            ->get();
+
+       return response()->json([
+            'data' => $estados
+        ], 200);
+    } catch (Exception $e) {
+        return response()->json(['mensaje' => $e->getMessage()], 500);
+    }
+}
 }

@@ -1,9 +1,11 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+
 use App\Http\Controllers\InformeController;
 use App\Http\Controllers\OfertaController;
 use App\Http\Controllers\PerfilController;
+use App\Http\Controllers\StatsEmpresaController;
 use App\Http\Controllers\TituloController;
 use App\Http\Controllers\ValidacionController;
 use App\Http\Middleware\authValidacion;
@@ -18,14 +20,11 @@ Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::get('/registro/roles',[AuthController::class,'roles']);
 
 Route::middleware(['auth:sanctum', \App\Http\Middleware\VerificarValidacion::class])->group(function () {
+ Route::middleware(['ability:empresa'])->group(function () {
+Route::get('/empresa/stats', [StatsEmpresaController::class, 'getStatsEmpresa'])->middleware('ability:empresa');    });
+   Route::controller(OfertaController::class)->middleware(['ability:empresa'])->group(function () {
+        Route::get('ofertas/estados-candidatos', [OfertaController::class, 'getEstadosCandidato']);
 
-    //rutas ofertas accesible por empresa y demandate
-    Route::controller(OfertaController::class)->middleware(['ability:empresa,demandante'])->group(function () {
-        Route::get('/ofertas', 'index');
-        Route::get('ofertas/{oferta}','show');
-    });
-    //rutas accesibles por empresa
-    Route::controller(OfertaController::class)->middleware(['ability:empresa'])->group(function () {
         Route::post('/ofertas', 'store');
         Route::get('ofertas/{oferta}/candidatos','candidatosInscritos');
         Route::get('ofertas/{oferta}/candidatos/{demandante}','detalleCandidato');
@@ -33,8 +32,14 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\VerificarValidacion::cla
         Route::post('/ofertas/{oferta}/candidatos/{demandante}/inscribir','añadirCandidato');
         Route::patch('ofertas/{oferta}/cerrar','cerrarOferta');
         Route::patch('ofertas/{oferta}/asignar/{demandante}','asignarCandidato');
-
+        Route::patch('/ofertas/{oferta}/candidatos/{demandante}/seguimiento', 'actualizarSeguimiento');
     });
+    //rutas ofertas accesible por empresa y demandate
+    Route::controller(OfertaController::class)->middleware(['ability:empresa,demandante'])->group(function () {
+        Route::get('/ofertas', 'index');
+        Route::get('ofertas/{oferta}','show');
+    });
+ 
     //rutas accesibles por demandante
     Route::controller(OfertaController::class)->middleware(['ability:demandante'])->group(function () {
         Route::post('/ofertas/{oferta}/apuntarse','apuntarseOferta');

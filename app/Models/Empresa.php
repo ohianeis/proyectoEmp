@@ -9,9 +9,12 @@ use Illuminate\Database\Eloquent\Model;
 class Empresa extends Model
 {
     protected $fillable = [
-        'cif',
         'nombre',
+        'cif',
         'localidad',
+        'descripcion',
+        'web',
+        'telefono_contacto'
 
     ];
     //no se pueda modificar extrnamente user_id ni centro_id
@@ -24,7 +27,7 @@ class Empresa extends Model
     {
         return new Attribute(
             set: function ($value) {
-                
+
                 return strtolower($value);
             }
         );
@@ -33,7 +36,7 @@ class Empresa extends Model
     {
         return new Attribute(
             set: function ($value) {
-                
+
                 return strtolower($value);
             }
         );
@@ -42,7 +45,7 @@ class Empresa extends Model
     {
         return new Attribute(
             set: function ($value) {
-                
+
                 return strtolower($value);
             }
         );

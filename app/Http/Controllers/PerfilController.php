@@ -107,46 +107,38 @@ class PerfilController extends Controller
      *     )
      * )
      */
-    public function index()
-    {
-        //
-        $usuario = Auth::user();
+public function index()
+{
+ 
 
+    try {
+        /** @var \App\Models\User $usuario */
+        $usuario = Auth::user();
+        $perfil = null;
 
         if ($usuario->role_id == 2) {
-            $perfil = $usuario->empresa;
-            $usuario->empresa->centro;
-            $direccion = $usuario->empresa->direccion ? [
-                'calle' => $usuario->empresa->direccion->calle,
-                'numero' => $usuario->empresa->direccion->numero,
-                'ciudad' => $usuario->empresa->direccion->ciudad,
-            ] : ['direccion' => 'sin completar'];
-        } else if ($usuario->role_id == 3) {
-
-            $usuario->demandante->situacion; // Carga la relación de 'demandante' y su 'situacion'
-            $usuario->demandante->centro;
-            $perfil = $usuario->demandante;
-            $direccion = $usuario->demandante->direccion ? [
-                'calle' => $usuario->demandante->direccion->calle,
-                'numero' => $usuario->demandante->direccion->numero,
-                'ciudad' => $usuario->demandante->direccion->ciudad,
-            ] : ['direccion' => 'sin completar'];
+            $perfil = $usuario->empresa()->with(['direccion', 'centro'])->first();
+        } 
+        else if ($usuario->role_id == 3) {
+            $perfil = $usuario->demandante()->with(['direccion', 'situacion', 'centro'])->first();
         }
 
         return response()->json([
-            'perfil' => $perfil,
-            'info' => [
-                'direccion' => [
-                    'updateDireccion' => '/perfil/direccion/{demandante/empresa}'
-                ],
-                'perfil' => [
-                    'updatePerfil' => '/perfil/{demandante/empresa}'
-                ]
-
-
-            ]
+            'success' => true,
+            'message' => 'Perfil cargado con éxito',
+            'data'    => $perfil
         ], 200);
+
+    } catch (Exception $e) {
+        // Si algo falla, el Frontend recibe un mensaje claro en lugar de un error de sistema
+        return response()->json([
+            'success' => false,
+            'message' => 'Error al obtener el perfil',
+            'errors'  => $e->getMessage()
+        ], 500);
     }
+
+}
 
 
     /**
@@ -599,12 +591,14 @@ class PerfilController extends Controller
                 $idUsuario = $usuario->empresa->id;
                 $empresa = Empresa::find($idUsuario);
                 $validacion = $request->validate([
-                    'cif' => 'nullable|string|size:9|unique:empresas,cif,' . $empresa->id,
-                    'nombre' => 'required|string|regex:/^[a-zA-Z\s.]+$/|max:255',
-                    'localidad' => 'nullable|string|max:100'
+                    'nombre'      => 'required|string|regex:/^[a-zA-Z\s.]+$/|max:255',
+                    'cif'         => 'nullable|string|size:9|unique:empresas,cif,' . $empresa->id,
+                    'localidad'   => 'nullable|string|max:100',
+                    'descripcion' => 'nullable|string|max:2000',
+                    'web'         => 'nullable|url|max:255',
+                    'telefono_contacto' => 'nullable|string|max:20'
                 ]);
-
-                if (isset($validacion['cif'])) {
+                /*   if (isset($validacion['cif'])) {
 
                     $empresa->cif = $request['cif'];
                 }
@@ -615,7 +609,9 @@ class PerfilController extends Controller
                 if (isset($validacion['localidad'])) {
 
                     $empresa->localidad = $request['localidad'];
-                }
+                }*/
+                // El método fill asigna todos los valores del array de golpe
+                $empresa->fill($validacion);
                 $empresa->save();
             } else if ($rol == 3) {
                 $idUsuario = $usuario->demandante->id;
@@ -644,13 +640,17 @@ class PerfilController extends Controller
                 }
                 $demandante->save();
             }
-            return response()->json([
-                'mensaje' => 'Perfil actualizado correctamente'
-            ], 201);
-        } catch (Exception $e) {
-            return response()->json([
-                'mensaje' => $e->getMessage()
-            ], 500);
+          return response()->json([
+            'success' => true,
+            'message' => 'Perfil actualizado correctamente',
+            'data'    => 'Cambios guardados'
+        ], 201);
+    } catch (Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error al actualizar el perfil',
+            'errors'  => $e->getMessage()
+        ], 500);
         }
     }
     /**

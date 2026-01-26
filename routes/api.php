@@ -54,7 +54,6 @@ Route::get('/empresa/stats', [StatsEmpresaController::class, 'getStatsEmpresa'])
        Route::get('/perfil',[PerfilController::class,'index'])->middleware('ability:empresa,demandante');
        Route::patch('/perfil/editar',[PerfilController::class,'update'])->middleware('ability:empresa,demandante');
     Route::post('perfil/direccion', [PerfilController::class,'store'])->middleware('ability:empresa,demandante');
-    Route::patch('perfil/direccion/{direccion}', [PerfilController::class,'actualizarDireccion'])->middleware('ability:empresa,demandante');
     Route::get('/perfil/situaciones',[PerfilController::class,'listarSituaciones'])->middleware('ability:demandante');
 
 

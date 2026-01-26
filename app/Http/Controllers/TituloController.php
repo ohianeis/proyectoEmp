@@ -104,10 +104,13 @@ class TituloController extends Controller
                     ];
                 });
       
-            return response()->json($titulos,200);
-        } catch (Exception $e) {
+return response()->json([
+                'message' => 'Lista de títulos recuperada con éxito',
+                'data' => $titulos
+            ], 200);  
+              } catch (Exception $e) {
             return response()->json([
-                'mensaje' => $e->getMessage()
+                'message' => $e->getMessage()
             ],500);
         }
     }
@@ -177,10 +180,12 @@ class TituloController extends Controller
     {
         try {
             $nivelesTitulos = Nivele::select('id', 'nivel')->get();
-            return response()->json([$nivelesTitulos], 200);
+            return response()->json([
+                'message'=>'Niveles titulos recuperados',
+                'data'=> $nivelesTitulos], 200);
         } catch (Exception $e) {
             return response()->json([
-                'mensaje' => $e->getMessage()
+                'message' => $e->getMessage()
             ], 500);
         }
     }
@@ -284,10 +289,12 @@ class TituloController extends Controller
             'updated_at' => $titulo->updated_at->format('d-m-Y')  // Formato de fecha legible
         ];
 
-        return response()->json($response,200);
+        return response()->json([
+            'message'=>'Detalle titulo obtenido correctamente',
+            'data'=> $response],200);
     }catch (Exception $e) {
         return response()->json([
-            'mensaje' => $e->getMessage()
+            'mesagge' => $e->getMessage()
         ], 500);
     } 
 }
@@ -417,9 +424,13 @@ class TituloController extends Controller
                     $nuevoRegistro['centro_id'] = $request['centro'];
                 }
                 Titulo::create($nuevoRegistro);
-                return response()->json('Titulo creado correctamente', 201);
+                return response()->json(['message'=>'Titulo creado correctamente'], 201);
             } catch (ValidationException $e) {
-                return response()->json($e->errors(), 422);
+    return response()->json([
+     
+        'message' => 'Los datos proporcionados no son válidos.', // Mensaje general para el Toast
+        'errors'  => $e->errors() // Detalles específicos para cada campo del formulario
+    ], 422);
             } catch (Exception $e) {
                 return response()->json([
                     'error' => 'Error al crear el título',
@@ -497,10 +508,13 @@ class TituloController extends Controller
     {
         try {
             $titulos = Titulo::select('id', 'nombre')->where('activado', 1)->orderBy('nombre')->get();
-            return response()->json($titulos,200);
+            return response()->json([
+                'message'=>'Datos obtenidos correctamente',
+                'data'=> $titulos
+            ],200);
         } catch (Exception $e) {
             return response()->json([
-                'mensaje' => $e->getMessage()
+                'message' => $e->getMessage()
             ],500);
         }
     }
@@ -647,15 +661,18 @@ class TituloController extends Controller
                 $titulo->centro_id = $validacion['centro'];
             }
             $titulo->save();
-            return response()->json($titulo, 201);
+            return response()->json([
+                'message'=>'Titulo actualizado correctamente',
+                'data'=> $titulo], 201);
         } catch (ValidationException $e) {
             return response()->json([
-                'errores' => $e->errors()
+                'message'=>'Errores de validación',
+                'errors' => $e->errors()
             ], 422);
         } catch (Exception $e) {
             return response()->json([
                 'error' => 'error al actualizar el titulo',
-                'mensaje' => $e->getMessage()
+                'message' => $e->getMessage()
             ], 500);
         }
     }
@@ -762,12 +779,11 @@ class TituloController extends Controller
             }
             $titulo->delete();
             return response()->json([
-                'mensage' => 'titulo borrado correctamente',
+                'message' => 'Titulo borrado correctamente',
             ], 201);
         } catch (Exception $e) {
             return response()->json([
-                'error' => 'error al borrar el titulo',
-                'mensaje' => $e->getMessage()
+                'message' =>'Error al borrar el título', $e->getMessage()
             ]);
         }
     }
@@ -893,7 +909,7 @@ class TituloController extends Controller
             });
 
             if ($titulosNoDuplicados->isEmpty()) {
-                return response()->json('Todos los títulos ya están vinculados al demandante.', 400);
+                return response()->json(['message'=> 'Todos los títulos ya están vinculados al demandante.'], 400);
             }
 
             foreach ($titulosNoDuplicados as $titulo) {
@@ -903,14 +919,15 @@ class TituloController extends Controller
                     'cursando' => $titulo['cursando'],
                 ]);
             }
-            return response()->json('Titulo/s creados correctamente', 201);
+            return response()->json(['message'=> 'Titulo/s asociados correctamente'], 201);
         } catch (ValidationException $e) {
             return response()->json([
-                'mensaje' => $e->errors()
+                'message' => 'Los datos introducidos no son válidos',
+                'errors' => $e->errors()
             ], 422);
         } catch (Exception $e) {
             return response()->json([
-                'mensaje' => $e->getMessage()
+                'message' => $e->getMessage()
             ], 500);
         }
     }
@@ -994,15 +1011,25 @@ class TituloController extends Controller
 
     public function titulosDemandante()
     {
-        $demandante = Demandante::where('user_id', Auth::user()->id)->first();
+       try {
+        $demandante = Auth::user()->demandante;
+        $misTitulos = $demandante->titulos->map(function ($titulo) {
+            return [
+                'id' => $titulo->pivot->id, // <--- Este ID es vital para el DELETE
+                'nombre' => $titulo->nombre,
+                'año' => $titulo->pivot->año,
+                'centro' => $titulo->pivot->centro,
+                'cursando' => (bool)$titulo->pivot->cursando
+            ];
+        });
 
-        try {
-            return response()->json($demandante->titulos, 200);
-        } catch (Exception $e) {
-            return response()->json([
-                'mensaje' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'message' => 'Títulos obtenidos correctamente',
+            'data' => $misTitulos
+        ], 200);
+    } catch (Exception $e) {
+        return response()->json(['message' => $e->getMessage()], 500);
+    }
     }
     /**
      * @OA\Delete(
@@ -1102,13 +1129,13 @@ class TituloController extends Controller
 
             if ($registro) {
                 $registro->delete(); // Eliminar exclusivamente de la tabla pivot
-                return response()->json(['mensaje' => 'El título ha sido eliminado del demandante.'], 201);
+                return response()->json(['message' => 'El título ha sido eliminado del demandante.'], 201);
             }
 
-            return response()->json(['mensaje' => 'Recurso no encontrado.'], 404);
+     
         } catch (Exception $e) {
             return response()->json([
-                'mensaje' => $e->getMessage()
+                'message' => $e->getMessage()
             ]);
         }
     }

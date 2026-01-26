@@ -107,326 +107,158 @@ class PerfilController extends Controller
      *     )
      * )
      */
-public function index()
-{
- 
-
-    try {
-        /** @var \App\Models\User $usuario */
-        $usuario = Auth::user();
-        $perfil = null;
-
-        if ($usuario->role_id == 2) {
-            $perfil = $usuario->empresa()->with(['direccion', 'centro'])->first();
-        } 
-        else if ($usuario->role_id == 3) {
-            $perfil = $usuario->demandante()->with(['direccion', 'situacion', 'centro'])->first();
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Perfil cargado con éxito',
-            'data'    => $perfil
-        ], 200);
-
-    } catch (Exception $e) {
-        // Si algo falla, el Frontend recibe un mensaje claro en lugar de un error de sistema
-        return response()->json([
-            'success' => false,
-            'message' => 'Error al obtener el perfil',
-            'errors'  => $e->getMessage()
-        ], 500);
-    }
-
-}
-
-
-    /**
-     * Crear dirección si esta null ,la primera vez.
-     */
-    /**
-     * @OA\Post(
-     *     path="/api/perfil/direccion",
-     *     summary="Crear dirección",
-     *     description="Crea una dirección si actualmente no está asociada con la empresa o el demandante del usuario autenticado.",
-     *     tags={"Perfil"},
-     *     security={
-     *         {"sanctum": {}}
-     *     },
-     *  @OA\Parameter(
-     *         name="Authorization",
-     *         in="header",
-     *         required=true,
-     *         description="Token de autenticación en formato Bearer",
-     *         @OA\Schema(
-     *             type="string",
-     *             example="Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
-     *         )
-     *     ),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             type="object",
-     *             required={"linea1", "ciudad", "provincia", "codigoPostal", "visible"},
-     *             @OA\Property(property="linea1", type="string", example="Avenida Siempre Viva 123", description="Primera línea de dirección."),
-     *             @OA\Property(property="linea2", type="string", nullable=true, example="Apartamento 45", description="Segunda línea de dirección, opcional."),
-     *             @OA\Property(property="ciudad", type="string", example="Pamplona", description="Ciudad."),
-     *             @OA\Property(property="provincia", type="string", example="Navarra", description="Provincia."),
-     *             @OA\Property(property="codigoPostal", type="integer", example=31600, description="Código postal, debe tener 6 dígitos."),
-     *             @OA\Property(property="visible", type="boolean", example=true, description="Visibilidad de la dirección (true o false).")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=201,
-     *         description="Dirección creada correctamente",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="mensaje", type="string", example="Dirección creada correctamente")
-     *         )
-     *     ),
-     *  @OA\Response(
-     *         response=403,
-     *         description="Acceso denegado. No tienes permisos para realizar esta acción.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="message", type="string", example="Usuario no autorizado.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No estás autenticado. Por favor, inicia sesión para continuar.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="message", type="string", example="Unauthenticated.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Errores de validación",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="mensaje", type="object", example={
-     *                 "linea1": {"El campo linea1 es obligatorio."},
-     *                 "ciudad": {"El campo ciudad es obligatorio."},
-     *                 "codigoPostal": {"Debe tener exactamente 6 dígitos."}
-     *             })
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error interno del servidor",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="mensaje", type="string", example="Se produjo un error al procesar la solicitud.")
-     *         )
-     *     )
-     * )
-     */
-    public function store(Request $request)
+    public function index()
     {
-        //
+
+
         try {
-
+            /** @var \App\Models\User $usuario */
             $usuario = Auth::user();
-            $direccion = $usuario->role_id == 2 ? $usuario->empresa->direccion : $usuario->demandante->direccion;
+            $perfil = null;
 
-            if (is_null($direccion)) {
-
-
-
-                $request->validate([
-                    'linea1' => 'required|string|max:255',
-                    'linea2' => 'nullable|string|max:255',
-                    'ciudad' => 'required|string|max:100',
-                    'provincia' => 'required|string|max:100',
-                    'codigoPostal' => 'required|integer|digits:5',
-                    'visible' => 'required|boolean'
-                ]);
-
-                $direccion = new Direccione();
-                $direccion->linea1 = $request['linea1'];
-                $direccion->linea2 = $request['linea2'];
-                $direccion->ciudad = $request['ciudad'];
-                $direccion->provincia = $request['provincia'];
-                $direccion->codigoPostal = $request['codigoPostal'];
-                $direccion->visible = $request['visible'];
-                if ($usuario->role_id == 2) {
-                    $direccion->direccioneable_id = $usuario->empresa->id;
-                    $direccion->direccioneable_type = 'App\Models\Empresa';
-                } else if ($usuario->role_id == 3) {
-
-                    $direccion->direccioneable_id = $usuario->demandante->id;
-                    $direccion->direccioneable_type = 'App\Models\Demandante';
-                }
-                $direccion->save();
-                return response()->json([
-                    'mensaje' => 'Dirección creada correctamente'
-                ], 201);
-            } else {
-                return $this->actualizarDireccion($request, $direccion);
+            if ($usuario->role_id == 2) {
+                $perfil = $usuario->empresa()->with(['direccion', 'centro'])->first();
+            } else if ($usuario->role_id == 3) {
+                $perfil = $usuario->demandante()->with(['direccion', 'situacion', 'centro'])->first();
             }
-        } catch (ValidationException $e) {
+
             return response()->json([
-                'mensaje' => $e->errors()
-            ], 422);
+                'success' => true,
+                'message' => 'Perfil cargado con éxito',
+                'data'    => $perfil
+            ], 200);
         } catch (Exception $e) {
+            // Si algo falla, el Frontend recibe un mensaje claro en lugar de un error de sistema
             return response()->json([
-                'mensaje' => $e->getMessage()
+                'success' => false,
+                'message' => 'Error al obtener el perfil',
+                'errors'  => $e->getMessage()
             ], 500);
         }
     }
 
+
     /**
-     * Display the specified resource.
-     */
-    /**
-     * @OA\Patch(
-     *     path="/api/perfil/direccion/{direccion}",
-     *     summary="Actualizar dirección",
-     *     description="Actualiza una dirección existente asociada a la empresa o el demandante del usuario autenticado. Si la dirección no existe, redirige al método que la crea.",
-     *     tags={"Perfil"},
-     *     security={
-     *         {"sanctum": {}}
-     *     },
-     *  @OA\Parameter(
-     *         name="Authorization",
-     *         in="header",
-     *         required=true,
-     *         description="Token de autenticación en formato Bearer",
-     *         @OA\Schema(
-     *             type="string",
-     *             example="Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
-     *         )
-     *     ),
-     *     @OA\Parameter(
-     *         name="direccion",
-     *         in="path",
-     *         description="ID de la dirección que se desea actualizar",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             type="object",
-     *             required={"linea1", "ciudad", "provincia", "codigoPostal", "visible"},
-     *             @OA\Property(property="linea1", type="string", example="Calle Mayor 123", description="Primera línea de dirección."),
-     *             @OA\Property(property="linea2", type="string", nullable=true, example="Piso 4B", description="Segunda línea de dirección, opcional."),
-     *             @OA\Property(property="ciudad", type="string", example="Pamplona", description="Ciudad."),
-     *             @OA\Property(property="provincia", type="string", example="Navarra", description="Provincia."),
-     *             @OA\Property(property="codigoPostal", type="integer", example=31600, description="Código postal con 5 dígitos."),
-     *             @OA\Property(property="visible", type="boolean", example=true, description="Indica si la dirección es visible (true o false).")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=201,
-     *         description="Dirección actualizada correctamente.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="mensaje", type="string", example="Dirección actualizada correctamente.")
-     *         )
-     *     ),
-     *  @OA\Response(
-     *         response=403,
-     *         description="Acceso denegado. No tienes permisos para realizar esta acción.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="message", type="string", example="Usuario no autorizado.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No estás autenticado. Por favor, inicia sesión para continuar.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="message", type="string", example="Unauthenticated.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Recurso no encontrado.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="error", type="string", example="Recurso no encontrado.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Errores de validación en los datos proporcionados.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="mensaje", type="object", example={
-     *                 "linea1": {"El campo linea1 es obligatorio."},
-     *                 "ciudad": {"El campo ciudad es obligatorio."},
-     *                 "codigoPostal": {"Debe tener exactamente 5 dígitos."}
-     *             })
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error interno del servidor.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="mensaje", type="string", example="Se produjo un error al procesar la solicitud.")
-     *         )
-     *     )
+     * @OA\Post(
+     * path="/api/perfil/direccion",
+     * summary="Guardar o actualizar dirección del perfil",
+     * description="Crea una nueva dirección si el usuario no tiene una, o actualiza la existente si ya tiene una asociada (Empresa o Demandante). La identificación se realiza mediante el token de usuario.",
+     * tags={"Perfil"},
+     * security={{"sanctum": {}}},
+     * @OA\RequestBody(
+     * required=true,
+     * @OA\JsonContent(
+     * type="object",
+     * required={"linea1", "ciudad", "provincia", "codigoPostal", "visible"},
+     * @OA\Property(property="linea1", type="string", example="Calle Mayor 123", description="Dirección principal."),
+     * @OA\Property(property="linea2", type="string", nullable=true, example="Piso 4B", description="Información adicional opcional."),
+     * @OA\Property(property="ciudad", type="string", example="Pamplona", description="Localidad o ciudad."),
+     * @OA\Property(property="provincia", type="string", example="Navarra", description="Provincia."),
+     * @OA\Property(property="codigoPostal", type="string", example="31001", description="Código postal (se guarda como string)."),
+     * @OA\Property(property="visible", type="boolean", example=true, description="Define si la dirección es pública para otros usuarios.")
+     * )
+     * ),
+     * @OA\Response(
+     * response=201,
+     * description="Dirección creada correctamente",
+     * @OA\JsonContent(
+     * @OA\Property(property="success", type="boolean", example=true),
+     * @OA\Property(property="mensaje", type="string", example="Dirección creada correctamente")
+     * )
+     * ),
+     * @OA\Response(
+     * response=200,
+     * description="Dirección actualizada correctamente",
+     * @OA\JsonContent(
+     * @OA\Property(property="success", type="boolean", example=true),
+     * @OA\Property(property="mensaje", type="string", example="Dirección actualizada correctamente")
+     * )
+     * ),
+     * @OA\Response(
+     * response=422,
+     * description="Error de validación",
+     * @OA\JsonContent(
+     * @OA\Property(property="success", type="boolean", example=false),
+     * @OA\Property(property="mensaje", type="object")
+     * )
+     * ),
+     * @OA\Response(
+     * response=500,
+     * description="Error interno del servidor",
+     * @OA\JsonContent(
+     * @OA\Property(property="success", type="boolean", example=false),
+     * @OA\Property(property="mensaje", type="string")
+     * )
+     * )
      * )
      */
-
-    public function actualizarDireccion(Request $request, Direccione $direccion)
+    public function store(Request $request)
     {
-
-
-        if (is_null($direccion)) {
-            return $this->store($request);
-        }
         try {
+            $usuario = Auth::user();
+
+            // Buscamos si ya tiene dirección (Empresa o Demandante)
+            $direccion = ($usuario->role_id == 2)
+                ? $usuario->empresa->direccion
+                : $usuario->demandante->direccion;
+
+            // Validamos los datos (común para crear y editar)
             $validacion = $request->validate([
-                'linea1' => 'required|string|max:255',
-                'linea2' => 'nullable|string|max:255',
-                'ciudad' => 'required|string|max:100',
-                'provincia' => 'required|string|max:100',
-                'codigoPostal' => 'required|integer|digits:5',
-                'visible' => 'required|boolean'
+                'linea1'       => 'required|string|max:255',
+                'linea2'       => 'nullable|string|max:255',
+                'ciudad'       => 'required|string|max:100',
+                'provincia'    => 'required|string|max:100',
+                'codigoPostal' => 'required|string|max:10',
+                'visible'      => 'required|boolean'
             ]);
-            //  $direccion = Direccione::find($usuario);
 
-            // Obtener los campos actuales de la dirección
-            $camposActuales = $direccion->only(['linea1', 'linea2', 'ciudad', 'provincia', 'codigoPostal', 'visible']);
+            if (is_null($direccion)) {
+                // CASO 1: CREAR (Store)
+                $direccion = new Direccione($validacion);
 
-            // Comparar los datos validados con los actuales
-            $diferencias = array_diff_assoc($validacion, $camposActuales);
+                if ($usuario->role_id == 2) {
+                    $usuario->empresa->direccion()->save($direccion);
+                } else {
+                    $usuario->demandante->direccion()->save($direccion);
+                }
 
-            // Verificar si hay cambios
-            if (empty($diferencias)) {
-                return response()->json([
-                    'mensaje' => 'No se realizaron cambios porque los datos son idénticos.'
-                ], 200);
+                return response()->json(['message' => 'Dirección creada correctamente'], 201);
+            } else {
+                // CASO 2: ACTUALIZAR
+                // Pasamos los datos validados al método de actualización
+                return $this->actualizarDireccion($validacion, $direccion);
             }
-            foreach ($validacion as $dato => $valor) {
-                $direccion->$dato = $valor;
-            }
-            $direccion->save();
-            return response()->json([
-                'mensaje' => 'Direccion actualizada correctamente'
-            ], 201);
         } catch (ValidationException $e) {
             return response()->json([
-                'mensaje' => $e->errors()
+                'message' => collect($e->errors())->flatten()->first()
             ], 422);
         } catch (Exception $e) {
             return response()->json([
-                'mensaje' => $e->getMessage()
+
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    public function actualizarDireccion(array $datos, Direccione $direccion)
+    {
+        try {
+            // Comparamos para ver si hay cambios reales
+            $camposActuales = $direccion->only(['linea1', 'linea2', 'ciudad', 'provincia', 'codigoPostal', 'visible']);
+            $diferencias = array_diff_assoc($datos, $camposActuales);
+
+            if (empty($diferencias)) {
+                return response()->json(['message' => 'No hay cambios que guardar.'], 200);
+            }
+
+            $direccion->update($datos);
+
+            return response()->json(['message' => 'Dirección actualizada correctamente'], 200);
+        } catch (Exception $e) {
+            return response()->json([
+
+                'message' => $e->getMessage()
             ], 500);
         }
     }
@@ -580,79 +412,89 @@ public function index()
      *     )
      * )
      */
-    public function update(Request $request)
-    {
-        //
-        try {
-            $rol = Auth::user()->role_id;
-            $usuario = Auth::user(); //controlar quien es el usuario un demandante o una empresa
+  public function update(Request $request)
+{
+    try {
+        $usuario = Auth::user();
+        $rol = $usuario->role_id;
+        $perfil = null;
+        $validacion = [];
 
-            if ($rol == 2) {
-                $idUsuario = $usuario->empresa->id;
-                $empresa = Empresa::find($idUsuario);
-                $validacion = $request->validate([
-                    'nombre'      => 'required|string|regex:/^[a-zA-Z\s.]+$/|max:255',
-                    'cif'         => 'nullable|string|size:9|unique:empresas,cif,' . $empresa->id,
-                    'localidad'   => 'nullable|string|max:100',
-                    'descripcion' => 'nullable|string|max:2000',
-                    'web'         => 'nullable|url|max:255',
-                    'telefono_contacto' => 'nullable|string|max:20'
-                ]);
-                /*   if (isset($validacion['cif'])) {
+        if ($rol == 2) {
+            $perfil = $usuario->empresa;
+            $validacion = $request->validate([
+                'nombre'            => 'required|string|max:255',
+                'cif'               => 'nullable|string|max:15|unique:empresas,cif,' . $perfil->id,
+                'localidad'         => 'nullable|string|max:100',
+                'descripcion'       => 'nullable|string|max:2000',
+                'web'               => 'nullable|string|max:255',
+                'telefono_contacto' => 'nullable|string|max:20'
+            ]);
 
-                    $empresa->cif = $request['cif'];
-                }
-                if (isset($validacion['nombre'])) {
+            // CAMPOS A COMPARAR PARA EMPRESA
+            $camposActuales = $perfil->only(['nombre', 'cif', 'localidad', 'descripcion', 'web', 'telefono_contacto']);
+            
+        } else if ($rol == 3) {
+            $perfil = $usuario->demandante;
+            $validacion = $request->validate([
+                'nombre'             => 'required|string|max:100',
+                'telefono'           => 'nullable|string|max:20',
+                'experienciaLaboral' => 'nullable|string|max:2000',
+                'situacion'          => 'nullable|integer|exists:situaciones,id'
+            ]);
 
-                    $empresa->nombre = $request['nombre'];
-                }
-                if (isset($validacion['localidad'])) {
+            // Mapeo manual para demandante (situacion vs situacione_id), lo hago aqui por relacion situacion_id
+            $camposActuales = [
+                'nombre'             => $perfil->nombre,
+                'telefono'           => $perfil->telefono,
+                'experienciaLaboral' => $perfil->experienciaLaboral,
+                'situacion'          => $perfil->situacione_id
+            ];
+        }
 
-                    $empresa->localidad = $request['localidad'];
-                }*/
-                // El método fill asigna todos los valores del array de golpe
-                $empresa->fill($validacion);
-                $empresa->save();
-            } else if ($rol == 3) {
-                $idUsuario = $usuario->demandante->id;
-                $validacion = $request->validate([
-                    'nombre' => 'required|string|regex:/^[a-zA-Z\s]+$/|max:100',
-                    'telefono' => 'nullable|integer|regex:/^(\34\s)?([6789][0-9]{8})$/',
-                    'experienciaLaboral' => 'nullable|string|max:2000',
-                    'situacion' => 'nullable|integer|exists:situaciones,id'
-                ]);
-                $demandante = Demandante::find($idUsuario);
-                if (isset($validacion['nombre'])) {
+        // CONTROL DE CAMBIOS: Comparamos lo que llega con lo que hay
+        $diferencias = array_diff_assoc($validacion, $camposActuales);
 
-                    $demandante->nombre = $request['nombre'];
-                }
-                if (isset($validacion['telefono'])) {
+        if (empty($diferencias)) {
+            return response()->json([
+           
+                'message' => 'No hay cambios que guardar'
+            ], 200); // Enviamos 200 para que Angular lo trate como éxito pero con mensaje de aviso
+        }
 
-                    $demandante->telefono = $request['telefono'];
-                }
-                if (isset($validacion['experienciaLaboral'])) {
+        // Si hay cambios, guardamos
+        if ($rol == 2) {
+            $perfil->fill($validacion);
+        } else {
+            $perfil->fill([
+                'nombre'             => $validacion['nombre'],
+                'telefono'           => $validacion['telefono'],
+                'experienciaLaboral' => $validacion['experienciaLaboral'],
+                'situacione_id'      => $validacion['situacion'],
+            ]);
+        }
+        
+        $perfil->save();
 
-                    $demandante->experienciaLaboral = $request['experienciaLaboral'];
-                }
-                if (isset($validacion['situacion'])) {
-
-                    $demandante->situacione_id = $request['situacion'];
-                }
-                $demandante->save();
-            }
-          return response()->json([
-            'success' => true,
+        return response()->json([
+     
             'message' => 'Perfil actualizado correctamente',
-            'data'    => 'Cambios guardados'
+      
         ], 201);
+
+    } catch (ValidationException $e) {
+        return response()->json([
+       
+            'message' => collect($e->errors())->flatten()->first()
+        ], 422);
     } catch (Exception $e) {
         return response()->json([
-            'success' => false,
+    
             'message' => 'Error al actualizar el perfil',
             'errors'  => $e->getMessage()
         ], 500);
-        }
     }
+}
     /**
      * @OA\Get(
      *     path="/api/perfil/situaciones",

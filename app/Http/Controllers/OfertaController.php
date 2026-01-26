@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Demandante;
 use App\Models\DemandanteOferta;
+use App\Models\EstadoCandidato;
 use App\Models\Motivo;
 use App\Models\Oferta;
 use App\Models\Proceso;
@@ -99,91 +100,71 @@ class OfertaController extends Controller
      * )
      */
 
-    public function index()
-    {
-        try {
-            $user = Auth::user();
+ public function index()
+{
+    try {
+        $user = Auth::user();
+        $queUsuario = ($user->role_id == 2) ? $user->empresa : $user->demandante;
 
-            $queUsuario = $user->role_id == 2 ? $user->empresa : $user->demandante;
-            if ($user->role_id == 2) {
-                $ofertas = Oferta::Select(
-                    'ofertas.id',
-                    'ofertas.nombre',
-                    'ofertas.observacion',
-                    'ofertas.tipoContrato',
-                    'ofertas.horario',
-                    'ofertas.fechaCierre',
-                    'ofertas.nPuestos',
-                    'ofertas.estado_id',
-                    'empresas.nombre as empresa_nombre',
-                    'ofertas.created_at'
-                )->join('empresas', 'ofertas.empresa_id', '=', 'empresas.id')->where('empresa_id', $queUsuario->id)->orderBy('created_at', 'desc')
-                    ->get();     // Ocultar motivo_id si es null
+        if ($user->role_id == 2) {
+            //datos para empresa
+            $ofertas = Oferta::select(
+                    'id', 'nombre', 'tipoContrato', 'horario', 
+                    'nPuestos', 'estado_id', 'created_at'
+                )
+                ->where('empresa_id', $queUsuario->id)
+                ->orderBy('created_at', 'desc')
+                ->get();
 
+            $ofertas->transform(function ($oferta) {
+                $oferta->estado_id = ($oferta->estado_id == 1) ? 'Abierta' : 'Cerrada';
+                return $oferta;
+            });
 
-                //map para modificar motivo_id y estado_id con las relaciones creadas y mostrar info en vez de id
-                $ofertas = $ofertas->map(function ($oferta) {
-                    // Asegurar que el estado está cargado y obtener solo el nombre
-                    $oferta->estado_id = $oferta->estado_id == 1 ? 'Abierta' : 'Cerrada';
-                    if ($oferta->fechaCierre == null) {
-                        unset($oferta->fechaCierre);
-                    }
+        } else if ($user->role_id == 3) {
+            // datos enviar perfil alumno
+            $misTitulosIds = $queUsuario->titulos->pluck('id')->toArray();
 
-
-                    return $oferta;
-                });
-
-                /*  foreach ($ofertas as $oferta) {
-                    $oferta->titulos->each(function ($titulo) {
-                        unset($titulo->pivot); // Elimina la propiedad pivot de cada título
-                    });
-                }*/
-            } else if ($user->role_id == 3) {
-
-
-                $ofertas = Oferta::whereHas('titulos', function ($query) use ($queUsuario) {
-                    $query->whereIn('titulo_id', $queUsuario->titulos->pluck('id'));
+            $ofertas = Oferta::whereHas('titulos', function ($query) use ($misTitulosIds) {
+                    $query->whereIn('titulo_id', $misTitulosIds);
                 })
-                    ->select(
-                        'ofertas.id',
-                        'ofertas.nombre',
-                        'ofertas.observacion',
-                        'ofertas.tipoContrato',
-                        'ofertas.horario',
-                        'ofertas.nPuestos',
-                        'ofertas.empresa_id',
-                        'empresas.nombre as empresa_nombre',
-                        'ofertas.created_at'
+                ->whereDoesntHave('demandantes', function ($query) use ($queUsuario) {
+                    $query->where('demandante_id', $queUsuario->id);
+                })
+                ->join('empresas', 'ofertas.empresa_id', '=', 'empresas.id')
+                ->where('ofertas.estado_id', 1)
+                ->select(
+                    'ofertas.id', 'ofertas.nombre', 'ofertas.tipoContrato', 
+                    'ofertas.horario', 'ofertas.nPuestos', 
+                    'empresas.nombre as empresa_nombre', 'ofertas.created_at'
+                )
+                ->withCount('demandantes')
+                ->with('titulos:id,nombre') // Traemos id y nombre para los tags rápidos
+                ->orderBy('ofertas.created_at', 'desc')
+                ->get();
 
-                    )
-                    ->join('empresas', 'ofertas.empresa_id', '=', 'empresas.id') // no me funciona con with asi que join
-                    ->where('estado_id', 1)
-                    ->orderBy('created_at', 'desc')
-                    ->get()
-                    ->map(function ($oferta) use ($queUsuario) {
-                        // Verificar si el demandante ya está inscrito en la oferta
-                        $inscrito = $queUsuario->ofertas()->where('oferta_id', $oferta->id)->exists();
-
-                        // Agregar el campo 'inscrito' al array de la oferta
-                        $oferta->inscrito = $inscrito;
-                        return $oferta;
-                    });
-            }
-
-
-            if ($ofertas->isEmpty()) {
-                return response()->json([
-                    'mensaje' => 'No hay ninguna oferta de trabajo actualmente'
-                ], 200);
-            } else {
-                return response()->json($ofertas, 200);
-            }
-        } catch (Exception $e) {
-            return response()->json([
-                'mensaje' => $e->getMessage()
-            ], 500);
+            $ofertas->each(function ($oferta) use ($misTitulosIds) {
+                $titulosOfertaIds = $oferta->titulos->pluck('id')->toArray();
+                $total = count($titulosOfertaIds);
+                
+                $oferta->matchAfinidad = ($total > 0)
+                    ? round((count(array_intersect($misTitulosIds, $titulosOfertaIds)) / $total) * 100)
+                    : 100;
+                
+                // limpiar  el pivot de los títulos que enviamos
+                $oferta->titulos->makeHidden('pivot');
+            });
         }
+
+        return response()->json([
+            'message' => $ofertas->isEmpty() ? 'No hay ofertas' : 'Ofertas cargadas',
+            'data' => $ofertas
+        ], 200);
+
+    } catch (Exception $e) {
+        return response()->json(['message' => $e->getMessage()], 500);
     }
+}
     /**
      * @OA\Get(
      *     path="/api/ofertas/{oferta}",
@@ -258,100 +239,104 @@ class OfertaController extends Controller
      *     )
      * )
      */
-    public function show(Oferta $oferta)
-    {
-        //  return response()->json([$oferta]);
-        try {
-            $user = Auth::user();
+  public function show(Oferta $oferta)
+{
+    try {
+        $user = Auth::user();
+        $queUsuario = ($user->role_id == 2) ? $user->empresa : $user->demandante;
+        
+        // Cargar todo 
+        $ofertaInfo = Oferta::with(['empresa.direccion', 'titulos.nivel', 'motivo', 'estado'])
+                            ->findOrFail($oferta->id);
 
-            $queUsuario = $user->role_id == 2 ? $user->empresa : $user->demandante;
+        // para control match e inscrito
+        $match = 0;
+        $inscrito = false;
 
-            if ($user->role_id == 2) {
-            } else if ($user->role_id == 3) {
+        // para info demandante
+        if ($user->role_id == 3) {
+            $misTitulosIds = $queUsuario->titulos->pluck('id')->toArray();
 
-                // Verificar si el demandante cumple los requisitos de titulación para ver la oferta
-                $cumpleRequisitos = $oferta->titulos()->whereIn('titulo_id', $queUsuario->titulos->pluck('id'))->exists();
-
-                if (!$cumpleRequisitos) {
-                    return response()->json([
-                        'mensaje' => 'Este candidato no tiene ninguno de los títulos requeridos para esta oferta.'
-                    ], 409);
-                }
-                $inscripcion = $oferta->demandantes()
-                    ->where('demandante_id', $queUsuario->id)
-                    ->exists();
-
-                if ($inscripcion) {
-                    $datosInscripcion = $oferta->demandantes()->where('demandante_id', $queUsuario->id)->first();
-                    $fechaInscripcion = $datosInscripcion->pivot->fecha;
-                    $estadoProceso = $datosInscripcion->pivot->proceso_id;
-                    //no consigo cargar relación asi que hago consulta
-                    $proceso = Proceso::find($estadoProceso);
-                }
-            }
-            $inscritosCount = $oferta->demandantes()->count();
-            $ofertaInfo = Oferta::where('id', $oferta->id)
-                ->select(
-                    'ofertas.id',
-                    'ofertas.nombre',
-                    'ofertas.observacion',
-                    'ofertas.tipoContrato',
-                    'ofertas.horario',
-                    'ofertas.nPuestos',
-                    'ofertas.estado_id',
-                    'ofertas.created_at',
-                    'ofertas.updated_at'
-                )->first();
-            $ofertaInfo = Oferta::find($oferta->id)->load('empresa', 'titulos:nombre,nivele_id', 'titulos.nivel:id,nivel', 'motivo', 'estado');
-            $titulosConNivel = $ofertaInfo->titulos->map(function ($titulo) {
-                return [
-                    'nombre' => $titulo->nombre,
-                    'nivele_id' => $titulo->nivele_id,
-                    'nivel' => $titulo->nivel->nivel ?? 'Sin nivel'
-                ];
-            });
-            $fechaCierre = $ofertaInfo->estado->tipo === 'cerrada' ? $ofertaInfo->updated_at : null;
-            unset($ofertaInfo->estado);
-            // unset($ofertaInfo->estado->created_at);
-            // unset($ofertaInfo->estado->updated_at);
-
-            //  return response()->json($ofertaInfo,200);
-            $response = [
-                'id'           => $ofertaInfo->id,
-                'nombre'       => $ofertaInfo->nombre,
-                'observacion'  => $ofertaInfo->observacion,
-                'tipoContrato' => $ofertaInfo->tipoContrato,
-                'horario'      => $ofertaInfo->horario,
-                'nPuestos'     => $ofertaInfo->nPuestos,
-                'estado'       => $ofertaInfo->estado->tipo,
-                'fechaCierre'  => $fechaCierre,
-                'empresa'      => $ofertaInfo->empresa->nombre,
-                'motivo'       => $ofertaInfo->motivo->tipo ?? 'Sin motivo',
-                'titulos'      => $titulosConNivel,
-                'demandantesInscritos' => $inscritosCount,
-                'created_at'   => $ofertaInfo->created_at, // <--- Añadido para consistencia
-            ];
-            //dar el id del candidato si se ha asignado la oferta
-            if ($user->role_id == 2) {
-                $response['candidatoAsignado'] = ($oferta->estado_id == 2 && $oferta->motivo_id == 1)
-                    ? $oferta->demandantes()->wherePivot('proceso_id', 3)->first()?->id
-                    : null;
-            }
-            // Si el usuario es demandante, agregamos la info adicional
-            if ($user->role_id == 3 && $inscripcion) {
-                $response['infoDemandante'] = [
-                    'fechaInscripcion' => $fechaInscripcion,
-                    'estadoProceso' => $proceso->estado
-                ];
+            // ver si tiene el titulo que necesita la oferta, seguridad
+            $cumple = $ofertaInfo->titulos->pluck('id')->intersect($misTitulosIds)->isNotEmpty();
+            if (!$cumple) {
+                return response()->json(['message' => 'No cumples los requisitos.'], 409);
             }
 
-            return response()->json(['data' => $response], 200);
-        } catch (Exception $e) {
-            return response()->json([
-                'mensaje' => $e->getMessage()
-            ], 500);
+            // Cálculo de Match con los titulos que tiene y los que pide oferta para front
+            $titulosReqIds = $ofertaInfo->titulos->pluck('id')->toArray();
+            $match = count($titulosReqIds) > 0 
+                ? round((count(array_intersect($misTitulosIds, $titulosReqIds)) / count($titulosReqIds)) * 100) 
+                : 100;
+
+            // Ver inscripción
+            $registro = $ofertaInfo->demandantes()->where('demandante_id', $queUsuario->id)->first();
+            $inscrito = !is_null($registro);
         }
+
+        // datos respuesta que usan tanto alumno como empresa
+        $response = [
+            'id'           => $ofertaInfo->id,
+            'nombre'       => $ofertaInfo->nombre,
+            'observacion'  => $ofertaInfo->observacion,
+            'tipoContrato' => $ofertaInfo->tipoContrato,
+            'horario'      => $ofertaInfo->horario,
+            'nPuestos'     => $ofertaInfo->nPuestos,
+            'estado'       => $ofertaInfo->estado->tipo ?? 'Sin estado',
+            'fechaCierre'  => $ofertaInfo->fechaCierre,
+            'motivo'       => $ofertaInfo->motivo->tipo ?? 'Sin motivo',
+            'titulos'      => $ofertaInfo->titulos->map(fn($t) => [
+                'nombre' => $t->nombre,
+                'nivel'  => $t->nivel->nivel ?? 'Sin nivel'
+            ]),
+            'demandantesInscritos' => $ofertaInfo->demandantes()->count(),
+        ];
+
+        // añadir datos extra para alumno
+        if ($user->role_id == 3) {
+            $response['empresa'] = [
+        'id'          => $ofertaInfo->empresa->id,
+        'nombre'      => $ofertaInfo->empresa->nombre,
+        'ubicacion'   => $ofertaInfo->empresa->localidad ?? 'No disponible',
+        'descripcion' => $ofertaInfo->empresa->descripcion,
+        'direccion'   => $this->formatDireccion($ofertaInfo->empresa->direccion)
+    ];
+            $response['matchAfinidad'] = $match; // Para el buscador
+            if ($inscrito) {
+                $response['infoDemandante'] = [
+                    'fechaInscripcion' => \Carbon\Carbon::parse($registro->pivot->fecha)->format('d/m/Y'),
+                    'estadoProceso'    => Proceso::find($registro->pivot->proceso_id)->estado ?? 'Pendiente',
+                    'porcentajeAfinidad' => $match
+                ];
+            }
+        }
+        //datos para empresa
+        if ($user->role_id == 2) {
+            $response['candidatoAsignado'] = ($ofertaInfo->estado_id == 2 && $ofertaInfo->motivo_id == 1)
+                ? $ofertaInfo->demandantes()->wherePivot('proceso_id', 3)->first()?->id
+                : null;
+        }
+
+        return response()->json([
+            'message'=>'Ofertas cargadas correctamente',
+            'data' => $response], 200);
+
+    } catch (\Exception $e) {
+        return response()->json(['message' => $e->getMessage()], 500);
     }
+}
+
+// Función auxiliar para no ensuciar el código principal
+private function formatDireccion($dir) {
+    if (!$dir) return null;
+    $visible = (bool)$dir->visible;
+    return [
+        'linea1' => $visible ? $dir->linea1 : 'Dirección privada',
+        'ciudad' => $dir->ciudad,
+        'provincia' => $dir->provincia,
+        'visible' => $visible
+    ];
+}
     /**
      * @OA\Post(
      *     path="/api/ofertas",
@@ -454,7 +439,7 @@ class OfertaController extends Controller
                 ->exists();
             if ($existeOferta) {
                 return response()->json([
-                    'mensaje' => 'Ya existe una oferta con esos datos'
+                    'message' => 'Ya existe una oferta con esos datos'
                 ], 200);
             }
             $oferta = new Oferta();
@@ -469,7 +454,7 @@ class OfertaController extends Controller
             $oferta->save();
             $oferta->titulos()->attach($request['titulo']);
             return response()->json([
-                'mensaje' => 'oferta creada correctamente'
+                'message' => 'oferta creada correctamente'
             ], 201);
         } catch (ValidationException $e) {
             return response()->json([
@@ -477,7 +462,7 @@ class OfertaController extends Controller
             ], 403);
         } catch (Exception $e) {
             return response()->json([
-                'mensaje' => $e->getMessage()
+                'message' => $e->getMessage()
             ], 500);
         }
     }
@@ -576,7 +561,7 @@ class OfertaController extends Controller
                     })->exists();
                 if (!$tituloValido) {
                     return response()->json([
-                        'mensaje' => 'No tienes el titulo que requiere la oferta'
+                        'message' => 'No tienes el titulo que requiere la oferta'
                     ], 422);
                 }
                 /*  $inscripcion=DemandanteOferta::create([
@@ -589,7 +574,7 @@ class OfertaController extends Controller
 
                 if ($yaInscrito) {
                     return response()->json([
-                        'mensaje' => 'Ya estás inscrito en esta oferta'
+                        'message' => 'Ya estás inscrito en esta oferta'
                     ], 422);
                 }
                 $demandante->ofertas()->attach($oferta->id, [
@@ -602,12 +587,12 @@ class OfertaController extends Controller
 
                 // $inscripcion->save();
                 return response()->json([
-                    'mensaje' => 'Te has inscrito correctamente a la oferta'
+                    'message' => 'Te has inscrito correctamente a la oferta'
                 ], 201);
             }
         } catch (Exception $e) {
             return response()->json([
-                'mensaje' => $e->getMessage()
+                'message' => $e->getMessage()
             ], 500);
         }
     }
@@ -699,16 +684,16 @@ class OfertaController extends Controller
 
             if (!$demandante->ofertas()->where('oferta_id', $oferta->id)->exists()) {
                 return response()->json([
-                    'mensaje' => 'No estás inscrito en esta oferta'
+                    'message' => 'No estás inscrito en esta oferta'
                 ], 422);
             }
             $demandante->ofertas()->detach($oferta->id);
             return response()->json([
-                'mensaje' => 'Te has desapuntado correctamente de la oferta'
+                'message' => 'Te has desapuntado correctamente de la oferta'
             ], 201);
         } catch (Exception $e) {
             return response()->json([
-                'mensaje' => $e->getMessage()
+                'message' => $e->getMessage()
             ], 500);
         }
     }
@@ -789,38 +774,91 @@ class OfertaController extends Controller
     public function ofertasInscritas()
     {
         try {
-            $demandante = Auth::user()->demandante;
-            // Verificar si el demandante está inscrito en alguna oferta
-            if (!$demandante->ofertas()->exists()) {
-                return response()->json([
-                    'mensaje' => 'No tienes ninguna oferta inscrita'
-                ], 422);
-            }
-
-            // Obtener ofertas inscritas correctamente
-            $ofertas = Oferta::whereHas('demandantes', function ($query) use ($demandante) {
-                $query->whereIn('oferta_id', $demandante->ofertas->pluck('id')); // 🔹 Corrección
-            })
-                ->select(
-                    'ofertas.id',
-                    'ofertas.nombre',
-                    'ofertas.observacion',
-                    'ofertas.tipoContrato',
-                    'ofertas.horario',
-                    'ofertas.nPuestos',
-                    'ofertas.empresa_id',
-                    'empresas.nombre as empresa_nombre',
-                    'ofertas.created_at'
-                )
-                ->join('empresas', 'ofertas.empresa_id', '=', 'empresas.id') // 🔹 Usamos JOIN correctamente
-                ->where('estado_id', 1)
-                ->orderBy('created_at', 'desc')
+            $user = Auth::user();
+            $demandante = $user->demandante;
+            // 1. Cargamos titulos candidato para hacer % match con titulos requeridos en oferta
+            $misTitulosIds = $demandante->titulos->pluck('id')->toArray();
+            $ofertas = $demandante->ofertas()
+                ->with(['empresa.direccion', 'estado', 'titulos'])
+                ->withCount('demandantes')
+                ->orderBy('demandante_oferta.fecha', 'desc')
                 ->get();
 
-            return response()->json($ofertas, 200);
+            if ($ofertas->isEmpty()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'No tienes ninguna oferta inscrita',
+                    'data' => []
+                ], 200);
+            }
+
+            $data = $ofertas->map(function ($oferta) use ($misTitulosIds) {
+                // --- logica afinidad por titulos ---
+                $titulosOfertaIds = $oferta->titulos->pluck('id')->toArray();
+                $totalRequeridos = count($titulosOfertaIds);
+                $porcentajeMatch = 100;
+
+                if ($totalRequeridos > 0) {
+                    $coincidencias = array_intersect($misTitulosIds, $titulosOfertaIds);
+                    $porcentajeMatch = round((count($coincidencias) / $totalRequeridos) * 100);
+                }
+                $proceso = \App\Models\Proceso::find($oferta->pivot->proceso_id);
+                // en que estado se encuentra el candidato dentro del proceso, visto, entrevista...
+                $estadoCandidato = EstadoCandidato::find($oferta->pivot->estado_candidato_id);
+                // --- LÓGICA DE PRIVACIDAD direccion empresa ---
+                $direccionFiltrada = null;
+                if ($oferta->empresa->direccion) {
+                    $dir = $oferta->empresa->direccion;
+                    $esVisible = (bool)$dir->visible;
+
+                    $direccionFiltrada = [
+                        'linea1'   => $esVisible ? $dir->linea1 : 'Dirección privada',
+                        'linea2'   => $esVisible ? $dir->linea2 : null,
+                        'ciudad'   => $dir->ciudad,
+                        'provincia' => $dir->provincia,
+                        'cp'       => $esVisible ? $dir->codigoPostal : null,
+                        'visible'  => $esVisible
+                    ];
+                }
+
+                return [
+                    'id' => $oferta->id,
+                    'nombre' => $oferta->nombre,
+                    'observacion' => $oferta->observacion,
+                    'tipoContrato' => $oferta->tipoContrato,
+                    'horario' => $oferta->horario,
+                    'nPuestos' => $oferta->nPuestos,
+                    'titulos' => $oferta->titulos->map(function ($t) {
+                        return [
+                            'id' => $t->id,
+                            'nombre' => $t->nombre
+                        ];
+                    }),
+                    'fechaCierre' => $oferta->fechaCierre,
+                    'created_at' => $oferta->created_at,
+                    'demandantesInscritos' => $oferta->demandantes_count,
+                    'empresa' => [
+                        'id' => $oferta->empresa->id,
+                        'nombre' => $oferta->empresa->nombre,
+                        'descripcion' => $oferta->empresa->descripcion,
+                        'direccion' => $direccionFiltrada // <--- Ahora es seguro
+                    ],
+                    'infoDemandante' => [
+                        'fechaInscripcion' => $oferta->pivot->fecha,
+                        'estadoProceso' => $proceso ? $proceso->estado : 'Inscrito',
+                        'seguimientoCandidato' => $estadoCandidato ? $estadoCandidato->nombre : 'Inscrito',
+                        'porcentajeAfinidad' => $porcentajeMatch,
+                    ]
+                ];
+            });
+
+            return response()->json([
+                'message' => 'Ofertas recuperadas correctamente',
+                'data' => $data
+            ], 200);
         } catch (Exception $e) {
             return response()->json([
-                'mensaje' => $e->getMessage()
+                'message' => $e->getMessage()
             ], 500);
         }
     }
@@ -899,7 +937,7 @@ class OfertaController extends Controller
         try {
             $candidatos = $oferta->demandantes()
                 ->select('demandantes.id', 'demandantes.nombre', 'demandantes.telefono', 'demandantes.experienciaLaboral',  'demandantes.created_at as alta')
-                ->withPivot('fecha', 'revisado','estado_candidato_id') //  Accede a fecha de inscripción
+                ->withPivot('fecha', 'revisado', 'estado_candidato_id') //  Accede a fecha de inscripción
                 ->orderBy('fecha', 'asc') //  Ordena por fecha  la relación sin duplicados
                 ->get()
                 ->map(function ($candidato) {
@@ -912,11 +950,12 @@ class OfertaController extends Controller
                 });
 
             return response()->json([
+                'message' => 'Candidatos incritos recuperados con éxito',
                 'data' => $candidatos
             ], 200);
         } catch (Exception $e) {
             return response()->json([
-                'mensaje' => $e->getMessage()
+                'message' => $e->getMessage()
             ], 500);
         }
     }
@@ -1037,7 +1076,7 @@ class OfertaController extends Controller
 
             if (!$tieneTitulo) {
                 return response()->json([
-                    'mensaje' => 'Acceso denegado: Este candidato no tiene la titulación requerida para esta oferta.'
+                    'message' => 'Acceso denegado: Este candidato no tiene la titulación requerida para esta oferta.'
                 ], 403);
             }
 
@@ -1098,16 +1137,17 @@ class OfertaController extends Controller
 
 
                 return response()->json([
+                    'message' => 'Datos del candidato',
                     'data' => $candidato
                 ], 200);
             }
 
             return response()->json([
-                'mensaje' => 'El demandante no se encontró.'
+                'message' => 'El demandante no se encontró.'
             ], 404);
         } catch (Exception $e) {
             return response()->json([
-                'mensaje' => $e->getMessage()
+                'message' => $e->getMessage()
             ], 500);
         }
     }
@@ -1181,13 +1221,15 @@ class OfertaController extends Controller
             })->whereDoesntHave('ofertas', function ($query) use ($oferta) {
                 $query->where('ofertas.id', $oferta->id);
             })->get();
-           
-            return response()->json($candidatos, 200);    return response()->json([
-                    'data' => $candidatos
-                ], 200);
+
+
+            return response()->json([
+                'message' => 'Candidatos sugueridos cargados correctamente',
+                'data' => $candidatos
+            ], 200);
         } catch (Exception $e) {
             return response()->json([
-                'mensaje' => $e->getMessage()
+                'message' => $e->getMessage()
             ], 500);
         }
     }
@@ -1280,7 +1322,7 @@ class OfertaController extends Controller
 
             if ($yaInscrito) {
                 return response()->json([
-                    'mensaje' => 'El candidato ya está inscrito en esta oferta.'
+                    'message' => 'El candidato ya está inscrito en esta oferta.'
                 ], 409); // 
             }
             //  Obtener los títulos requeridos para la oferta
@@ -1291,7 +1333,7 @@ class OfertaController extends Controller
 
             if (!$tieneTitulo) {
                 return response()->json([
-                    'mensaje' => 'Este candidato no tiene ninguno de los títulos requeridos para esta oferta.'
+                    'message' => 'Este candidato no tiene ninguno de los títulos requeridos para esta oferta.'
                 ], 403);
             }
             $demandante->ofertas()->attach($oferta->id, [
@@ -1302,11 +1344,11 @@ class OfertaController extends Controller
             ]);
 
             return response()->json([
-                'mensaje' => 'Candidato añadido correctamente a la oferta',
+                'message' => 'Candidato añadido correctamente a la oferta',
             ], 201);
         } catch (Exception $e) {
             return response()->json([
-                'mensaje' => $e->getMessage()
+                'message' => $e->getMessage()
             ], 500);
         }
     }
@@ -1381,7 +1423,7 @@ class OfertaController extends Controller
         try {
             if ($oferta->estado_id == 2) { // Suponiendo que '3' significa cerrada
                 return response()->json([
-                    'mensaje' => 'La oferta ya está cerrada'
+                    'message' => 'La oferta ya está cerrada'
                 ], 409);
             }
 
@@ -1400,11 +1442,11 @@ class OfertaController extends Controller
             }
 
             return response()->json([
-                'mensaje' => 'oferta cerrada correctamente'
+                'message' => 'oferta cerrada correctamente'
             ], 201);
         } catch (Exception $e) {
             return response()->json([
-                'mensaje' => $e->getMessage()
+                'message' => $e->getMessage()
             ], 500);
         }
     }
@@ -1483,7 +1525,7 @@ class OfertaController extends Controller
     {
         try {
             if (!$oferta || !$demandante) {
-                return response()->json(['mensaje' => 'Oferta o Demandante no encontrado'], 404);
+                return response()->json(['message' => 'Oferta o Demandante no encontrado'], 404);
             }
 
             // Asignar el proceso '3' (adjudicada) al demandante seleccionado
@@ -1492,39 +1534,42 @@ class OfertaController extends Controller
                 'estado_candidato_id' => 7
             ]);
 
-// 2. Contar cuántos candidatos han sido ya seleccionados (proceso_id = 3)
-        $seleccionadosCount = $oferta->demandantes()->wherePivot('proceso_id', 3)->count();
+            // 2. Contar cuántos candidatos han sido ya seleccionados (proceso_id = 3)
+            $seleccionadosCount = $oferta->demandantes()->wherePivot('proceso_id', 3)->count();
 
-        // 3. Comparar con el número de puestos disponibles (nPuestos)
-        if ($seleccionadosCount >= $oferta->nPuestos) {
-            
-            // SI SE HAN LLENADO TODAS LAS VACANTES:
-            
-            // Cambiar a proceso '2' (Cerrada/No seleccionado) a los que sobran
-            $oferta->demandantes()
-                ->wherePivot('proceso_id', '!=', 3) // Los que no han ganado la plaza
-                ->updateExistingPivot(null, ['proceso_id' => 2]); // Nota: updateExistingPivot con null afecta al query builder anterior
+            // 3. Comparar con el número de puestos disponibles (nPuestos)
+            if ($seleccionadosCount >= $oferta->nPuestos) {
 
-            // Actualizar estado de la oferta
-            $oferta->estado_id = 2; // Cerrada
-            $oferta->motivo_id = 1; // Asignada/Cubierta
-            $oferta->save();
+                // SI SE HAN LLENADO TODAS LAS VACANTES:
 
+                // Cambiar a proceso '2' (Cerrada/No seleccionado) a los que sobran
+                $oferta->demandantes()
+                    ->wherePivot('proceso_id', '!=', 3)
+                    ->newPivotStatement() // Accede directamente a la tabla pivote
+                    ->where('oferta_id', $oferta->id)
+                    ->where('proceso_id', '!=', 3)
+                    ->update(['proceso_id' => 2]); // Se mantienen sus estados de seguimiento (visto, entrevista...)
+
+                // Actualizar estado de la oferta
+                $oferta->estado_id = 2; // Cerrada
+                $oferta->motivo_id = 1; // Asignada/Cubierta
+                $oferta->fechaCierre = Carbon::now()->toDateString();
+                $oferta->save();
+
+                return response()->json([
+                    'message' => 'Última vacante cubierta. Oferta cerrada correctamente.',
+                    'quedan_vacantes' => false
+                ], 200);
+            }
+
+            // SI AÚN QUEDAN VACANTES:
             return response()->json([
-                'mensaje' => 'Última vacante cubierta. Oferta cerrada correctamente.',
-                'quedan_vacantes' => false
+                'message' => 'Candidato asignado. Aún quedan vacantes disponibles (' . ($oferta->nPuestos - $seleccionadosCount) . ')',
+                'quedan_vacantes' => true
             ], 200);
+        } catch (Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 500);
         }
-
-        // SI AÚN QUEDAN VACANTES:
-        return response()->json([
-            'mensaje' => 'Candidato asignado. Aún quedan vacantes disponibles (' . ($oferta->nPuestos - $seleccionadosCount) . ')',
-            'quedan_vacantes' => true
-        ], 200);
-
-    } catch (Exception $e) {
-        return response()->json(['mensaje' => $e->getMessage()], 500);
-    }
     }
     /**
      * Actualiza el estado o seguimiento de un candidato en una oferta
@@ -1568,48 +1613,49 @@ class OfertaController extends Controller
             $oferta->demandantes()->updateExistingPivot($demandante->id, $datosUpdate);
 
             return response()->json([
-                'mensaje' => 'Seguimiento actualizado correctamente',
+                'message' => 'Seguimiento actualizado correctamente',
                 'data'    => $datosUpdate
             ], 200);
         } catch (Exception $e) {
-            return response()->json(['mensaje' => $e->getMessage()], 500);
+            return response()->json(['message' => $e->getMessage()], 500);
         }
     }
     /**
- * @OA\Get(
- * path="/api/ofertas/estados-candidatos",
- * summary="Obtener lista de estados posibles para un candidato",
- * description="Devuelve los estados (Inscrito, Entrevista, Seleccionado, etc.) definidos en la base de datos.",
- * tags={"Ofertas/Empresa"},
- * security={{"sanctum": {}}},
- * @OA\Response(
- * response=200,
- * description="Lista de estados obtenida correctamente.",
- * @OA\JsonContent(
- * type="array",
- * @OA\Items(
- * type="object",
- * @OA\Property(property="id", type="integer", example=1),
- * @OA\Property(property="nombre", type="string", example="Entrevista")
- * )
- * )
- * ),
- * @OA\Response(response=401, description="No autenticado")
- * )
- */
-public function getEstadosCandidato()
-{
-    try {
-        // Obtenemos los estados de la tabla que creamos en el Seeder
-        $estados = DB::table('estado_candidatos')
-            ->select('id', 'nombre')
-            ->get();
+     * @OA\Get(
+     * path="/api/ofertas/estados-candidatos",
+     * summary="Obtener lista de estados posibles para un candidato",
+     * description="Devuelve los estados (Inscrito, Entrevista, Seleccionado, etc.) definidos en la base de datos.",
+     * tags={"Ofertas/Empresa"},
+     * security={{"sanctum": {}}},
+     * @OA\Response(
+     * response=200,
+     * description="Lista de estados obtenida correctamente.",
+     * @OA\JsonContent(
+     * type="array",
+     * @OA\Items(
+     * type="object",
+     * @OA\Property(property="id", type="integer", example=1),
+     * @OA\Property(property="nombre", type="string", example="Entrevista")
+     * )
+     * )
+     * ),
+     * @OA\Response(response=401, description="No autenticado")
+     * )
+     */
+    public function getEstadosCandidato()
+    {
+        try {
+            // Obtenemos los estados de la tabla que creamos en el Seeder
+            $estados = DB::table('estado_candidatos')
+                ->select('id', 'nombre')
+                ->get();
 
-       return response()->json([
-            'data' => $estados
-        ], 200);
-    } catch (Exception $e) {
-        return response()->json(['mensaje' => $e->getMessage()], 500);
+            return response()->json([
+                'message' => 'Datos obtenidos correctamente',
+                'data' => $estados
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
     }
-}
 }

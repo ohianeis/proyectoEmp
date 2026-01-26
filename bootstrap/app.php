@@ -35,7 +35,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
             // Para otras rutas no encontradas
             return response()->json([
-                'error' => 'Recurso no encontrado'
+                'message' => 'Recurso no encontrado'
             ], 404);
           
        

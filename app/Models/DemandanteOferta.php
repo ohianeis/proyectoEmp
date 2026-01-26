@@ -46,6 +46,7 @@ class DemandanteOferta extends Pivot
             }
         );
     }
+    
     //relacion tabla proceso
     public function proceso() {
         return $this->belongsTo(Proceso::class, 'proceso_id');

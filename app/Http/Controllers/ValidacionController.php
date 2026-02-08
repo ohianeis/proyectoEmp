@@ -90,11 +90,15 @@ class ValidacionController extends Controller
                 ->with('rol:id,rol') // Carga la relación para incluir el nombre del rol
                 ->orderBy('created_at', 'asc') // Ordena por la fecha de creación en orden ascendente
                 ->get();
-            return response()->json($users, 200);
-        } catch (Exception $e) {
             return response()->json([
-                'mensaje' => $e->getMessage()
-            ]);
+            'data' => $users,
+            'message' => 'Listado de validaciones obtenido correctamente'
+        ], 200);
+        } catch (Exception $e) {
+           return response()->json([
+            'data' => [],
+            'message' => 'Error al obtener usuarios: ' . $e->getMessage()
+        ], 500);
         }
     }
 
@@ -235,12 +239,14 @@ class ValidacionController extends Controller
                 ]);*/
                 $demandante->save();
             }
-            return response()->json([
-                'mensaje' => 'Usuario validado correctamente y registrado'
+      return response()->json([
+                'data' => $user, // Devolvemos el usuario actualizado
+                'message' => 'Usuario validado correctamente y registrado'
             ], 200);
         } catch (Exception $e) {
-            return response()->json([
-                'mensaje' => $e->getMessage()
+           return response()->json([
+                'data' => null,
+                'message' => 'Error al validar: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -322,13 +328,16 @@ class ValidacionController extends Controller
         //
         try{
            $user->delete();
+           
            return response()->json([
-            'mensaje'=>'Usuario eliminado del resgistro correctamente'
-           ],200);
+                'data' => null,
+                'message' => 'Usuario eliminado del registro correctamente'
+            ], 200);
         }catch(Exception $e){
-            return response()->json([
-                'mensaje'=>$e->getMessage()
-            ],500);
+           return response()->json([
+                'data' => null,
+                'message' => 'Error al eliminar: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

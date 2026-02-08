@@ -13,15 +13,16 @@ class EstadoCandidatoSeeder extends Seeder
      */
    public function run(): void
     {
-        $estados = [
-            ['nombre' => 'Inscrito'],      // ID 1
-            ['nombre' => 'Visto'],   // ID 2
-            ['nombre' => 'Entrevista telefónica'],    // ID 3
-            ['nombre'=>'Entrevista Presencial'], //ID4
-            ['nombre'=>'Prueba técnica'], //ID 5
-            ['nombre' => 'Descartado'],    // ID 6
-            ['nombre' => 'Seleccionado']   // ID 7
-        ];
+ $estados = [
+        ['id' => 1, 'nombre' => 'Inscrito'],
+        ['id' => 2, 'nombre' => 'Visto'],
+        ['id' => 3, 'nombre' => 'Entrevista telefónica'],
+        ['id' => 4, 'nombre' => 'Entrevista Presencial'],
+        ['id' => 5, 'nombre' => 'Prueba técnica'],
+        ['id' => 6, 'nombre' => 'Descartado'],
+        ['id' => 7, 'nombre' => 'Seleccionado'],
+        ['id' => 8, 'nombre' => 'Retirada por el candidato'] 
+    ];
 
         foreach ($estados as $estado) {
             EstadoCandidato::create($estado);

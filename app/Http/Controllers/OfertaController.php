@@ -564,32 +564,48 @@ private function formatDireccion($dir) {
                         'message' => 'No tienes el titulo que requiere la oferta'
                     ], 422);
                 }
+
                 /*  $inscripcion=DemandanteOferta::create([
                         'fecha'=>now(),
                         'proceso_id'=>1,
                         'demandante_id'=>$demandante,
                         'oferta_id'=>$oferta->id
                     ]);*/
-                $yaInscrito = $demandante->ofertas()->where('oferta_id', $oferta->id)->exists();
+                $yaInscrito = $demandante->ofertas()->where('oferta_id', $oferta->id)->first();
 
-                if ($yaInscrito) {
-                    return response()->json([
-                        'message' => 'Ya estás inscrito en esta oferta'
-                    ], 422);
-                }
-                $demandante->ofertas()->attach($oferta->id, [
-                    'fecha' => now(),
-                    'proceso_id' => 1,
-                    'estado_candidato_id' => 1,
-                    'revisado' => false
-                ]);
+               if ($yaInscrito) {
+            $estadoActual = $yaInscrito->pivot->estado_candidato_id;
 
-
-                // $inscripcion->save();
-                return response()->json([
-                    'message' => 'Te has inscrito correctamente a la oferta'
-                ], 201);
+            // CASO A: Ya está inscrito activamente
+            if ($estadoActual != 8) {
+                return response()->json(['message' => 'Ya estás inscrito en esta oferta'], 422);
             }
+
+            // CASO B: Estaba RETIRADA (8) -> REACTIVAMOS
+            $demandante->ofertas()->updateExistingPivot($oferta->id, [
+                'fecha' => now(),
+                'estado_candidato_id' => 1, // Volvemos a 'Inscrito'
+                'revisado' => false,         // Para que a la empresa le salga como NUEVO
+                'proceso_id' => 1            // Reset de proceso si fuera necesario
+            ]);
+
+            return response()->json([
+                'message' => 'Candidatura reactivada correctamente'
+            ], 200);
+        }
+
+        // 4. SI NO EXISTE REGISTRO PREVIO -> INSERTAMOS (Attach)
+        $demandante->ofertas()->attach($oferta->id, [
+            'fecha' => now(),
+            'proceso_id' => 1,
+            'estado_candidato_id' => 1,
+            'revisado' => false
+        ]);
+
+        return response()->json([
+            'message' => 'Te has inscrito correctamente a la oferta'
+        ], 201);
+    }
         } catch (Exception $e) {
             return response()->json([
                 'message' => $e->getMessage()
@@ -682,15 +698,25 @@ private function formatDireccion($dir) {
         try {
             $demandante = Auth::user()->demandante;
 
-            if (!$demandante->ofertas()->where('oferta_id', $oferta->id)->exists()) {
-                return response()->json([
-                    'message' => 'No estás inscrito en esta oferta'
-                ], 422);
-            }
-            $demandante->ofertas()->detach($oferta->id);
-            return response()->json([
-                'message' => 'Te has desapuntado correctamente de la oferta'
-            ], 201);
+          // Buscamos la inscripción activa
+        $inscripcion = $demandante->ofertas()
+            ->where('oferta_id', $oferta->id)
+            ->first();
+
+        if (!$inscripcion) {
+            return response()->json(['message' => 'No estás inscrito en esta oferta.'], 404);
+        }
+
+        // En lugar de borrar, actualizamos el estado al ID 8
+        $demandante->ofertas()->updateExistingPivot($oferta, [
+            'estado_candidato_id' => 8,
+            'fecha' => now() // Opcional: guardar cuándo se desapuntó
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Candidatura retirada correctamente.'
+        ], 200);
         } catch (Exception $e) {
             return response()->json([
                 'message' => $e->getMessage()
@@ -1125,7 +1151,7 @@ private function formatDireccion($dir) {
 
                         'nombre' => $titulo->nombre,
                         'estado' => $titulo->pivot->cursando == 0 ? 'finalizado' : 'en curso',
-                        'año' => $titulo->pivot->año,
+                        'anio' => $titulo->pivot->año,
                         'centro' => $titulo->pivot->centro
                     ];
                 });

@@ -188,7 +188,7 @@ class AuthController extends Controller
         'password' => 'required|string',
     ]);
         if(!Auth::attempt($request->only('email','password'))){
-            return response()->json(['mensaje'=>'Usuario no autorizado'],401);
+            return response()->json(['mensaje'=>'Usuario no autorizado, contacte con el centro'],401);
 
         }
         $user =User::where('email',$request->email)->firstOrFail();

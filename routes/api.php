@@ -97,5 +97,6 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\VerificarValidacion::cla
         Route::get('informes/all-alumnos', 'getAllAlumnos');
         Route::get('informes/all-empresas', 'getAllEmpresas');
         Route::get('informes/alumno/{id}', [InformeController::class, 'getDetalleAlumnoAdmin']);
+        Route::get('informes/reportes/{tipo}', [InformeController::class, 'getReportesEspeciales']);
     });
 });

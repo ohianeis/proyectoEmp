@@ -21,7 +21,7 @@ class RolesSeeder extends Seeder
             'rol'=>'empresa'
         ]);
         Role::create([
-            'rol'=>'demandante'
+            'rol'=>'Alumno'
         ]);
     }
 }

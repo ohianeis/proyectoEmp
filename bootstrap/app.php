@@ -50,5 +50,13 @@ return Application::configure(basePath: dirname(__DIR__))
                 'error' => 'No estás autenticado. Por favor, inicia sesión para continuar.'
             ], 401);
         });
+        //para que no salgan datos sql al cliente, controlo error 500
+        $exceptions->renderable(function (\Illuminate\Database\QueryException $e, $request) {
+      
+            return response()->json([
+                'message' => 'Error de conexión con la base de datos. Por favor, inténtelo más tarde.',
+               
+            ], 500);
         
+    });
     })->create();

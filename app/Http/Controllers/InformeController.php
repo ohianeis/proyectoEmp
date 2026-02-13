@@ -9,6 +9,7 @@ use App\Models\Titulo;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 use Illuminate\Http\Request;
 
@@ -620,7 +621,7 @@ class InformeController extends Controller
                         'nombre' => $empresa->nombre,
                         'cif' => $empresa->cif,
                         'email' => $empresa->user->email ?? 'Sin email',
-                        'validado' => 1, // Sabemos que es 1 por el filtro whereHas
+                        'validado' => 1, // es 1 por el filtro whereHas
                         'telefono' => $empresa->telefono_contacto,
                         'web' => $empresa->web,
                         'created_at' => $empresa->created_at
@@ -632,7 +633,8 @@ class InformeController extends Controller
                 'data' => $empresas
             ], 200);
         } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 500);
+            Log::error("Error en el dashboard: " . $e->getMessage());
+            return response()->json(['message' => 'Error al conectar con la API, intentelo mas tarde']);
         }
     }
     public function getDetalleAlumnoAdmin($id)

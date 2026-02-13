@@ -187,11 +187,20 @@ class AuthController extends Controller
         'email' => 'required|string|email',
         'password' => 'required|string',
     ]);
-        if(!Auth::attempt($request->only('email','password'))){
-            return response()->json(['mensaje'=>'Usuario no autorizado, contacte con el centro'],401);
+      
+        $user =User::where('email',$request->email)->first();
+        if (!$user || !Hash::check($request->password, $user->password)) {
+        return response()->json([
+            'mensaje' => 'Las credenciales introducidas no son correctas.'
+        ], 401);
+    }
 
-        }
-        $user =User::where('email',$request->email)->firstOrFail();
+    // 3. Si el usuario existe y la contraseña es correcta, pero NO ESTÁ VALIDADO
+    if ($user->validado == 0) {
+        return response()->json([
+            'mensaje' => 'Tu cuenta aún está pendiente de revisión por el centro.'
+        ], 403); // 403 Forbidden es el código correcto para "te conozco pero no te dejo pasar"
+    }
         $abilities=[];
         switch($user->role_id){
             case 1://administrador

@@ -8,6 +8,7 @@ use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ValidacionController extends Controller
 {
@@ -88,17 +89,17 @@ class ValidacionController extends Controller
             $users = User::where('validado', 0)
                 ->select('id', 'name', 'email', 'validado', 'role_id', 'created_at')
                 ->with('rol:id,rol') // Carga la relación para incluir el nombre del rol
-                ->orderBy('created_at', 'asc') // Ordena por la fecha de creación en orden ascendente
+                ->orderBy('created_at', 'desc') // Ordena por la fecha de creación en orden ascendente
                 ->get();
             return response()->json([
-            'data' => $users,
-            'message' => 'Listado de validaciones obtenido correctamente'
-        ], 200);
+                'data' => $users,
+                'message' => 'Listado de validaciones obtenido correctamente'
+            ], 200);
         } catch (Exception $e) {
-           return response()->json([
-            'data' => [],
-            'message' => 'Error al obtener usuarios: ' . $e->getMessage()
-        ], 500);
+            return response()->json([
+                'data' => [],
+                'message' => 'Error al obtener usuarios: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -212,39 +213,33 @@ class ValidacionController extends Controller
 
 
         try {
-            $centro = Auth::user()->id;
-            $user->validado = true;
-            $user->save();
-            if ($user->role_id == 2) {
-                $empresa=new Empresa();
-                $empresa->nombre=$user->name;
-                $empresa->user_id=$user->id;
-                $empresa->centro_id=$centro;
-             /*   Empresa::create([
-                    'nombre' => ,
-                    'user_id' => ,
-                    'centro_id' => 
-                ]);*/
-                $empresa->save();
-            } else if ($user->role_id == 3) {
-                $demandante=new Demandante();
-                $demandante->nombre=$user->name;
-                $demandante->centro_id=$centro;
-                $demandante->user_id=$user->id;
+            return DB::transaction(function () use ($user) {
 
-             /*   Demandante::create([
-                    'nombre' => $user->name,
-                    'centro_id' => $centro,
-                    'user_id' => $user->id
-                ]);*/
-                $demandante->save();
-            }
-      return response()->json([
-                'data' => $user, // Devolvemos el usuario actualizado
-                'message' => 'Usuario validado correctamente y registrado'
-            ], 200);
+                $centro = Auth::user()->id;
+                $user->validado = true;
+                $user->save();
+
+                if ($user->role_id == 2) {
+                    $empresa = new Empresa();
+                    $empresa->nombre = $user->name;
+                    $empresa->user_id = $user->id;
+                    $empresa->centro_id = $centro;
+                    $empresa->save();
+                } else if ($user->role_id == 3) {
+                    $demandante = new Demandante();
+                    $demandante->nombre = $user->name;
+                    $demandante->centro_id = $centro;
+                    $demandante->user_id = $user->id;
+                    $demandante->save();
+                }
+
+                return response()->json([
+                    'data' => $user,
+                    'message' => 'Usuario validado correctamente y registrado'
+                ], 200);
+            });
         } catch (Exception $e) {
-           return response()->json([
+            return response()->json([
                 'data' => null,
                 'message' => 'Error al validar: ' . $e->getMessage()
             ], 500);
@@ -255,109 +250,126 @@ class ValidacionController extends Controller
      * No se acepta la validacion
      */
     /**
- * @OA\Delete(
- *     path="/api/usuarios/validaciones/{user}",
- *     summary="Elimina un usuario del registro",
- *     description="Este endpoint elimina a un usuario del sistema. Se utiliza cuando no se acepta su validación.",
- *     tags={"Validaciones"},
- *        security={{"sanctum": {}}},
-*     @OA\Parameter(
-*         name="Authorization",
-*         in="header",
-*         required=true,
-*         description="Token de autenticación en formato Bearer",
-*         @OA\Schema(
-*             type="string",
-*             example="Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
-*         )
-*     ),
- *     @OA\Parameter(
- *         name="user",
- *         in="path",
- *         required=true,
- *         description="ID del usuario que será eliminado",
- *         @OA\Schema(
- *             type="integer",
- *             example=1
- *         )
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="Usuario eliminado del registro correctamente",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="mensaje", type="string", example="Usuario eliminado del registro correctamente")
- *         )
- *     ),
- *     @OA\Response(
- *         response=401,
- *         description="No estás autenticado. Por favor, inicia sesión para continuar.",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="message", type="string", example="Unauthenticated.")
- *         )
- *     ),
- *     @OA\Response(
- *         response=403,
- *         description="Acceso denegado. No tienes permisos para realizar esta acción.",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="message", type="string", example="Usuario no autorizado.")
- *         )
- *     ),
- *     @OA\Response(
- *         response=404,
- *         description="Usuario no encontrado. Verifica el ID proporcionado.",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="message", type="string", example="Usuario no encontrado.")
- *         )
- *     ),
- *     @OA\Response(
- *         response=500,
- *         description="Error interno del servidor.",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="mensaje", type="string", example="Error al eliminar el usuario. Por favor, inténtelo de nuevo.")
- *         )
- *     )
- * )
- */
+     * @OA\Delete(
+     *     path="/api/usuarios/validaciones/{user}",
+     *     summary="Elimina un usuario del registro",
+     *     description="Este endpoint elimina a un usuario del sistema. Se utiliza cuando no se acepta su validación.",
+     *     tags={"Validaciones"},
+     *        security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="Authorization",
+     *         in="header",
+     *         required=true,
+     *         description="Token de autenticación en formato Bearer",
+     *         @OA\Schema(
+     *             type="string",
+     *             example="Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="user",
+     *         in="path",
+     *         required=true,
+     *         description="ID del usuario que será eliminado",
+     *         @OA\Schema(
+     *             type="integer",
+     *             example=1
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Usuario eliminado del registro correctamente",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="mensaje", type="string", example="Usuario eliminado del registro correctamente")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="No estás autenticado. Por favor, inicia sesión para continuar.",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Acceso denegado. No tienes permisos para realizar esta acción.",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="message", type="string", example="Usuario no autorizado.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Usuario no encontrado. Verifica el ID proporcionado.",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="message", type="string", example="Usuario no encontrado.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Error interno del servidor.",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="mensaje", type="string", example="Error al eliminar el usuario. Por favor, inténtelo de nuevo.")
+     *         )
+     *     )
+     * )
+     */
     public function destroy(User $user)
     {
         //
-        try{
-           $user->delete();
-           
-           return response()->json([
+        try {
+            $user->delete();
+
+            return response()->json([
                 'data' => null,
                 'message' => 'Usuario eliminado del registro correctamente'
             ], 200);
-        }catch(Exception $e){
-           return response()->json([
+        } catch (Exception $e) {
+            return response()->json([
                 'data' => null,
                 'message' => 'Error al eliminar: ' . $e->getMessage()
             ], 500);
         }
     }
+
+    //obtiene el total de validaciones que tiene pendientes el centro
+    public function getPendientesCount()
+    {
+        try {
+            // Contamos usuarios (alumnos y empresas) con validado = 0
+            $count = \App\Models\User::where('validado', 0)->count();
+
+            return response()->json([
+                'data' => $count,
+                'message' => 'Numero de usuarios por validar obtenido correctamente'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json(['data' => 0, 'message' => 'Error al obtener el número de pendientes de  validar.'], 500);
+        }
+    }
 }
-    /**
+
+/**
  * @OA\Patch(
  *     path="/api/ofertas/{oferta}/cerrar/{motivo}",
  *     summary="Cierra una oferta con un motivo específico",
  *     description="Cambia el estado de la oferta y asigna un motivo de cierre.",
  *     tags={"Ofertas"},
-*     security={{"sanctum": {}}},
-*    @OA\Parameter(
-*         name="Authorization",
-*         in="header",
-*         required=true,
-*         description="Token de autenticación en formato Bearer",
-*         @OA\Schema(
-*             type="string",
-*             example="Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
-*         )
-*     ),
+ *     security={{"sanctum": {}}},
+ *    @OA\Parameter(
+ *         name="Authorization",
+ *         in="header",
+ *         required=true,
+ *         description="Token de autenticación en formato Bearer",
+ *         @OA\Schema(
+ *             type="string",
+ *             example="Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
+ *         )
+ *     ),
  *     @OA\Parameter(
  *         name="oferta",
  *         in="path",
@@ -380,22 +392,22 @@ class ValidacionController extends Controller
  *             @OA\Property(property="mensaje", type="string", example="Oferta cerrada correctamente")
  *         )
  *     ),
-*     @OA\Response(
-*         response=401,
-*         description="No autorizado. Es necesario enviar un token válido.",
-*         @OA\JsonContent(
-*             type="object",
-*             @OA\Property(property="message", type="string", example="Unauthenticated.")
-*         )
-*     ),
-*     @OA\Response(
-*         response=403,
-*         description="Acceso denegado. No tienes permisos para realizar esta acción.",
-*         @OA\JsonContent(
-*             type="object",
-*             @OA\Property(property="mensaje", type="string", example="Este candidato no tiene la titulación requerida para esta oferta.")
-*         )
-*     ),
+ *     @OA\Response(
+ *         response=401,
+ *         description="No autorizado. Es necesario enviar un token válido.",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=403,
+ *         description="Acceso denegado. No tienes permisos para realizar esta acción.",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="mensaje", type="string", example="Este candidato no tiene la titulación requerida para esta oferta.")
+ *         )
+ *     ),
  *     @OA\Response(
  *         response=409,
  *         description="La oferta ya está cerrada",

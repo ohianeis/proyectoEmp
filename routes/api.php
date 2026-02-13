@@ -77,8 +77,10 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\VerificarValidacion::cla
     //rutas para las validaciones solo accesible por el centro
     Route::controller(ValidacionController::class)->middleware('ability:administrador')->group(function () {
         Route::get('/usuarios/validaciones', 'index');
+         Route::get('/usuarios/validaciones/pendientes', 'getPendientesCount');
         Route::patch('/usuarios/validaciones/{user}', 'update');
         Route::delete('/usuarios/validaciones/{user}', 'destroy');
+       
     });
     //rutas para informes accesible por el centro
     Route::controller(InformeController::class)->middleware('ability:administrador')->group(function () {

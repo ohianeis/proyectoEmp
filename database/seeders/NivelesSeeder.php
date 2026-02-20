@@ -15,13 +15,13 @@ class NivelesSeeder extends Seeder
     {
         //
         Nivele::create([
-            'nivel'=>'grado básico'
+            'nivel'=>'Grado Básico'
         ]);
         Nivele::create([
-            'nivel'=>'grado medio'
+            'nivel'=>'Grado Medio'
         ]);
         Nivele::create([
-            'nivel'=>'grado superior'
+            'nivel'=>'Grado Superior'
         ]);
     }
 }

@@ -19,6 +19,8 @@ return new class extends Migration
             $table->string('horario',45);
             $table->date('fechaCierre')->nullable();
             $table->integer('nPuestos');
+            $table->date('incorporacion')->nullable();
+            $table->boolean('esAnonima');
            $table->unsignedBigInteger('motivo_id')->nullable();
               $table->foreign('motivo_id')->references('id')->on('motivos');
             $table->unsignedBigInteger('estado_id');//debe ser mismo tipo que id de estados

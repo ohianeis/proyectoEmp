@@ -18,6 +18,8 @@ class Oferta extends Model
         'horario',
 
         'nPuestos',
+        'incorporacion',
+        'esAnonima'
 
     ];
     protected $guarded=[
@@ -26,6 +28,10 @@ class Oferta extends Model
         'estado_id',
         'empresa_id'
     ];
+    protected $casts = [
+    'esAnonima' => 'boolean'
+   
+];
     //protected $hidden = ['pivot'];
 
     protected function createdAt(): Attribute
@@ -50,6 +56,11 @@ class Oferta extends Model
 {
     return Attribute::make(
         get: fn ($value) => $value ? \Carbon\Carbon::parse($value)->format('d/m/Y') : null
+    );
+}
+protected function incorporacion():Attribute{
+    return Attribute::make(
+        get:fn($value)=> $value ? \Carbon\Carbon::parse($value)->format('d/m/Y') : null
     );
 }
     //relacion 1:muchos desde ofeerta recupera estado usamos metodo find porque buscamos por un id, le paso el id de estado_id y me da el id de la tabla estados

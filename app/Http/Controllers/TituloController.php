@@ -778,26 +778,21 @@ class TituloController extends Controller
 
 
         try {
-            // Comprobar si tiene CUALQUIER relación (Ofertas o Demandantes)
-            $tieneOfertas = $titulo->ofertas()->exists();
-            $tieneAlumnos = $titulo->demandantes()->exists();
+       // Marcamos como inactivo en cualquier caso
+        $titulo->activado = 0;
+        $titulo->save(); // <--- ¡IMPORTANTE! Sin esto no se guarda en la BD
 
-            if ($tieneOfertas || $tieneAlumnos) {
-                // No borrar, solo desactivar para preservar el histórico
-                $titulo->activado = 0;
-                $titulo->save();
-              return response()->json([
+        // Comprobamos si tenía relaciones solo para personalizar el mensaje del Toast
+        $tieneRelaciones = $titulo->ofertas()->exists() || $titulo->demandantes()->exists();
+        
+        $message = $tieneRelaciones 
+            ? 'El título tiene historial asociado. Se ha marcado como inactivo para preservar los datos.' 
+            : 'Título marcado como inactivo correctamente.';
+
+        return response()->json([
             'data' => $titulo,
-            'message' => 'El título tiene historial asociado. Se ha marcado como inactivo para preservar los datos.'
+            'message' => $message
         ], 200);
-            }
-
-            // Si es un título  que se creó por error, sí se borra
-            $titulo->delete();
-          return response()->json([
-        'data' => null,
-        'message' => 'Título eliminado correctamente'
-    ], 200);
         } catch (Exception $e) {
             return response()->json(['message' => 'Error al procesar el borrado'], 500);
         }

@@ -16,7 +16,7 @@ class CentroSeeder extends Seeder
         //
         Centro::create([
             "alta"=>1,
-            'nombre'=>'politécnico estella',
+            'nombre'=>'CI Formación Profesional Burlada',
             'user_id'=>1
 
         ]);

@@ -21,16 +21,29 @@ class UserFactory extends Factory
      *
      * @return array<string, mixed>
      */
-    public function definition(): array
-    {
-        return [
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
-            'remember_token' => Str::random(10),
-        ];
-    }
+   public function definition(): array
+{
+    // 1. Generamos primero el nombre
+    $nombre = $this->faker->firstName();
+    $apellido = $this->faker->lastName();
+    $nombreCompleto = $nombre . ' ' . $apellido;
+
+    // 2. Creamos un email basado en ese nombre
+    // Str::slug convierte "Ana Ruiz" en "ana-ruiz"
+    // Str::replace cambia el "-" por "." para que parezca un email real: "ana.ruiz"
+    $emailBase = Str::replace('-', '.', Str::slug($nombreCompleto));
+    
+    // Añadimos un número aleatorio al final por si hay nombres duplicados
+    $email = $emailBase . $this->faker->numberBetween(1, 99) . '@example.com';
+
+    return [
+        'name' => $nombreCompleto,
+        'email' => $email,
+        'password' => bcrypt('prueba'),
+        'validado' => $this->faker->boolean(80),
+        'role_id' => 3, 
+    ];
+}
 
     /**
      * Indicate that the model's email address should be unverified.

@@ -74,6 +74,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\VerificarValidacion::cla
         Route::post('/titulos', 'store');
         Route::delete('/titulos/{titulo}', 'destroy');
     });
+    
     //rutas para las validaciones solo accesible por el centro
     Route::controller(ValidacionController::class)->middleware('ability:administrador')->group(function () {
         Route::get('/usuarios/validaciones', 'index');

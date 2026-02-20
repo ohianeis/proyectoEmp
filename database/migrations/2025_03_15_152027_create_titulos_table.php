@@ -19,6 +19,7 @@ return new class extends Migration
             $table->foreign('nivele_id')->references('id')->on('niveles')->onDelete('set null');
             $table->unsignedBigInteger('centro_id')->nullable();
             $table->foreign('centro_id')->references('id')->on('centros')->onDelete('set null');
+            $table->foreignId('familia_id')->constrained('familias')->onDelete('cascade');
             $table->timestamps();
         });
     }

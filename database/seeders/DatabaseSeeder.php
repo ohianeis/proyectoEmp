@@ -42,18 +42,30 @@ class DatabaseSeeder extends Seeder
         $this->call(NivelesSeeder::class);
         $this->call(PorcesosSeeder::class); //poner bien nombre seeder!!!
         $this->call(EstadoCandidatoSeeder::class); //estado de un candidado en un proceso oferta
+        //creacion para ejemplo de familias titulos
+        $familiasData = [
+            ['nombre' => 'Informática y Comunicaciones'],
+            ['nombre' => 'Administración y Gestión'],
+            ['nombre' => 'Sanidad'],
+            ['nombre' => 'Hostelería y Turismo'],
+            ['nombre' => 'Comercio y Marketing']
+        ];
 
+        foreach ($familiasData as $f) {
+            \App\Models\Familia::create($f);
+        }
         //seeder de titulos
         $superior = \App\Models\Nivele::where('nivel', 'Grado Superior')->first()->id;
         $medio = \App\Models\Nivele::where('nivel', 'Grado Medio')->first()->id;
         $basico = \App\Models\Nivele::where('nivel', 'Grado Básico')->first()->id;
-
+        // Obtenemos los IDs de las familias para asignar
+        $fInformática = \App\Models\Familia::where('nombre', 'Informática y Comunicaciones')->first()->id;
+        $fAdmin = \App\Models\Familia::where('nombre', 'Administración y Gestión')->first()->id;
         $titulos = [
-            ['nombre' => 'Desarrollo de Aplicaciones Web', 'nivel' => $superior],
-            ['nombre' => 'Desarrollo de Aplicaciones Multiplataforma', 'nivel' => $superior],
-            ['nombre' => 'Sistemas Microinformáticos y Redes', 'nivel' => $medio],
-            ['nombre' => 'Administración y Finanzas', 'nivel' => $superior],
-            ['nombre' => 'Profesional básico en Informática de Oficina', 'nivel' => $basico]
+            ['nombre' => 'Desarrollo de Aplicaciones Web', 'nivel' => $superior, 'familia' => $fInformática],
+            ['nombre' => 'Desarrollo de Aplicaciones Multiplataforma', 'nivel' => $superior, 'familia' => $fInformática],
+            ['nombre' => 'Sistemas Microinformáticos y Redes', 'nivel' => $medio, 'familia' => $fInformática],
+            ['nombre' => 'Administración y Finanzas', 'nivel' => $superior, 'familia' => $fAdmin],
         ];
 
         foreach ($titulos as $t) {
@@ -61,11 +73,11 @@ class DatabaseSeeder extends Seeder
                 'nombre' => $t['nombre'],
                 'activado' => true,
                 'nivele_id' => $t['nivel'],
-                'centro_id' => 1, // ID de tu centro (CIP Burlada)
+                'familia_id' => $t['familia'],
+                'centro_id' => 1,
             ]);
         }
 
-        //creacion admin
 
 
         //  Crear empresas validadas y sus ofertas

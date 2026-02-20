@@ -466,6 +466,7 @@ class OfertaController extends Controller
                 'motivo_id' => 'exclude',
                 'estado_id' => 'exclude',
                 'empresa_id' => 'exclude',
+                'familia_id' => 'required|integer|exists:familias,id',
                 'titulo' => 'required|array',
                 'titulo.*' => 'integer|exists:titulos,id',
                 'incorporacion' => 'nullable|date',
@@ -473,6 +474,7 @@ class OfertaController extends Controller
             ]);
             $existeOferta = Oferta::where('nombre', $request['nombre'])
                 ->where('tipoContrato', $request['tipoContrato'])
+                ->where('estado_id', 1)
                 ->where('horario', $request['horario'])
                 ->where('nPuestos', $request['nPuestos'])
                 ->where('empresa_id', $empresa)
@@ -861,6 +863,7 @@ class OfertaController extends Controller
             }
 
             $data = $ofertas->map(function ($oferta) use ($misTitulosIds) {
+                $esAnonima = $oferta->esAnonima;
                 // --- logica afinidad por titulos ---
                 $titulosOfertaIds = $oferta->titulos->pluck('id')->toArray();
                 $totalRequeridos = count($titulosOfertaIds);
@@ -875,23 +878,22 @@ class OfertaController extends Controller
                 $estadoCandidato = EstadoCandidato::find($oferta->pivot->estado_candidato_id);
                 // --- LÓGICA DE PRIVACIDAD direccion empresa ---
                 $direccionFiltrada = null;
-                if ($oferta->empresa->direccion) {
+                if ($oferta->empresa->direccion && !$esAnonima) {
                     $dir = $oferta->empresa->direccion;
                     $esVisible = (bool)$dir->visible;
-
                     $direccionFiltrada = [
-                        'linea1'   => $esVisible ? $dir->linea1 : 'Dirección privada',
-                        'linea2'   => $esVisible ? $dir->linea2 : null,
-                        'ciudad'   => $dir->ciudad,
+                        'linea1'    => $esVisible ? $dir->linea1 : 'Dirección privada',
+                        'ciudad'    => $dir->ciudad,
                         'provincia' => $dir->provincia,
-                        'cp'       => $esVisible ? $dir->codigoPostal : null,
-                        'visible'  => $esVisible
+                        'visible'   => $esVisible
                     ];
                 }
 
                 return [
                     'id' => $oferta->id,
                     'nombre' => $oferta->nombre,
+                    'esAnonima'=>$oferta->esAnonima,
+                    'incorporacion'=>$oferta->incorporacion,
                     'observacion' => $oferta->observacion,
                     'tipoContrato' => $oferta->tipoContrato,
                     'horario' => $oferta->horario,
@@ -906,10 +908,12 @@ class OfertaController extends Controller
                     'created_at' => $oferta->created_at,
                     'demandantesInscritos' => $oferta->demandantes_count,
                     'empresa' => [
-                        'id' => $oferta->empresa->id,
-                        'nombre' => $oferta->empresa->nombre,
-                        'descripcion' => $oferta->empresa->descripcion,
-                        'direccion' => $direccionFiltrada // <--- Ahora es seguro
+                        'id'          => $esAnonima ? null : $oferta->empresa->id,
+                        'nombre'      => $esAnonima ? 'Empresa Confidencial' : $oferta->empresa->nombre,
+                        'descripcion' => $esAnonima ? 'La identidad de la empresa es privada para esta oferta.' : $oferta->empresa->descripcion,
+                        'ubicacion'   => $oferta->empresa->localidad ?? $oferta->empresa->ubicacion,
+                        'web'         => $esAnonima ? null : $oferta->empresa->web, // <-- Ocultamos la web también
+                        'direccion'   => $esAnonima ? null : $direccionFiltrada      // <-- Forzamos null si es anónima
                     ],
                     'infoDemandante' => [
                         'fechaInscripcion' => $oferta->pivot->fecha,

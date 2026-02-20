@@ -92,8 +92,8 @@ class TituloController extends Controller
 
         //listar todos los titulos
         try {
-            $titulos = \App\Models\Titulo::with('nivel')
-                ->orderBy('nivele_id')
+            $titulos = \App\Models\Titulo::with(['nivel', 'familia'])
+                ->orderBy('familia_id') // Agrupar por familia queda más ordenado
                 ->get()
                 ->map(function ($titulo) {
                     return [
@@ -101,6 +101,7 @@ class TituloController extends Controller
                         'titulo' => $titulo->nombre,
                         'estado' => $titulo->activado ? 'activo' : 'inactivo',
                         'nivel' => $titulo->nivel->nivel,
+                        'familia' => $titulo->familia->nombre, // <--- NUEVO
                     ];
                 });
 
@@ -109,9 +110,7 @@ class TituloController extends Controller
                 'data' => $titulos
             ], 200);
         } catch (Exception $e) {
-            return response()->json([
-                'message' => $e->getMessage()
-            ], 500);
+            return response()->json(['message' => $e->getMessage()], 500);
         }
     }
     /**
@@ -415,6 +414,7 @@ class TituloController extends Controller
                 $validacion = $request->validate([
                     'nombre' => 'required|string|max:255',
                     'nivel' => 'required|integer|exists:niveles,id', //exista en la tabla niveles el dato
+                    'familia' => 'required|integer|exists:familias,id', //tabla familias profesionales
                     'centro' => 'required|integer|exists:centros,id',
 
                 ]);
@@ -423,11 +423,12 @@ class TituloController extends Controller
                     $nuevoRegistro['nombre'] = strtolower($request['nombre']);
                     $nuevoRegistro['activado'] = 1;
                     $nuevoRegistro['nivele_id'] = $request['nivel'];
+                    $nuevoRegistro['familia_id'] = $request['familia'];
                     $nuevoRegistro['centro_id'] = $request['centro'];
                 }
                 Titulo::create($nuevoRegistro);
                 return response()->json([
-                    'data' => $nuevoRegistro, 
+                    'data' => $nuevoRegistro,
                     'message' => 'Título creado correctamente'
                 ], 201);
             } catch (ValidationException $e) {
@@ -666,9 +667,9 @@ class TituloController extends Controller
                 $titulo->centro_id = $validacion['centro'];
             }
             // Si el request trae el campo 'activado', lo actualizo para poder pasar a activo un titulo inactivo
-        if ($request->has('activado')) {
-            $titulo->activado = $request->activado;
-        }
+            if ($request->has('activado')) {
+                $titulo->activado = $request->activado;
+            }
             $titulo->save();
             return response()->json([
                 'message' => 'Titulo actualizado correctamente',
@@ -778,21 +779,21 @@ class TituloController extends Controller
 
 
         try {
-       // Marcamos como inactivo en cualquier caso
-        $titulo->activado = 0;
-        $titulo->save(); // <--- ¡IMPORTANTE! Sin esto no se guarda en la BD
+            // Marcamos como inactivo en cualquier caso
+            $titulo->activado = 0;
+            $titulo->save(); // <--- ¡IMPORTANTE! Sin esto no se guarda en la BD
 
-        // Comprobamos si tenía relaciones solo para personalizar el mensaje del Toast
-        $tieneRelaciones = $titulo->ofertas()->exists() || $titulo->demandantes()->exists();
-        
-        $message = $tieneRelaciones 
-            ? 'El título tiene historial asociado. Se ha marcado como inactivo para preservar los datos.' 
-            : 'Título marcado como inactivo correctamente.';
+            // Comprobamos si tenía relaciones solo para personalizar el mensaje del Toast
+            $tieneRelaciones = $titulo->ofertas()->exists() || $titulo->demandantes()->exists();
 
-        return response()->json([
-            'data' => $titulo,
-            'message' => $message
-        ], 200);
+            $message = $tieneRelaciones
+                ? 'El título tiene historial asociado. Se ha marcado como inactivo para preservar los datos.'
+                : 'Título marcado como inactivo correctamente.';
+
+            return response()->json([
+                'data' => $titulo,
+                'message' => $message
+            ], 200);
         } catch (Exception $e) {
             return response()->json(['message' => 'Error al procesar el borrado'], 500);
         }
@@ -1146,6 +1147,104 @@ class TituloController extends Controller
             return response()->json([
                 'message' => $e->getMessage()
             ]);
+        }
+    }
+
+    //gestion familiar profesionales
+    /**
+     * Obtener listado de familias profesionales para selectores
+     */
+    public function familias()
+    {
+        try {
+            $familias = \App\Models\Familia::select('id', 'nombre', 'activa')
+                ->orderBy('nombre')
+                ->get();
+
+            return response()->json([
+                'message' => 'Familias recuperadas',
+                'data' => $familias
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json(['errors' => $e->getMessage()], 500);
+        }
+    }
+    /**
+     * Crear una nueva familia profesional
+     */
+    public function storeFamilia(Request $request)
+    {
+        try {
+            $validacion = $request->validate([
+                'nombre' => 'required|string|max:255|unique:familias,nombre',
+            ], [
+                'nombre.unique' => 'Ya existe una familia profesional con ese nombre.'
+            ]);
+
+            $familia = \App\Models\Familia::create([
+                'nombre' => $validacion['nombre'],
+                'activa' => true
+            ]);
+
+            return response()->json([
+                'message' => 'Familia profesional creada con éxito',
+                'data' => $familia
+            ], 201);
+        } catch (ValidationException $e) {
+            return response()->json(['message' => $e->getMessage(), 'errors' => $e->errors()], 422);
+        } catch (Exception $e) {
+            return response()->json(['errors' => 'Error al crear la familia'], 500);
+        }
+    }
+
+    /**
+     * Actualizar una familia existente
+     */
+    public function updateFamilia(Request $request, $id)
+    {
+        try {
+            $familia = \App\Models\Familia::findOrFail($id);
+
+            $validacion = $request->validate([
+                'nombre' => 'sometimes|string|max:255|unique:familias,nombre,' . $id,
+                'activa' => 'sometimes|boolean'
+            ]);
+
+            $familia->update($validacion);
+
+            return response()->json([
+                'message' => 'Familia actualizada correctamente',
+                'data' => $familia
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json(['errors' => 'Error al actualizar la familia'], 500);
+        }
+    }
+
+    /**
+     * Inactivar una familia (Borrado lógico)
+     */
+    public function destroyFamilia($id)
+    {
+        try {
+            $familia = \App\Models\Familia::findOrFail($id);
+
+            // Comprobamos si tiene títulos asociados para dar un mensaje más informativo
+            $tieneTitulos = $familia->titulos()->exists();
+
+            $familia->activa = false;
+            $familia->save();
+
+            $message = $tieneTitulos
+                ? 'La familia tiene títulos asociados. Se ha desactivado para mantener la integridad.'
+                : 'Familia profesional desactivada correctamente.';
+
+            return response()->json([
+                'message' => $message,
+                'data' => $familia
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json(['errors' => 'Error al desactivar la familia'], 500);
         }
     }
 }

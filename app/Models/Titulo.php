@@ -12,6 +12,7 @@ class Titulo extends Model
         'nombre',
         'activado',
         'nivele_id',
+        'familia_id',
         'centro_id',
     ];
     use HasFactory;
@@ -39,5 +40,8 @@ class Titulo extends Model
         public function notificaciones(){
             return $this->morphMany(Notificacione::class,'relacioneable');
         }
+        public function familia() {
+    return $this->belongsTo(Familia::class);
+}
         
 }

@@ -57,6 +57,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\VerificarValidacion::cla
     Route::get('/perfil/situaciones', [PerfilController::class, 'listarSituaciones'])->middleware('ability:demandante');
 
 
+    Route::get('/titulos/familias', [TituloController::class, 'familias'])->middleware(['ability:administrador,demandante,empresa']); //pueden acceder los tres roles
 
     Route::get('/titulos/activos', [TituloController::class, 'titulosActivos'])->middleware(['ability:administrador,demandante,empresa']); //pueden acceder los tres roles
     Route::post('/titulos/demandante', [TituloController::class, 'agregarTitulos'])->middleware(['ability:demandante']); //pueden acceder solo los demandantes
@@ -69,19 +70,23 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\VerificarValidacion::cla
         Route::get('/titulos', 'index');
         Route::get('/titulos/{titulo}', 'show');
         Route::get('/titulos/niveles/listado', 'nivel');
+        //para administrar familias
 
+        Route::post('titulos/familias', 'storeFamilia');
+        Route::patch('titulos/familias/{id}', 'updateFamilia');
+        Route::delete('titulos/familias/{id}', 'destroyFamilia');
+        //administrar titulos
         Route::patch('/titulos/{titulo}', 'update');
         Route::post('/titulos', 'store');
         Route::delete('/titulos/{titulo}', 'destroy');
     });
-    
+
     //rutas para las validaciones solo accesible por el centro
     Route::controller(ValidacionController::class)->middleware('ability:administrador')->group(function () {
         Route::get('/usuarios/validaciones', 'index');
-         Route::get('/usuarios/validaciones/pendientes', 'getPendientesCount');
+        Route::get('/usuarios/validaciones/pendientes', 'getPendientesCount');
         Route::patch('/usuarios/validaciones/{user}', 'update');
         Route::delete('/usuarios/validaciones/{user}', 'destroy');
-       
     });
     //rutas para informes accesible por el centro
     Route::controller(InformeController::class)->middleware('ability:administrador')->group(function () {

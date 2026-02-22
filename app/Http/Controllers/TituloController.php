@@ -510,20 +510,26 @@ class TituloController extends Controller
      * )
      * )
      */
-    public function titulosActivos()
-    {
-        try {
-            $titulos = Titulo::select('id', 'nombre')->where('activado', 1)->orderBy('nombre')->get();
-            return response()->json([
-                'message' => 'Datos obtenidos correctamente',
-                'data' => $titulos
-            ], 200);
-        } catch (Exception $e) {
-            return response()->json([
-                'message' => $e->getMessage()
-            ], 500);
-        }
+ public function titulosActivos()
+{
+    try {
+        // Añadimos familia_id y nivele_id al select
+     $titulos = Titulo::with(['nivel:id,nivel']) // Trae solo id y nombre del nivel relacionado
+            ->select('id', 'nombre', 'familia_id', 'nivele_id')
+            ->where('activado', 1)
+            ->orderBy('nombre')
+            ->get();
+
+        return response()->json([
+            'message' => 'Datos obtenidos correctamente',
+            'data' => $titulos
+        ], 200);
+    } catch (Exception $e) {
+        return response()->json([
+            'message' => $e->getMessage()
+        ], 500);
     }
+}
 
 
     /**
@@ -1027,6 +1033,7 @@ class TituloController extends Controller
             $misTitulos = $demandante->titulos->map(function ($titulo) {
                 return [
                     'id' => $titulo->pivot->id, // <--- Este ID es vital para el DELETE
+                    'titulo_id' => $titulo->id,//id real del titulo para el filtrado en front
                     'nombre' => $titulo->nombre,
                     'año' => $titulo->pivot->año,
                     'centro' => $titulo->pivot->centro,

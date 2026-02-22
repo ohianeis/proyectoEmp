@@ -108,67 +108,56 @@ class OfertaController extends Controller
 
             if ($user->role_id == 2) {
                 //datos para empresa
-                $ofertas = Oferta::select(
-                    'id',
-                    'nombre',
-                    'tipoContrato',
-                    'horario',
-                    'nPuestos',
-                    'estado_id',
-                    'esAnonima',
-                    'created_at'
-                )
+                $ofertasDatos = Oferta::with(['familia']) // Traemos la familia para la tarjeta
+                    ->withCount('demandantes')      // Necesario para "X personas inscritas"
                     ->where('empresa_id', $queUsuario->id)
                     ->orderBy('created_at', 'desc')
                     ->get();
 
-                $ofertas->transform(function ($oferta) {
-                    $oferta->estado_id = ($oferta->estado_id == 1) ? 'Abierta' : 'Cerrada';
-                    return $oferta;
+                $ofertas = $ofertasDatos->map(function ($oferta) {
+                    return [
+                        'id' => $oferta->id,
+                        'nombre' => $oferta->nombre,
+                        'familia' => $oferta->familia->nombre ?? 'Perfil General',
+                        'tipoContrato' => $oferta->tipoContrato,
+                        'horario' => $oferta->horario,
+                        'estado_id' => ($oferta->estado_id == 1) ? 'Abierta' : 'Cerrada',
+                        'esAnonima' => (bool)$oferta->esAnonima,
+                        'demandantesInscritos' => $oferta->demandantes_count,
+                        'created_at' => $oferta->created_at
+                    ];
                 });
             } else if ($user->role_id == 3) {
                 // datos enviar perfil alumno
 
                 $misTitulosIds = $queUsuario->titulos->pluck('id')->toArray();
+                $misFamiliasIds = $queUsuario->titulos->pluck('familia_id')->unique()->toArray(); //familias que pertenecena sus ttulos
 
-                $ofertas = Oferta::whereHas('titulos', function ($query) use ($misTitulosIds) {
-                    $query->whereIn('titulo_id', $misTitulosIds);
-                })
-                    ->whereDoesntHave('demandantes', function ($query) use ($queUsuario) {
-                        $query->where('demandante_id', $queUsuario->id);
+                $ofertas = Oferta::with(['familia', 'empresa'])
+                    ->where('estado_id', 1)
+                    ->whereDoesntHave('demandantes', fn($q) => $q->where('demandante_id', $queUsuario->id))
+                    ->where(function ($query) use ($misTitulosIds, $misFamiliasIds) {
+                        $query->whereHas('titulos', fn($q) => $q->whereIn('titulos.id', $misTitulosIds))
+                            ->orWhere(fn($q) => $q->whereIn('familia_id', $misFamiliasIds)->whereDoesntHave('titulos'));
                     })
-                    ->join('empresas', 'ofertas.empresa_id', '=', 'empresas.id')
-                    ->where('ofertas.estado_id', 1)
-                    ->select(
-                        'ofertas.id',
-                        'ofertas.nombre',
-                        'ofertas.tipoContrato',
-                        'ofertas.horario',
-                        'ofertas.nPuestos',
-                        'empresas.nombre as empresa_nombre',
-                        'ofertas.created_at',
-                        'ofertas.esAnonima'
-                    )
-                    ->withCount('demandantes')
-                    ->with('titulos:id,nombre') // Traemos id y nombre para los tags rápidos
-                    ->orderBy('ofertas.created_at', 'desc')
-                    ->get();
+                    ->orderBy('created_at', 'desc')
+                    ->get()
+                    ->map(function ($oferta) use ($misTitulosIds) {
+                        $titulosOferta = $oferta->titulos()->pluck('titulos.id');
+                        $match = ($titulosOferta->count() > 0)
+                            ? round(($titulosOferta->intersect($misTitulosIds)->count() / $titulosOferta->count()) * 100)
+                            : 100;
 
-                $ofertas->each(function ($oferta) use ($misTitulosIds) {
-                    // Lógica de Anonimato en el listado si empresa no quiere mostrar nada de ella
-                    if ($oferta->esAnonima) {
-                        $oferta->empresa_nombre = "Anónima";
-                    }
-                    $titulosOfertaIds = $oferta->titulos->pluck('id')->toArray();
-                    $total = count($titulosOfertaIds);
-
-                    $oferta->matchAfinidad = ($total > 0)
-                        ? round((count(array_intersect($misTitulosIds, $titulosOfertaIds)) / $total) * 100)
-                        : 100;
-
-                    // limpiar  el pivot de los títulos que enviamos
-                    $oferta->titulos->makeHidden('pivot');
-                });
+                        return [
+                            'id' => $oferta->id,
+                            'nombre' => $oferta->nombre,
+                            'empresa_nombre' => $oferta->esAnonima ? "Empresa Confidencial" : $oferta->empresa->nombre,
+                            'familia' => $oferta->familia->nombre,
+                            'matchAfinidad' => $match,
+                            'created_at' => $oferta->created_at, // Formateo de fecha opcional
+                            'esAnonima' => (bool)$oferta->esAnonima
+                        ];
+                    });
             }
 
             return response()->json([
@@ -260,7 +249,7 @@ class OfertaController extends Controller
             $queUsuario = ($user->role_id == 2) ? $user->empresa : $user->demandante;
 
             // Cargar todo 
-            $ofertaInfo = Oferta::with(['empresa.direccion', 'titulos.nivel', 'motivo', 'estado'])
+            $ofertaInfo = Oferta::with(['empresa.direccion', 'titulos.nivel', 'motivo', 'estado', 'familia'])
                 ->findOrFail($oferta->id);
 
             // para control match e inscrito
@@ -272,19 +261,26 @@ class OfertaController extends Controller
 
                 $misTitulosIds = $queUsuario->titulos->pluck('id')->toArray();
 
-                // ver si tiene el titulo que necesita la oferta, seguridad
-                $cumple = $ofertaInfo->titulos->pluck('id')->intersect($misTitulosIds)->isNotEmpty();
-                if (!$cumple) {
-                    return response()->json(['message' => 'No cumples los requisitos.'], 409);
+                $titulosOfertaIds = $ofertaInfo->titulos->pluck('id');
+
+                if ($titulosOfertaIds->isNotEmpty()) {
+                    $cumple = $titulosOfertaIds->intersect($misTitulosIds)->isNotEmpty();
+                } else {
+                    // Si es perfil general, comprobamos que el alumno tenga algún título de esa familia
+                    $cumple = $queUsuario->titulos()
+                        ->where('familia_id', $ofertaInfo->familia_id)
+                        ->exists();
                 }
 
-                // Cálculo de Match con los titulos que tiene y los que pide oferta para front
-                $titulosReqIds = $ofertaInfo->titulos->pluck('id')->toArray();
-                $match = count($titulosReqIds) > 0
-                    ? round((count(array_intersect($misTitulosIds, $titulosReqIds)) / count($titulosReqIds)) * 100)
-                    : 100;
+                if (!$cumple) {
+                    return response()->json(['message' => 'No cumples los requisitos para esta rama profesional.'], 409);
+                }
 
-                // Ver inscripción
+                // Cálculo de Match
+                $match = $titulosOfertaIds->count() > 0
+                    ? round((count(array_intersect($misTitulosIds, $titulosOfertaIds->toArray())) / $titulosOfertaIds->count()) * 100)
+                    : 100; // Si es perfil general de su familia, match es 100%
+
                 $registro = $ofertaInfo->demandantes()->where('demandante_id', $queUsuario->id)->first();
                 $inscrito = !is_null($registro);
             }
@@ -293,6 +289,7 @@ class OfertaController extends Controller
             $response = [
                 'id'           => $ofertaInfo->id,
                 'nombre'       => $ofertaInfo->nombre,
+                'familia'       => $ofertaInfo->familia->nombre,
                 'incorporacion' => $ofertaInfo->incorporacion,
                 'esAnonima'   => $ofertaInfo->esAnonima,
                 'observacion'  => $ofertaInfo->observacion,
@@ -466,8 +463,8 @@ class OfertaController extends Controller
                 'motivo_id' => 'exclude',
                 'estado_id' => 'exclude',
                 'empresa_id' => 'exclude',
-                'familia_id' => 'required|integer|exists:familias,id',
-                'titulo' => 'required|array',
+                'familia_id'    => 'required|integer|exists:familias,id',
+                'titulo'        => 'nullable|array',
                 'titulo.*' => 'integer|exists:titulos,id',
                 'incorporacion' => 'nullable|date',
                 'esAnonima' => 'nullable|boolean'
@@ -494,16 +491,19 @@ class OfertaController extends Controller
             $oferta->empresa_id = $empresa;
             $oferta->incorporacion = $request->incorporacion;
             $oferta->esAnonima = $request->esAnonima ?? false;
-
+            $oferta->familia_id = $request->familia_id;
             $oferta->save();
-            $oferta->titulos()->attach($request['titulo']);
+            //se controla si hay titulos ya que ahora no es obligatorio si la oferta se crea por familia
+            if ($request->has('titulo') && is_array($request->titulo)) {
+                $oferta->titulos()->attach($request->titulo);
+            }
             return response()->json([
                 'message' => 'oferta creada correctamente'
             ], 201);
         } catch (ValidationException $e) {
             return response()->json([
                 $e->errors()
-            ], 403);
+            ], 422);
         } catch (Exception $e) {
             return response()->json([
                 'message' => $e->getMessage()
@@ -596,60 +596,68 @@ class OfertaController extends Controller
     {
         try {
             $demandante = Auth::user()->demandante;
-            if ($oferta->estado_id == 1) {
+            if ($oferta->estado_id != 1) {
+                return response()->json(['message' => 'La oferta ya no está activa'], 422);
+            }
 
-                //vuelvo a verificar que tiene los titulos requeridos a la oferta
-                $tituloValido = Oferta::where('id', $oferta->id)
-                    ->whereHas('titulos', function ($query) use ($demandante) {
-                        $query->whereIn('titulos.id', $demandante->titulos->pluck('id'));
-                    })->exists();
-                if (!$tituloValido) {
-                    return response()->json([
-                        'message' => 'No tienes el titulo que requiere la oferta'
-                    ], 422);
+            // OBTENER LOS IDS DE LOS TÍTULOS Y LAS FAMILIAS DEL ALUMNO
+            $misTitulosIds = $demandante->titulos->pluck('id')->toArray();
+            $misFamiliasIds = $demandante->titulos->pluck('familia_id')->unique()->toArray();
+
+            // titulos o familia
+            // Buscamos si la oferta actual cumple alguna de las dos condiciones
+            $esValidaParaMi = Oferta::where('id', $oferta->id)
+                ->where(function ($query) use ($misTitulosIds, $misFamiliasIds) {
+                    $query->whereHas('titulos', function ($q) use ($misTitulosIds) {
+                        // Caso A: La oferta pide títulos específicos y yo tengo alguno
+                        $q->whereIn('titulos.id', $misTitulosIds);
+                    })
+                        ->orWhere(function ($q) use ($misFamiliasIds) {
+                            //  La oferta NO tiene títulos específicos pero  de la familia titulos
+                            $q->whereIn('familia_id', $misFamiliasIds)
+                                ->whereDoesntHave('titulos');
+                        });
+                })->exists();
+
+            if (!$esValidaParaMi) {
+                return response()->json([
+                    'message' => 'Tu perfil profesional no encaja con los requisitos de esta oferta'
+                ], 422);
+            }
+            $yaInscrito = $demandante->ofertas()->where('oferta_id', $oferta->id)->first();
+
+            if ($yaInscrito) {
+                $estadoActual = $yaInscrito->pivot->estado_candidato_id;
+
+                // Ya está inscrito activamente
+                if ($estadoActual != 8) {
+                    return response()->json(['message' => 'Ya estás inscrito en esta oferta'], 422);
                 }
 
-                /*  $inscripcion=DemandanteOferta::create([
-                        'fecha'=>now(),
-                        'proceso_id'=>1,
-                        'demandante_id'=>$demandante,
-                        'oferta_id'=>$oferta->id
-                    ]);*/
-                $yaInscrito = $demandante->ofertas()->where('oferta_id', $oferta->id)->first();
-
-                if ($yaInscrito) {
-                    $estadoActual = $yaInscrito->pivot->estado_candidato_id;
-
-                    // CASO A: Ya está inscrito activamente
-                    if ($estadoActual != 8) {
-                        return response()->json(['message' => 'Ya estás inscrito en esta oferta'], 422);
-                    }
-
-                    // CASO B: Estaba RETIRADA (8) -> REACTIVAMOS
-                    $demandante->ofertas()->updateExistingPivot($oferta->id, [
-                        'fecha' => now(),
-                        'estado_candidato_id' => 1, // Volvemos a 'Inscrito'
-                        'revisado' => false,         // Para que a la empresa le salga como NUEVO
-                        'proceso_id' => 1            // Reset de proceso si fuera necesario
-                    ]);
-
-                    return response()->json([
-                        'message' => 'Candidatura reactivada correctamente'
-                    ], 200);
-                }
-
-                // 4. SI NO EXISTE REGISTRO PREVIO -> INSERTAMOS (Attach)
-                $demandante->ofertas()->attach($oferta->id, [
+                // Estaba RETIRADA (8) -> REACTIVAMOS
+                $demandante->ofertas()->updateExistingPivot($oferta->id, [
                     'fecha' => now(),
-                    'proceso_id' => 1,
-                    'estado_candidato_id' => 1,
-                    'revisado' => false
+                    'estado_candidato_id' => 1, // Volvemos a 'Inscrito'
+                    'revisado' => false,         // Para que a la empresa le salga como NUEVO
+                    'proceso_id' => 1            // Reset de proceso si fuera necesario
                 ]);
 
                 return response()->json([
-                    'message' => 'Te has inscrito correctamente a la oferta'
-                ], 201);
+                    'message' => 'Candidatura reactivada correctamente'
+                ], 200);
             }
+
+            // SI NO EXISTE REGISTRO PREVIO -> INSERTAMOS (Attach)
+            $demandante->ofertas()->attach($oferta->id, [
+                'fecha' => now(),
+                'proceso_id' => 1,
+                'estado_candidato_id' => 1,
+                'revisado' => false
+            ]);
+
+            return response()->json([
+                'message' => 'Te has inscrito correctamente a la oferta'
+            ], 201);
         } catch (Exception $e) {
             return response()->json([
                 'message' => $e->getMessage()
@@ -862,16 +870,23 @@ class OfertaController extends Controller
                 ], 200);
             }
 
-            $data = $ofertas->map(function ($oferta) use ($misTitulosIds) {
+            $data = $ofertas->map(function ($oferta) use ($misTitulosIds, $demandante) {
                 $esAnonima = $oferta->esAnonima;
                 // --- logica afinidad por titulos ---
                 $titulosOfertaIds = $oferta->titulos->pluck('id')->toArray();
                 $totalRequeridos = count($titulosOfertaIds);
                 $porcentajeMatch = 100;
-
                 if ($totalRequeridos > 0) {
+                    // Match por títulos específicos
                     $coincidencias = array_intersect($misTitulosIds, $titulosOfertaIds);
                     $porcentajeMatch = round((count($coincidencias) / $totalRequeridos) * 100);
+                } else {
+                    // Match por Familia (Perfil General)
+                    // Comprobamos si el alumno tiene algún título de la familia de la oferta
+                    $perteneceAFamilia = $demandante->titulos()
+                        ->where('familia_id', $oferta->familia_id)
+                        ->exists();
+                    $porcentajeMatch = $perteneceAFamilia ? 100 : 0;
                 }
                 $proceso = \App\Models\Proceso::find($oferta->pivot->proceso_id);
                 // en que estado se encuentra el candidato dentro del proceso, visto, entrevista...
@@ -892,8 +907,10 @@ class OfertaController extends Controller
                 return [
                     'id' => $oferta->id,
                     'nombre' => $oferta->nombre,
-                    'esAnonima'=>$oferta->esAnonima,
-                    'incorporacion'=>$oferta->incorporacion,
+                    'estado' => $oferta->estado_id == 1 ? 'abierta' : 'cerrada',
+                    'familia' => $oferta->familia->nombre,
+                    'esAnonima' => $oferta->esAnonima,
+                    'incorporacion' => $oferta->incorporacion,
                     'observacion' => $oferta->observacion,
                     'tipoContrato' => $oferta->tipoContrato,
                     'horario' => $oferta->horario,
@@ -1142,13 +1159,23 @@ class OfertaController extends Controller
         try {
 
             //  Verificar si el demandante tiene títulos requeridos por la oferta
-            $tieneTitulo = $demandante->titulos()
-                ->whereIn('titulos.id', $oferta->titulos->pluck('id'))
-                ->exists();
+            $titulosOfertaIds = $oferta->titulos->pluck('id');
 
-            if (!$tieneTitulo) {
+            if ($titulosOfertaIds->isNotEmpty()) {
+                // La oferta tiene títulos específicos
+                $cumpleRequisito = $demandante->titulos()
+                    ->whereIn('titulos.id', $titulosOfertaIds)
+                    ->exists();
+            } else {
+                //la oferrta es por familia solo
+                $cumpleRequisito = $demandante->titulos()
+                    ->where('familia_id', $oferta->familia_id)
+                    ->exists();
+            }
+
+            if (!$cumpleRequisito) {
                 return response()->json([
-                    'message' => 'Acceso denegado: Este candidato no tiene la titulación requerida para esta oferta.'
+                    'message' => 'Acceso denegado: El perfil no coincide con la rama profesional de la oferta.'
                 ], 403);
             }
 
@@ -1288,21 +1315,34 @@ class OfertaController extends Controller
     public function candidatosNoInscritos(Oferta $oferta)
     {
         try {
-            $candidatos = Demandante::whereHas('titulos', function ($query) use ($oferta) {
-                $query->whereIn('titulos.id', $oferta->titulos->pluck('id'));
-            })->whereDoesntHave('ofertas', function ($query) use ($oferta) {
-                $query->where('ofertas.id', $oferta->id);
-            })->get();
+            $titulosOfertaIds = $oferta->titulos->pluck('id');
+            $query = Demandante::query();
+            //si la ofertas tiene titulos
+            if ($titulosOfertaIds->isNotEmpty()) {
+                $query->whereHas('titulos', function ($q) use ($titulosOfertaIds) {
+                    $q->whereIn('titulos.id', $titulosOfertaIds);
+                });
+                //si la oferta es por familia y sin titulos
+            } else {
+                $query->whereHas('titulos', function ($q) use ($oferta) {
+                    $q->where('familia_id', $oferta->familia_id);
+                });
+            }
 
+            $query->whereDoesntHave('ofertas', function ($q) use ($oferta) {
+                $q->where('ofertas.id', $oferta->id);
+            });
+
+
+            $candidatos = $query->select('id', 'nombre')
+                ->get();
 
             return response()->json([
-                'message' => 'Candidatos sugueridos cargados correctamente',
+                'message' => 'Candidatos sugeridos cargados correctamente',
                 'data' => $candidatos
             ], 200);
         } catch (Exception $e) {
-            return response()->json([
-                'message' => $e->getMessage()
-            ], 500);
+            return response()->json(['message' => $e->getMessage()], 500);
         }
     }
     /**
@@ -1400,21 +1440,32 @@ class OfertaController extends Controller
             //  Obtener los títulos requeridos para la oferta
             $titulosRequeridos = $oferta->titulos()->pluck('titulo_id');
 
-            //  Verificar si el demandante tiene alguno de esos títulos
-            $tieneTitulo = $demandante->titulos()->whereIn('titulo_id', $titulosRequeridos)->exists();
-
-            if (!$tieneTitulo) {
-                return response()->json([
-                    'message' => 'Este candidato no tiene ninguno de los títulos requeridos para esta oferta.'
-                ], 403);
+            if ($titulosRequeridos->isNotEmpty()) {
+                // la oferta tiene titulos
+                $tieneRequisito = $demandante->titulos()
+                    ->whereIn('titulos.id', $titulosRequeridos)
+                    ->exists();
+                $errorMsg = 'Este candidato no tiene ninguno de los títulos requeridos.';
+            } else {
+                // la oferta es solo por familia
+                // ver si el alumno tiene CUALQUIER título que pertenezca a la familia de la oferta
+                $tieneRequisito = $demandante->titulos()
+                    ->where('familia_id', $oferta->familia_id)
+                    ->exists();
+                $errorMsg = 'Este candidato no pertenece a la familia profesional de la oferta: ' . ($oferta->familia->nombre ?? 'N/A');
             }
+
+            if (!$tieneRequisito) {
+                return response()->json(['message' => $errorMsg], 403);
+            }
+
+            // 3. Inscripción (Attach)
             $demandante->ofertas()->attach($oferta->id, [
                 'fecha' => now(),
-                'proceso_id' => 1,
-                'estado_candidato_id' => 2,
-                'revisado' => true
+                'proceso_id' => 1,           // Estado inicial del proceso
+                'estado_candidato_id' => 2,  // Estado del candidato (ej: "Enviado por centro")
+                'revisado' => true           // Marcamos como revisado ya que lo añade la empresa/gestor
             ]);
-
             return response()->json([
                 'message' => 'Candidato añadido correctamente a la oferta',
             ], 201);
@@ -1509,7 +1560,7 @@ class OfertaController extends Controller
             foreach ($demandantes as $demandante) {
                 // Actualizar el proceso_id en la tabla demandante_oferta
                 $oferta->demandantes()->updateExistingPivot($demandante->id, [
-                    'proceso_id' => 2 // Asumiendo que el ID 3 corresponde al estado 'cerrada'
+                    'proceso_id' => 2 // ID 3 corresponde al estado 'cerrada'
                 ]);
             }
 

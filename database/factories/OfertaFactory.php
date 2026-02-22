@@ -25,6 +25,7 @@ class OfertaFactory extends Factory
         'nPuestos' => $this->faker->numberBetween(1, 3),
         'estado_id' => 1, // Por defecto "Abierta"
         'motivo_id' => null, // Normalmente nulo si está abierta
+        'familia_id' => \App\Models\Familia::inRandomOrder()->first()->id ?? 1,//eligue una al azar de la tabla familias si no esta ese id pone 1
         'incorporacion'=>$this->faker->optional(0.8)->dateTimeBetween('+1 week', '+1 month'),
         'esAnonima' => $this->faker->boolean(20), // 20% de probabilidad de ser anónima para probar ambos casos
     ];

@@ -11,27 +11,28 @@ class Oferta extends Model
 {
     use HasFactory;
     //
-    protected $fillable=[
+    protected $fillable = [
         'nombre',
         'observacion',
         'tipoContrato',
         'horario',
-
+        'familia_id',
         'nPuestos',
+        'familia_id',
         'incorporacion',
         'esAnonima'
 
     ];
-    protected $guarded=[
+    protected $guarded = [
         'fechaCierre',
         'motivo_id',
         'estado_id',
         'empresa_id'
     ];
     protected $casts = [
-    'esAnonima' => 'boolean'
-   
-];
+        'esAnonima' => 'boolean'
+
+    ];
     //protected $hidden = ['pivot'];
 
     protected function createdAt(): Attribute
@@ -52,43 +53,57 @@ class Oferta extends Model
             }
         );
     }
- protected function fechaCierre(): Attribute
-{
-    return Attribute::make(
-        get: fn ($value) => $value ? \Carbon\Carbon::parse($value)->format('d/m/Y') : null
-    );
-}
-protected function incorporacion():Attribute{
-    return Attribute::make(
-        get:fn($value)=> $value ? \Carbon\Carbon::parse($value)->format('d/m/Y') : null
-    );
-}
+    protected function fechaCierre(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => $value ? \Carbon\Carbon::parse($value)->format('d/m/Y') : null
+        );
+    }
+    protected function incorporacion(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => $value ? \Carbon\Carbon::parse($value)->format('d/m/Y') : null
+        );
+    }
     //relacion 1:muchos desde ofeerta recupera estado usamos metodo find porque buscamos por un id, le paso el id de estado_id y me da el id de la tabla estados
 
     //relacion uno a muchos inversa, una oferta tiene un estado -->belongsTo
-    public function estado(){
+    public function estado()
+    {
         return $this->belongsTo(Estado::class);
     }
-    public function motivo(){
+    public function motivo()
+    {
         return $this->belongsTo(Motivo::class);
     }
     //relacion muchos a muchos
-    public function demandantes(){
+    public function demandantes()
+    {
         return $this->belongsToMany(Demandante::class)
-        ->withPivot('fecha','proceso_id','revisado','estado_candidato_id','notas_reclutador')
-        ->withTimestamps();
+            ->withPivot('fecha', 'proceso_id', 'revisado', 'estado_candidato_id', 'notas_reclutador')
+            ->withTimestamps();
         //->using(DemandanteOferta::class);
     }
     //muchos a muchos
-    public function titulos(){
+    public function titulos()
+    {
         return $this->belongsToMany(Titulo::class)
-                    ->withTimestamps();
+            ->withTimestamps();
     }
-    public function empresa(){
+    public function empresa()
+    {
         return $this->belongsTo(Empresa::class);
     }
- //reacion 1 a mcuhos polimorfica
-     public function notificaciones(){
-        return $this->morphMany(Notificacione::class,'relacioneable');
+    //reacion 1 a mcuhos polimorfica
+    public function notificaciones()
+    {
+        return $this->morphMany(Notificacione::class, 'relacioneable');
     }
+
+
+public function familia()
+{
+
+    return $this->belongsTo(Familia::class, 'familia_id');
+}
 }

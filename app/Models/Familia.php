@@ -14,4 +14,9 @@ class Familia extends Model
  public function titulos() {
     return $this->hasMany(Titulo::class);
 }
+public function ofertas()
+{
+  
+    return $this->hasMany(Oferta::class, 'familia_id');
+}
 }

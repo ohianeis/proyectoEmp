@@ -43,6 +43,7 @@ class DatabaseSeeder extends Seeder
         $this->call(NivelesSeeder::class);
         $this->call(PorcesosSeeder::class); //poner bien nombre seeder!!!
         $this->call(EstadoCandidatoSeeder::class); //estado de un candidado en un proceso oferta
+        $this->call(MotivoBajaSeeder::class);//motivos de baja seeder creado
         //creacion para ejemplo de familias titulos
         $familiasData = [
             ['nombre' => 'Informática y Comunicaciones'],

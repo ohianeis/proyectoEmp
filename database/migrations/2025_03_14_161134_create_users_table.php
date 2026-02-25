@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\UserEstado;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -18,6 +19,7 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->boolean('validado');
+            $table->string('status')->default(UserEstado::PENDIENTE_VALIDACION->value);
             $table->unsignedBigInteger('role_id')->nullable();
             $table->foreign('role_id')->references('id')->on('roles')->onDelete('set null');
             $table->rememberToken();

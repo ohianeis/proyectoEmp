@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\UserEstado;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -41,9 +42,20 @@ class UserFactory extends Factory
         'email' => $email,
         'password' => bcrypt('prueba'),
         'validado' => $this->faker->boolean(80),
+        'status' => UserEstado::PENDIENTE_VALIDACION,
         'role_id' => 3, 
     ];
 }
+/**
+     * Estado para usuarios ya validados
+     */
+    public function activo(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'validado' => true,
+            'status' => UserEstado::ACTIVO,
+        ]);
+    }
 
     /**
      * Indicate that the model's email address should be unverified.

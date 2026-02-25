@@ -217,6 +217,7 @@ class ValidacionController extends Controller
 
                 $centro = Auth::user()->id;
                 $user->validado = true;
+                $user->status = \App\Enums\UserEstado::ACTIVO;
                 $user->save();
 
                 if ($user->role_id == 2) {

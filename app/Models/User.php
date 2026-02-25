@@ -4,7 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
-
+use App\Enums\UserEstado;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -28,7 +28,10 @@ class User extends Authenticatable
         'validado',
         'role_id'
     ];
-
+    //casting de enums
+    protected $casts = [
+    'status' => UserEstado::class,
+];
     /**
      * The attributes that should be hidden for serialization.
      *

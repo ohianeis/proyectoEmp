@@ -1,7 +1,7 @@
 <?php
 
 namespace Database\Seeders;
-
+use App\Enums\UserEstado;
 use App\Models\Demandante;
 use App\Models\Empresa;
 use App\Models\Notificacione;
@@ -36,6 +36,7 @@ class DatabaseSeeder extends Seeder
             'password' => bcrypt('administrador'), // uso admin para diferenciar del resto
             'role_id' => 1,
             'validado' => 1,
+            'status' => \App\Enums\UserEstado::ACTIVO,
         ]);
         $this->call(CentroSeeder::class);
         $this->call(SituacionSeeder::class);
@@ -81,7 +82,7 @@ class DatabaseSeeder extends Seeder
 
 
         //  Crear empresas validadas y sus ofertas
-        User::factory(5)->create(['role_id' => 2, 'validado' => 1])->each(function ($user) {
+        User::factory(5)->create(['role_id' => 2, 'validado' => 1,'status' => \App\Enums\UserEstado::ACTIVO])->each(function ($user) {
             // A cada usuario le creamos su perfil de empresa
             $empresa = $user->empresa()->create(
                 \App\Models\Empresa::factory()->make()->toArray()
@@ -106,7 +107,8 @@ class DatabaseSeeder extends Seeder
         //crear factory con 5 alumos validados
         User::factory(5)->create([
             'role_id' => 3,
-            'validado' => 1
+            'validado' => 1,
+            'status' => \App\Enums\UserEstado::ACTIVO
         ])->each(function ($user) {
             // Creamos el perfil de demandante
             $demandante = $user->demandante()->create(

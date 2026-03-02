@@ -42,7 +42,10 @@ class UserFactory extends Factory
         'email' => $email,
         'password' => bcrypt('prueba'),
         'validado' => $this->faker->boolean(80),
-        'status' => UserEstado::PENDIENTE_VALIDACION,
+        'motivo_baja_id' => null,
+        'comentario_baja' => null,
+        'fecha_baja' => null,
+        'status' => UserEstado::PENDIENTE_VALIDACION->value,
         'role_id' => 3, 
     ];
 }
@@ -53,7 +56,7 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'validado' => true,
-            'status' => UserEstado::ACTIVO,
+            'status' => UserEstado::ACTIVO->value,
         ]);
     }
 

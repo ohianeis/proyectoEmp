@@ -135,6 +135,10 @@ class OfertaController extends Controller
 
                 $ofertas = Oferta::with(['familia', 'empresa'])
                     ->where('estado_id', 1)
+                    ->whereHas('empresa.user', function ($q) {
+                        $q->where('status', \App\Enums\UserEstado::ACTIVO->value)
+                            ->where('validado', true);
+                    })
                     ->whereDoesntHave('demandantes', fn($q) => $q->where('demandante_id', $queUsuario->id))
                     ->where(function ($query) use ($misTitulosIds, $misFamiliasIds) {
                         $query->whereHas('titulos', fn($q) => $q->whereIn('titulos.id', $misTitulosIds))
@@ -303,7 +307,12 @@ class OfertaController extends Controller
                     'nombre' => $t->nombre,
                     'nivel'  => $t->nivel->nivel ?? 'Sin nivel'
                 ]),
-                'demandantesInscritos' => $ofertaInfo->demandantes()->count(),
+                //controlo que el candidato este activo y validado por si se inscribio y luego se dio de baja, 
+                'demandantesInscritos' => $ofertaInfo->demandantes()
+                    ->whereHas('user', function ($q) {
+                        $q->where('status', \App\Enums\UserEstado::ACTIVO->value)
+                            ->where('validado', true);
+                    })->count(),
                 'created_at' => $ofertaInfo->created_at
             ];
 
@@ -1025,6 +1034,14 @@ class OfertaController extends Controller
     {
         try {
             $candidatos = $oferta->demandantes()
+                //alumno sea activo y validado o estado oferta 3 que es adjudicada
+                ->where(function ($query) {
+                    $query->whereHas('user', function ($q) {
+                        $q->where('status', \App\Enums\UserEstado::ACTIVO->value)
+                            ->where('validado', true);
+                    })
+                        ->orWhere('demandante_oferta.proceso_id', 3);
+                })
                 ->select('demandantes.id', 'demandantes.nombre', 'demandantes.telefono', 'demandantes.experienciaLaboral',  'demandantes.created_at as alta')
                 ->withPivot('fecha', 'revisado', 'estado_candidato_id') //  Accede a fecha de inscripción
                 ->orderBy('fecha', 'asc') //  Ordena por fecha  la relación sin duplicados
@@ -1158,6 +1175,40 @@ class OfertaController extends Controller
     {
         try {
 
+            $user = $demandante->user;
+
+            // 1. Verificamos el seguimiento/pivote primero para saber su estado
+            $seguimiento = $demandante->ofertas()
+                ->where('oferta_id', $oferta->id)
+                ->first();
+
+            if (!$seguimiento) {
+                return response()->json(['message' => 'El candidato no está vinculado a esta oferta.'], 404);
+            }
+
+            /**
+             * LÓGICA DE VISIBILIDAD PARA USUARIOS DADOS DE BAJA
+             */
+            if ($user->status !== \App\Enums\UserEstado::ACTIVO->value || !$user->validado) {
+
+                // Verificamos si el proceso de esta inscripción fue 'adjudicada' (ID 3)
+                $esAdjudicado = ($seguimiento->pivot->proceso_id == 3);
+
+                // Periodo de gracia de 6 meses por si alumno al ser seleccionado se dio de baja
+                $fechaBaja = $user->fecha_baja ? \Carbon\Carbon::parse($user->fecha_baja) : null;
+                $periodoVigente = $fechaBaja && $fechaBaja->addMonths(6)->isFuture();
+
+                // Si NO se le adjudicó la plaza O ya pasó el tiempo de gracia, bloqueamos
+                if (!$esAdjudicado || !$periodoVigente) {
+                    return response()->json([
+                        'message' => 'Este perfil ya no está disponible por baja del usuario.'
+                    ], 403);
+                }
+
+                // Si llega aquí es porque fue seleccionado y está en el periodo de 6 meses.
+                // Avisamos a la empresa de que el usuario ya no está activo en el portal.
+                $candidatoYaInactivo = true;
+            }
             //  Verificar si el demandante tiene títulos requeridos por la oferta
             $titulosOfertaIds = $oferta->titulos->pluck('id');
 
@@ -1234,7 +1285,7 @@ class OfertaController extends Controller
                 unset($candidato->user_id);
 
 
-
+                $candidato->es_historico = isset($candidatoYaInactivo);
                 return response()->json([
                     'message' => 'Datos del candidato',
                     'data' => $candidato
@@ -1317,6 +1368,11 @@ class OfertaController extends Controller
         try {
             $titulosOfertaIds = $oferta->titulos->pluck('id');
             $query = Demandante::query();
+            //mira si esta activo, por si se dio de baja el demandante
+            $query->whereHas('user', function ($q) {
+                $q->where('status', \App\Enums\UserEstado::ACTIVO->value)
+                    ->where('validado', true);
+            });
             //si la ofertas tiene titulos
             if ($titulosOfertaIds->isNotEmpty()) {
                 $query->whereHas('titulos', function ($q) use ($titulosOfertaIds) {

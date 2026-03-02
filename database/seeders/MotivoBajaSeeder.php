@@ -15,19 +15,19 @@ class MotivoBajaSeeder extends Seeder
         //
         $motivos = [
         // Visibles para Alumnos
-        ['motivo' => 'He encontrado trabajo', 'visibleAlumno' => true, 'visibleEmpresa' => false, 'soloAdmin' => false],
-        ['motivo' => 'No me gusta la plataforma', 'visibleAlumno' => true, 'visibleEmpresa' => false, 'soloAdmin' => false],
+        ['motivo' => 'He encontrado trabajo', 'visible_alumno' => true, 'visible_empresa' => false, 'solo_admin' => false],
+        ['motivo' => 'No me gusta la plataforma', 'visible_alumno' => true, 'visible_empresa' => false, 'solo_admin' => false],
         
         // Visibles para Empresas
-        ['motivo' => 'Ya no necesito contratar', 'visibleAlumno' => false, 'visibleEmpresa' => true, 'soloAdmin' => false],
-        ['motivo' => 'Cierre de la empresa', 'visibleAlumno' => false, 'visibleEmpresa' => true, 'soloAdmin' => false],
+        ['motivo' => 'Ya no necesito contratar', 'visible_alumno' => false, 'visible_empresa' => true, 'solo_admin' => false],
+        ['motivo' => 'Cierre de la empresa', 'visible_alumno' => false, 'visible_empresa' => true, 'solo_admin' => false],
         
         // Solo para que el Admin los use al expulsar
-        ['motivo' => 'Incumplimiento de términos', 'visibleAlumno' => false, 'visibleEmpresa' => false, 'soloAdmin' => true],
-        ['motivo' => 'Comportamiento inadecuado', 'visibleAlumno' => false, 'visibleEmpresa' => false, 'soloAdmin' => true],
+        ['motivo' => 'Incumplimiento de términos', 'visible_alumno' => false, 'visible_empresa' => false, 'solo_admin' => true],
+        ['motivo' => 'Comportamiento inadecuado', 'visible_alumno' => false, 'visible_empresa' => false, 'solo_admin' => true],
         
         // Genérico
-        ['motivo' => 'Otros motivos', 'visibleAlumno' => true, 'visibleEmpresa' => true, 'soloAdmin' => false],
+        ['motivo' => 'Otros motivos', 'visible_alumno' => true, 'visible_empresa' => true, 'solo_admin' => false],
     ];
 
     foreach ($motivos as $motivo) {

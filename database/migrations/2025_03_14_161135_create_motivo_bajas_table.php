@@ -14,9 +14,10 @@ return new class extends Migration
         Schema::create('motivo_bajas', function (Blueprint $table) {
             $table->id();
             $table->string('motivo');
-            $table->boolean('visibleAlumno')->default(false);
-            $table->boolean('visibleEmpresa')->default(false);
-            $table->boolean('soloAdmin')->default(false);
+            $table->boolean('visible_alumno')->default(false);
+            $table->boolean('visible_empresa')->default(false);
+            $table->boolean('solo_admin')->default(false);
+            $table->boolean('activo')->default(true);
             $table->timestamps();
         });
     }

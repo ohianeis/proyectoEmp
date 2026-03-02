@@ -14,14 +14,22 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name',100);
+            $table->string('name', 100);
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->boolean('validado');
             $table->string('status')->default(UserEstado::PENDIENTE_VALIDACION->value);
+
+
             $table->unsignedBigInteger('role_id')->nullable();
             $table->foreign('role_id')->references('id')->on('roles')->onDelete('set null');
+            $table->unsignedBigInteger('motivo_baja_id')->nullable();
+
+            $table->foreign('motivo_baja_id')->references('id')->on('motivo_bajas')->onDelete('set null');
+
+            $table->text('comentario_baja')->nullable();
+            $table->timestamp('fecha_baja')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

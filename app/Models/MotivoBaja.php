@@ -11,12 +11,12 @@ class MotivoBaja extends Model
     'nombre',
     'visible_alumno',
     'visible_empresa',
-    'solo_admin'
+    'solo_admin',
+    'activo'
 ];
 
-// Relación: Un motivo puede estar en muchas solicitudes
-public function solicitudes()
-{
-    return $this->hasMany(SolicitudBaja::class);
-}
+public function usuarios()
+    {
+        return $this->hasMany(User::class, 'motivo_baja_id');
+    }
 }

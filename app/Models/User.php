@@ -26,12 +26,13 @@ class User extends Authenticatable
         'email',
         'password',
         'validado',
-        'role_id'
+        'role_id',
+        'status',           
+    'motivo_baja_id',    
+    'comentario_baja',  
+    'fecha_baja'
     ];
-    //casting de enums
-    protected $casts = [
-    'status' => UserEstado::class,
-];
+
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -52,6 +53,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'status' => UserEstado::class,//casting enums
+            'fecha_baja' => 'datetime',
         ];
     }
     protected function createdAt():Attribute{
@@ -75,4 +78,8 @@ class User extends Authenticatable
     public function demandante(){
         return $this->hasOne(Demandante::class);
     }
+    public function motivoBaja()
+{
+    return $this->belongsTo(MotivoBaja::class, 'motivo_baja_id');
+}
 }

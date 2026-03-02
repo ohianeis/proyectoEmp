@@ -87,9 +87,10 @@ class ValidacionController extends Controller
         //
         try {
             $users = User::where('validado', 0)
+                ->where('status', '!=', \App\Enums\UserEstado::INACTIVO->value) // Filtro clave
                 ->select('id', 'name', 'email', 'validado', 'role_id', 'created_at')
-                ->with('rol:id,rol') // Carga la relación para incluir el nombre del rol
-                ->orderBy('created_at', 'desc') // Ordena por la fecha de creación en orden ascendente
+                ->with('rol:id,rol')
+                ->orderBy('created_at', 'desc')
                 ->get();
             return response()->json([
                 'data' => $users,
@@ -342,8 +343,9 @@ class ValidacionController extends Controller
     {
         try {
             // Contamos usuarios (alumnos y empresas) con validado = 0
-            $count = \App\Models\User::where('validado', 0)->count();
-
+            $count = \App\Models\User::where('validado', 0)
+                ->where('status', '!=', \App\Enums\UserEstado::INACTIVO->value)
+                ->count();
             return response()->json([
                 'data' => $count,
                 'message' => 'Numero de usuarios por validar obtenido correctamente'

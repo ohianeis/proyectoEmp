@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
-
+use App\Http\Controllers\BajaController;
 use App\Http\Controllers\InformeController;
 use App\Http\Controllers\OfertaController;
 use App\Http\Controllers\PerfilController;
@@ -107,4 +107,32 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\VerificarValidacion::cla
         Route::get('informes/alumno/{id}', [InformeController::class, 'getDetalleAlumnoAdmin']);
         Route::get('informes/reportes/{tipo}', [InformeController::class, 'getReportesEspeciales']);
     });
+
+    // --- RUTAS DE GESTIÓN DE BAJAS ---
+
+    // Rutas accesibles por todos (Empresa, Demandante y Administrador)
+Route::prefix('bajas')->controller(BajaController::class)->group(function () {
+
+    //  Ruta común para TODOS (Admin, Empresa, Demandante)
+    // El controlador filtra qué motivos ve cada uno internamente
+    Route::get('/motivos', 'listarMotivos'); 
+
+    //Rutas exclusivas para Usuarios (Empresa/Demandante)
+    Route::middleware(['ability:empresa,demandante'])->group(function () {
+        Route::post('/ejecutar', 'ejecutarBaja'); 
+    });
+
+    //  Rutas exclusivas para el Administrador
+    Route::middleware(['ability:administrador'])->group(function () {
+        Route::get('/historial', 'indexHistorialBajas'); 
+        Route::post('/motivos', 'storeMotivo');         
+        Route::put('/motivos/{id}', 'updateMotivo');  
+        Route::delete('/motivos/{id}', 'destroyMotivo');  
+        
+        // baja forzosa por admin
+        Route::post('/admin/baja-forzosa/{idUsuario}', 'bajaPorAdmin');
+        //reactivar baja
+        Route::patch('/reactivar/{idUsuario}', [BajaController::class, 'reactivarUsuario']);
+    });
+});
 });

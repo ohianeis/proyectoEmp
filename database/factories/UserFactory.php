@@ -34,45 +34,27 @@ class UserFactory extends Factory
         // Str::replace cambia el "-" por "." para que parezca un email real: "ana.ruiz"
         $emailBase = Str::replace('-', '.', Str::slug($nombreCompleto));
 
-        // Añadimos un número aleatorio al final por si hay nombres duplicados
-        $email = $emailBase . $this->faker->numberBetween(1, 99) . '@example.com';
 
-        return [
-            'name' => $nombreCompleto,
-            'email' => $email,
-            'password' => bcrypt('prueba'),
-            'validado' => $this->faker->boolean(80),
-            'status' => UserEstado::PENDIENTE_VALIDACION,
-            'role_id' => 3,
-        ];
-    }
-    // UserFactory.php
+    return [
+        'name' => $nombreCompleto,
+        'email' => $email,
+        'password' => bcrypt('prueba'),
+        'validado' => $this->faker->boolean(80),
+        'motivo_baja_id' => null,
+        'comentario_baja' => null,
+        'fecha_baja' => null,
+        'status' => UserEstado::PENDIENTE_VALIDACION->value,
+        'role_id' => 3, 
+    ];
+}
 
-    public function empresa(): static
-    {
-        return $this->state(function (array $attributes) {
-        $nombreEmpresa = $this->faker->catchPhrase() . ' ' . $this->faker->companySuffix();
-        
-        // Regeneramos el email basado en el nombre de empresa
-        $email = Str::replace('-', '.', Str::slug($nombreEmpresa)) . 
-                 $this->faker->numberBetween(1, 99) . '@empresa.com';
-
-        return [
-            'name' => $nombreEmpresa,
-            'email' => $email,
-            'role_id' => 2,
-            'status' => UserEstado::ACTIVO,
-        ];
-    });
-    }
-    /**
      * Estado para usuarios ya validados
      */
     public function activo(): static
     {
         return $this->state(fn(array $attributes) => [
             'validado' => true,
-            'status' => UserEstado::ACTIVO,
+            'status' => UserEstado::ACTIVO->value,
         ]);
     }
 

@@ -107,6 +107,21 @@ class AuthController extends Controller
  * )
  */
     public function registro(Request $request){
+        $usuarioExistente = User::where('email', $request->email)->first();
+
+    if ($usuarioExistente) {
+        // Caso A: Está inactivo (se dio de baja en el pasado)
+        if ($usuarioExistente->status === \App\Enums\UserEstado::INACTIVO->value) {
+            return response()->json([
+                'message' => 'Contacte con el centro.'
+            ], 409); 
+        }
+        
+        // Caso B: Está activo pero intenta registrarse de nuevo
+        return response()->json([
+            'message' => 'No se puede registrar con ese correo.'
+        ], 422);
+    }
        $request->validate([
             'name'=>'required|string|max:100',
             'email'=>'required|string|email|max:255|unique:users',
@@ -194,12 +209,18 @@ class AuthController extends Controller
             'mensaje' => 'Las credenciales introducidas no son correctas.'
         ], 401);
     }
-
-    // 3. Si el usuario existe y la contraseña es correcta, pero NO ESTÁ VALIDADO
-    if ($user->validado == 0) {
+    $statusActual = ($user->status instanceof \BackedEnum) ? $user->status->value : $user->status;
+    // Si el usuario está inactivo, no le dejamos entrar aunque la contraseña sea correcta.
+   if ($statusActual === \App\Enums\UserEstado::INACTIVO->value) {
+        return response()->json([
+            'mensaje' => 'Tu cuenta ha sido desactivada. Contacta con el centro si deseas reactivarla.'
+        ], 403);
+    }
+    //  Si el usuario existe y la contraseña es correcta, pero NO ESTÁ VALIDADO
+   if (!(bool)$user->validado) {
         return response()->json([
             'mensaje' => 'Tu cuenta aún está pendiente de revisión por el centro.'
-        ], 403); // 403 Forbidden es el código correcto para "te conozco pero no te dejo pasar"
+        ], 403);
     }
         $abilities=[];
         switch($user->role_id){

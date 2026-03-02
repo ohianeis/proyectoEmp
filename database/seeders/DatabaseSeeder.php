@@ -83,11 +83,20 @@ class DatabaseSeeder extends Seeder
 
 
         //  Crear empresas validadas y sus ofertas
-        User::factory(5)->create(['role_id' => 2, 'validado' => 1,'status' => \App\Enums\UserEstado::ACTIVO])->each(function ($user) {
-            // A cada usuario le creamos su perfil de empresa
-            $empresa = $user->empresa()->create(
-                \App\Models\Empresa::factory()->make()->toArray()
-            );
+     User::factory(5)->empresa()->create([
+    'role_id' => 2, 
+    'validado' => 1,
+    'status' => UserEstado::ACTIVO
+])->each(function ($user) {
+    // CAPTURAMOS el nombre generado para el usuario
+    $nombreEmpresa = $user->name;
+
+    // A cada usuario le creamos su perfil de empresa pasando el nombre del User
+    $empresa = $user->empresa()->create(
+        \App\Models\Empresa::factory()->make([
+            'nombre' => $nombreEmpresa // <--- Sincronización de nombres
+        ])->toArray()
+    );
 
             // Cada empresa crea 2 ofertas
             $ofertas = \App\Models\Oferta::factory(2)->create([
@@ -101,10 +110,18 @@ class DatabaseSeeder extends Seeder
             });
         });
         //crear con factory para demo 5 empresas no validadas
-        User::factory(5)->create([
-            'role_id' => 2,
-            'validado' => 0,
-        ]);
+    User::factory(5)->empresa()->create([
+    'role_id' => 2,
+    'validado' => 0,
+    'status' => UserEstado::PENDIENTE_VALIDACION // Aseguramos que el enum sea correcto
+])->each(function ($user) {
+    // También creamos el perfil de empresa para las no validadas con el mismo nombre
+    $user->empresa()->create(
+        \App\Models\Empresa::factory()->make([
+            'nombre' => $user->name
+        ])->toArray()
+    );
+});
         //crear factory con 5 alumos validados
         User::factory(5)->create([
             'role_id' => 3,

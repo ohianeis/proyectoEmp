@@ -22,20 +22,18 @@ class UserFactory extends Factory
      *
      * @return array<string, mixed>
      */
-   public function definition(): array
-{
-    // 1. Generamos primero el nombre
-    $nombre = $this->faker->firstName();
-    $apellido = $this->faker->lastName();
-    $nombreCompleto = $nombre . ' ' . $apellido;
+    public function definition(): array
+    {
+        // 1. Generamos primero el nombre
+        $nombre = $this->faker->firstName();
+        $apellido = $this->faker->lastName();
+        $nombreCompleto = $nombre . ' ' . $apellido;
 
-    // 2. Creamos un email basado en ese nombre
-    // Str::slug convierte "Ana Ruiz" en "ana-ruiz"
-    // Str::replace cambia el "-" por "." para que parezca un email real: "ana.ruiz"
-    $emailBase = Str::replace('-', '.', Str::slug($nombreCompleto));
-    
-    // Añadimos un número aleatorio al final por si hay nombres duplicados
-    $email = $emailBase . $this->faker->numberBetween(1, 99) . '@example.com';
+        // 2. Creamos un email basado en ese nombre
+        // Str::slug convierte "Ana Ruiz" en "ana-ruiz"
+        // Str::replace cambia el "-" por "." para que parezca un email real: "ana.ruiz"
+        $emailBase = Str::replace('-', '.', Str::slug($nombreCompleto));
+
 
     return [
         'name' => $nombreCompleto,
@@ -49,12 +47,12 @@ class UserFactory extends Factory
         'role_id' => 3, 
     ];
 }
-/**
+
      * Estado para usuarios ya validados
      */
     public function activo(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'validado' => true,
             'status' => UserEstado::ACTIVO->value,
         ]);
@@ -65,7 +63,7 @@ class UserFactory extends Factory
      */
     public function unverified(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'email_verified_at' => null,
         ]);
     }

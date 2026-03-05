@@ -655,6 +655,25 @@ class TituloController extends Controller
     {
         //
         try {
+
+            // Si el título está inactivo y el request NO viene a activarlo, bloqueamos la edición.
+        if ($titulo->activado == 0 && !$request->has('activado')) {
+            return response()->json([
+                'message' => 'El título está desactivado. Actívelo primero para poder editar sus datos.'
+            ], 403);
+        }
+
+        // 2. COMPROBACIÓN DE FAMILIA:
+        // Si el request intenta activar el título, verificamos que su familia esté activa.
+        if ($request->activado == 1) {
+            // Cargamos la relación familia si no está cargada
+            $familia = $titulo->familia; 
+            if ($familia && !$familia->activa) {
+                return response()->json([
+                    'message' => 'No se puede activar el título porque la Familia Profesional "' . $familia->nombre . '" está desactivada.'
+                ], 422); // Unprocessable Entity
+            }
+        }
             $validacion = $request->validate([
                 'id' => 'integer|in:' . $titulo->id, //sea el mismo que el id a actualizar no se haya cambiado
                 'nombre' => 'required|string|max:255',
@@ -1210,19 +1229,32 @@ class TituloController extends Controller
     public function updateFamilia(Request $request, $id)
     {
         try {
-            $familia = \App\Models\Familia::findOrFail($id);
+       $familia = \App\Models\Familia::findOrFail($id);
 
-            $validacion = $request->validate([
-                'nombre' => 'sometimes|string|max:255|unique:familias,nombre,' . $id,
-                'activa' => 'sometimes|boolean'
-            ]);
-
-            $familia->update($validacion);
-
+        // Si está desactivada Y el request no intenta activarla, bloqueamos.
+        if (!$familia->activa && !$request->has('activa')) {
             return response()->json([
-                'message' => 'Familia actualizada correctamente',
-                'data' => $familia
-            ], 200);
+                'message' => 'La familia está desactivada. Primero debe reactivarla para editar sus datos.',
+            ], 403); 
+        }
+
+        $validacion = $request->validate([
+            'nombre' => 'sometimes|string|max:255|unique:familias,nombre,' . $id,
+            'activa' => 'sometimes|boolean'
+        ]);
+
+        $familia->update($validacion);
+
+        // Lógica de cascada: Si reactivamos la familia, ¿reactivamos los títulos?
+        // Esto es opcional, depende de tu lógica de negocio.
+        if ($familia->activa) {
+            // $familia->titulos()->update(['activo' => true]);
+        }
+
+        return response()->json([
+            'message' => 'Familia actualizada correctamente, revise los títulos uno a uno que quiera volver a reactivar.',
+            'data' => $familia
+        ], 200);
         } catch (Exception $e) {
             return response()->json(['errors' => 'Error al actualizar la familia'], 500);
         }
@@ -1236,20 +1268,18 @@ class TituloController extends Controller
         try {
             $familia = \App\Models\Familia::findOrFail($id);
 
-            // Comprobamos si tiene títulos asociados para dar un mensaje más informativo
-            $tieneTitulos = $familia->titulos()->exists();
+          // 1. Desactivamos la familia
+        $familia->activa = false;
+        $familia->save();
 
-            $familia->activa = false;
-            $familia->save();
+        // 2. Desactivamos todos sus títulos asociados de golpe
+        // Esto asume que el modelo Titulo tiene una columna 'activo'
+        $familia->titulos()->update(['activado' => false]); 
 
-            $message = $tieneTitulos
-                ? 'La familia tiene títulos asociados. Se ha desactivado para mantener la integridad.'
-                : 'Familia profesional desactivada correctamente.';
-
-            return response()->json([
-                'message' => $message,
-                'data' => $familia
-            ], 200);
+        return response()->json([
+            'message' => 'Familia y sus títulos asociados desactivados correctamente.',
+            'data' => $familia
+        ], 200);
         } catch (Exception $e) {
             return response()->json(['errors' => 'Error al desactivar la familia'], 500);
         }

@@ -33,7 +33,7 @@ class UserFactory extends Factory
         // Str::slug convierte "Ana Ruiz" en "ana-ruiz"
         // Str::replace cambia el "-" por "." para que parezca un email real: "ana.ruiz"
         $emailBase = Str::replace('-', '.', Str::slug($nombreCompleto));
-
+    $email = $emailBase . $this->faker->unique()->numberBetween(1, 99) . '@ejemplo.com';
 
     return [
         'name' => $nombreCompleto,
@@ -48,8 +48,8 @@ class UserFactory extends Factory
     ];
 }
 
-     * Estado para usuarios ya validados
-     */
+     // Estado para usuarios ya validados
+     
     public function activo(): static
     {
         return $this->state(fn(array $attributes) => [

@@ -239,7 +239,7 @@ class AuthController extends Controller
         return response()->json([
             'mensaje'=>true,
             'usuario'=>$user->name,
-            'rol'=>$user->role_id,
+            'rol'=>strtolower($user->rol->rol),
             'token'=>$token,
             'token_type'=>'Bearer'
         ]);

@@ -57,7 +57,36 @@ class Demandante extends Model
             }
         );
     }
-    
+
+/**
+ * Verifica si UN demandante concreto cumple los requisitos (para el detalle)
+ */
+public function CumpleRequisitos(Oferta $oferta): bool
+{
+    //IDs de los títulos que pide la oferta
+    $titulosOfertaIds = $oferta->titulos->pluck('id');
+
+    //Si la oferta tiene títulos específicos, comprobamos si el candidato tiene alguno
+    if ($titulosOfertaIds->isNotEmpty()) {
+        return $this->titulos()->whereIn('titulos.id', $titulosOfertaIds)->exists();
+    }
+
+    //  Si no tiene títulos (es por familia), comprobamos la familia profesional
+    return $this->titulos()->where('familia_id', $oferta->familia_id)->exists();
+}
+
+public function scopeCumpleRequisitos($query, $oferta)
+{
+    $titulosOfertaIds = $oferta->titulos->pluck('id');
+
+    return $query->whereHas('titulos', function ($q) use ($titulosOfertaIds, $oferta) {
+        if ($titulosOfertaIds->isNotEmpty()) {
+            $q->whereIn('titulos.id', $titulosOfertaIds);
+        } else {
+            $q->where('familia_id', $oferta->familia_id);
+        }
+    });
+}
     public function situacion()
     {
         return $this->belongsTo(Situacione::class, 'situacione_id');

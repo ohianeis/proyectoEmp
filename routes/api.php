@@ -38,6 +38,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\VerificarValidacion::cla
         Route::patch('ofertas/{oferta}/cerrar', 'cerrarOferta');
         Route::patch('ofertas/{oferta}/asignar/{demandante}', 'asignarCandidato');
         Route::patch('/ofertas/{oferta}/candidatos/{demandante}/seguimiento', 'actualizarSeguimiento');
+        Route::patch('ofertas/{id}/toggle-anonimo', [OfertaController::class, 'cambiarAnonimato']);
     });
     //rutas ofertas accesible por empresa y demandate
     Route::controller(OfertaController::class)->middleware(['ability:empresa,demandante'])->group(function () {

@@ -11,6 +11,7 @@ use App\Models\Proceso;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
 use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -488,7 +489,7 @@ class OfertaController extends Controller
             if ($existeOferta) {
                 return response()->json([
                     'message' => 'Ya existe una oferta con esos datos'
-                ], 200);
+                ], 409);
             }
             $oferta = new Oferta();
             $oferta->nombre = $request['nombre'];
@@ -519,6 +520,43 @@ class OfertaController extends Controller
             ], 500);
         }
     }
+    /**
+     * @OA\Patch(
+     * path="/api/ofertas/{id}/anonimato",
+     * summary="Cambiar el estado de anonimato de una oferta",
+     * tags={"Ofertas Empresa"},
+     * security={{"bearerAuth": {}}},
+     * @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     * @OA\RequestBody(
+     * @OA\JsonContent(
+     * @OA\Property(property="esAnonima", type="boolean", example=true)
+     * )
+     * ),
+     * @OA\Response(response=200, description="Estado actualizado")
+     * )
+     */
+    public function cambiarAnonimato($id)
+    {
+
+        try {
+            $usuario = Auth::user();
+            $oferta = Oferta::where('id', $id)
+                ->where('empresa_id', $usuario->empresa->id)
+                ->firstOrFail();
+
+            // Aplicamos el "NOT" (!) al valor actual
+            $oferta->esAnonima = !$oferta->esAnonima;
+            $oferta->save();
+
+            return response()->json([
+                'message' => 'Visibilidad cambiada con éxito',
+
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json(['message' => 'No se pudo cambiar el estado'], 404);
+        }
+    }
+
     /**
      * @OA\Post(
      *     path="/api/ofertas/{oferta}/apuntarse",
@@ -1177,26 +1215,26 @@ class OfertaController extends Controller
 
             $user = $demandante->user;
 
-            // 1. Verificamos el seguimiento/pivote primero para saber su estado
-            $seguimiento = $demandante->ofertas()
-                ->where('oferta_id', $oferta->id)
-                ->first();
+            $seguimiento = $demandante->ofertas()->where('oferta_id', $oferta->id)->first();
 
-            if (!$seguimiento) {
-                return response()->json(['message' => 'El candidato no está vinculado a esta oferta.'], 404);
+            //ver si puede verlo
+            $inscrito = ($seguimiento !== null);
+            $cumpleRequisitos = $demandante->cumpleRequisitos($oferta);
+
+            if (!$inscrito && !$cumpleRequisitos) {
+                return response()->json(['message' => 'No tienes permiso para ver este perfil'], 403);
             }
-
+            $esActivo = ($user->status === \App\Enums\UserEstado::ACTIVO);
+            $esValidado = (bool)$user->validado;
             /**
              * LÓGICA DE VISIBILIDAD PARA USUARIOS DADOS DE BAJA
              */
-            if ($user->status !== \App\Enums\UserEstado::ACTIVO->value || !$user->validado) {
-
+            if (!$esActivo || !$esValidado) {
                 // Verificamos si el proceso de esta inscripción fue 'adjudicada' (ID 3)
-                $esAdjudicado = ($seguimiento->pivot->proceso_id == 3);
-
+                $esAdjudicado = ($inscrito && $seguimiento->pivot->proceso_id == 3);
                 // Periodo de gracia de 6 meses por si alumno al ser seleccionado se dio de baja
                 $fechaBaja = $user->fecha_baja ? \Carbon\Carbon::parse($user->fecha_baja) : null;
-                $periodoVigente = $fechaBaja && $fechaBaja->addMonths(6)->isFuture();
+                $periodoVigente = $fechaBaja && $fechaBaja->copy()->addMonths(6)->isFuture();
 
                 // Si NO se le adjudicó la plaza O ya pasó el tiempo de gracia, bloqueamos
                 if (!$esAdjudicado || !$periodoVigente) {
@@ -1366,31 +1404,16 @@ class OfertaController extends Controller
     public function candidatosNoInscritos(Oferta $oferta)
     {
         try {
-            $titulosOfertaIds = $oferta->titulos->pluck('id');
-            $query = Demandante::query();
-            //mira si esta activo, por si se dio de baja el demandante
-            $query->whereHas('user', function ($q) {
-                $q->where('status', \App\Enums\UserEstado::ACTIVO->value)
-                    ->where('validado', true);
-            });
-            //si la ofertas tiene titulos
-            if ($titulosOfertaIds->isNotEmpty()) {
-                $query->whereHas('titulos', function ($q) use ($titulosOfertaIds) {
-                    $q->whereIn('titulos.id', $titulosOfertaIds);
-                });
-                //si la oferta es por familia y sin titulos
-            } else {
-                $query->whereHas('titulos', function ($q) use ($oferta) {
-                    $q->where('familia_id', $oferta->familia_id);
-                });
-            }
-
-            $query->whereDoesntHave('ofertas', function ($q) use ($oferta) {
-                $q->where('ofertas.id', $oferta->id);
-            });
-
-
-            $candidatos = $query->select('id', 'nombre')
+            $candidatos = Demandante::query()
+                ->whereHas('user', function ($q) {
+                    $q->where('status', \App\Enums\UserEstado::ACTIVO->value)
+                        ->where('validado', true);
+                })
+                ->cumpleRequisitos($oferta)
+                ->whereDoesntHave('ofertas', function ($q) use ($oferta) {
+                    $q->where('ofertas.id', $oferta->id);
+                })
+                ->select('id', 'nombre')
                 ->get();
 
             return response()->json([

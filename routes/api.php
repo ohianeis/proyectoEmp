@@ -20,6 +20,10 @@ Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::get('/registro/roles', [AuthController::class, 'roles']);
 
 Route::middleware(['auth:sanctum', \App\Http\Middleware\VerificarValidacion::class])->group(function () {
+   //logout
+   Route::post('/logout', [AuthController::class, 'logout']);
+//compoprbacion rol usuario
+    Route::get('/perfil-auth', [AuthController::class, 'perfil']);
     Route::middleware(['ability:empresa'])->group(function () {
         Route::get('/empresa/stats', [StatsEmpresaController::class, 'getStatsEmpresa'])->middleware('ability:empresa');
     });

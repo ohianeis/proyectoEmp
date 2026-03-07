@@ -222,6 +222,7 @@ class AuthController extends Controller
             'mensaje' => 'Tu cuenta aún está pendiente de revisión por el centro.'
         ], 403);
     }
+    $user->tokens()->delete();//borrar tokens anteriores por seguridad y limpieza tabla
         $abilities=[];
         switch($user->role_id){
             case 1://administrador
@@ -244,4 +245,54 @@ class AuthController extends Controller
             'token_type'=>'Bearer'
         ]);
     }
+    /**
+     * @OA\Post(
+     * path="/api/logout",
+     * summary="Cierre de sesión",
+     * description="Invalida el token actual del usuario.",
+     * tags={"Auth"},
+     * security={{"bearerAuth": {}}},
+     * @OA\Response(
+     * response=200,
+     * description="Sesión cerrada correctamente.",
+     * @OA\JsonContent(
+     * @OA\Property(property="mensaje", type="string", example="Sesión cerrada con éxito")
+     * )
+     * )
+     * )
+     */
+    public function logout(Request $request)
+    {
+        try {
+            // Borrar el token que el usuario está usando en esta petición
+            $request->user()->currentAccessToken()->delete();
+
+            return response()->json([
+                'message' => 'Sesión cerrada con éxito'
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => 'Error al cerrar sesión'
+            ], 500);
+        }
+    }
+    /**
+ * Obtener perfil del usuario autenticado
+ * @OA\Get(
+ * path="/api/perfil",
+ * tags={"Auth"},
+ * security={{"bearerAuth": {}}},
+ * @OA\Response(response=200, description="Perfil del usuario")
+ * )
+ */
+public function perfil(Request $request)
+{
+    $user = $request->user();
+    
+    return response()->json([
+        'usuario' => $user->name,
+        'rol' => strtolower($user->rol->rol)  
+    
+    ], 200);
+}
 }

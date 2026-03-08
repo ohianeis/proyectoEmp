@@ -35,17 +35,20 @@ class UserFactory extends Factory
         $emailBase = Str::replace('-', '.', Str::slug($nombreCompleto));
     $email = $emailBase . $this->faker->unique()->numberBetween(1, 99) . '@ejemplo.com';
 
-    return [
+  return [
         'name' => $nombreCompleto,
-        'email' => $email,
+        // Usamos una función anónima para el email. 
+        // Así, si 'name' cambia en un estado, el email se generará con el nuevo nombre.
+        'email' => function (array $attributes) {
+            $slug = Str::slug($attributes['name'], '.');
+            return $slug . fake()->unique()->numberBetween(1, 99) . '@ejemplo.com';
+        },
         'password' => bcrypt('prueba'),
         'validado' => $this->faker->boolean(80),
-        'motivo_baja_id' => null,
-        'comentario_baja' => null,
-        'fecha_baja' => null,
         'status' => UserEstado::PENDIENTE_VALIDACION->value,
         'role_id' => 3, 
     ];
+
 }
 
      // Estado para usuarios ya validados
@@ -57,6 +60,21 @@ class UserFactory extends Factory
             'status' => UserEstado::ACTIVO->value,
         ]);
     }
+    /**
+ * Estado para usuarios que son empresas.
+ */
+public function empresa(): static
+{
+    return $this->state(fn (array $attributes) => [
+        'role_id' => 2, 
+    ]);
+}
+public function conNombreEmpresa(): static
+{
+    return $this->state(fn (array $attributes) => [
+        'name' => $this->faker->company() // Cambia "Ana Ruiz" por "Tech Solutions S.L."
+    ]);
+}
 
     /**
      * Indicate that the model's email address should be unverified.
@@ -67,4 +85,5 @@ class UserFactory extends Factory
             'email_verified_at' => null,
         ]);
     }
+
 }

@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 use App\Enums\UserEstado;
 use App\Models\Demandante;
+use App\Models\DetalleMotivo;
 use App\Models\Empresa;
 use App\Models\Notificacione;
 use App\Models\Oferta;
@@ -25,6 +26,7 @@ class DatabaseSeeder extends Seeder
 
         $this->call(EstadoSeeder::class); //estado de una oferta
         $this->call(MotivoSeeder::class);
+        $this->call(DetalleMotivoSeeder::class);
         $this->call(MensajeSeeder::class);
         $this->call(AccioneSeeder::class);
         $this->call(RolesSeeder::class);
@@ -83,45 +85,51 @@ class DatabaseSeeder extends Seeder
 
 
         //  Crear empresas validadas y sus ofertas
-     User::factory(5)->empresa()->create([
-    'role_id' => 2, 
-    'validado' => 1,
-    'status' => UserEstado::ACTIVO
-])->each(function ($user) {
-    // CAPTURAMOS el nombre generado para el usuario
-    $nombreEmpresa = $user->name;
+ User::factory(5)
+    ->empresa()           // Asigna role_id 2
+    ->conNombreEmpresa()  // Genera nombre tipo "Empresa S.A."
+    ->create([
+        'validado' => 1,
+        'status' => UserEstado::ACTIVO
+    ])->each(function ($user) {
+        
+        // El nombre de la tabla 'empresas' será igual al del 'users'
+        $empresa = $user->empresa()->create(
+            \App\Models\Empresa::factory()->make([
+                'nombre' => $user->name 
+            ])->toArray()
+        );
 
-    // A cada usuario le creamos su perfil de empresa pasando el nombre del User
-    $empresa = $user->empresa()->create(
-        \App\Models\Empresa::factory()->make([
-            'nombre' => $nombreEmpresa // <--- Sincronización de nombres
-        ])->toArray()
-    );
-
-            // Cada empresa crea 2 ofertas
-            $ofertas = \App\Models\Oferta::factory(2)->create([
-                'empresa_id' => $empresa->id
+       // Creamos 1 oferta ABIERTA
+            $ofertaAbierta = Oferta::factory()->create([
+                'empresa_id' => $empresa->id,
+                'estado_id' => 1, // Abierta
+                'motivo_id' => null,
+                'detalle_motivo_id' => null
             ]);
 
-            // A cada oferta le asignamos 1 o 2 títulos aleatorios (relación muchos a muchos)
-            $ofertas->each(function ($oferta) {
-                $titulosAleatorios = \App\Models\Titulo::inRandomOrder()->take(rand(1, 2))->pluck('id');
-                $oferta->titulos()->attach($titulosAleatorios);
-            });
+            // Creamos 1 oferta CERRADA (Sin demandante) para probar la nueva lógica
+            $ofertaCerrada = Oferta::factory()->create([
+                'empresa_id' => $empresa->id,
+                'estado_id' => 2, // Cerrada
+                'fechaCierre' => now(),
+                'motivo_id' => 2, // Sin demandante
+                'detalle_motivo_id' => DetalleMotivo::where('motivo_id', 2)->inRandomOrder()->first()->id
+            ]);
+
+            // Asignar títulos a ambas
+            foreach([$ofertaAbierta, $ofertaCerrada] as $o) {
+                $o->titulos()->attach(Titulo::inRandomOrder()->take(rand(1, 2))->pluck('id'));
+            }
         });
         //crear con factory para demo 5 empresas no validadas
-    User::factory(5)->empresa()->create([
-    'role_id' => 2,
-    'validado' => 0,
-    'status' => UserEstado::PENDIENTE_VALIDACION // Aseguramos que el enum sea correcto
-])->each(function ($user) {
-    // También creamos el perfil de empresa para las no validadas con el mismo nombre
-    $user->empresa()->create(
-        \App\Models\Empresa::factory()->make([
-            'nombre' => $user->name
-        ])->toArray()
-    );
-});
+   User::factory(5)
+    ->conNombreEmpresa() // Genera nombre de empresa para el usuario
+    ->create([
+        'role_id' => 2,
+        'validado' => 0,
+        'status' => UserEstado::PENDIENTE_VALIDACION 
+    ]);
         //crear factory con 5 alumos validados
         User::factory(5)->create([
             'role_id' => 3,

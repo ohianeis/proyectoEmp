@@ -23,6 +23,8 @@ return new class extends Migration
             $table->boolean('esAnonima');
            $table->unsignedBigInteger('motivo_id')->nullable();
               $table->foreign('motivo_id')->references('id')->on('motivos');
+              $table->unsignedBigInteger('detalle_motivo_id')->nullable();//especificacion del cierre
+        $table->foreign('detalle_motivo_id')->references('id')->on('detalle_motivos');
             $table->unsignedBigInteger('estado_id');//debe ser mismo tipo que id de estados
 
             $table->foreign('estado_id')->references('id')->on('estados');//pongo a user_id como llave foranea con el id de la tabla estados

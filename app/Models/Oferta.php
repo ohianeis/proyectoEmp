@@ -76,6 +76,11 @@ class Oferta extends Model
     {
         return $this->belongsTo(Motivo::class);
     }
+    public function detalleMotivo()
+{
+    // El motivo específico (Puesto cancelado, Cubierta externamente...)
+    return $this->belongsTo(DetalleMotivo::class, 'detalle_motivo_id');
+}
     //relacion muchos a muchos
     public function demandantes()
     {

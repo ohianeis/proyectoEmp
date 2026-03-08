@@ -40,6 +40,21 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\VerificarValidacion::cla
         Route::patch('/ofertas/{oferta}/candidatos/{demandante}/seguimiento', 'actualizarSeguimiento');
         Route::patch('ofertas/{id}/toggle-anonimo', [OfertaController::class, 'cambiarAnonimato']);
     });
+    // --- RUTAS DE GESTIÓN DE MOTIVOS DE CIERRE (OFERTAS) ---
+Route::prefix('configuracion-cierre')->controller(\App\Http\Controllers\DetalleMotivoController::class)->group(function () {
+
+    //  SOLO EMPRESA: Listar detalles activos para el selector de cierre de oferta
+
+    Route::get('/detalles/activos', 'listarActivosPorMotivo')
+         ->middleware('ability:empresa');
+
+    //  SOLO ADMINISTRADOR: CRUD y Gestión de la configuración
+    Route::middleware(['ability:administrador'])->group(function () {
+        Route::get('/motivos-admin', 'index');           // Ver árbol completo (Activos e Inactivos)
+        Route::post('/detalles', 'store');               // Crear nuevo detalle (ej: "Puesto cancelado")
+        Route::patch('/detalles/{id}', 'update');        // Editar nombre o activar/desactivar
+    });
+});
     //rutas ofertas accesible por empresa y demandate
     Route::controller(OfertaController::class)->middleware(['ability:empresa,demandante'])->group(function () {
         Route::get('/ofertas', 'index');

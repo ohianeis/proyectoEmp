@@ -1620,17 +1620,21 @@ class OfertaController extends Controller
      *     )
      * )
      */
-    public function cerrarOferta(Oferta $oferta)
+    public function cerrarOferta(Request $request, Oferta $oferta)
     {
         try {
+            $request->validate([
+            'detalle_motivo_id' => 'required|exists:detalle_motivos,id',
+        ]);
             if ($oferta->estado_id == 2) { // Suponiendo que '3' significa cerrada
                 return response()->json([
                     'message' => 'La oferta ya está cerrada'
                 ], 409);
             }
-
+    $detalle = \App\Models\DetalleMotivo::findOrFail($request->detalle_motivo_id);
             $oferta->forceFill([
                 'motivo_id' => 2,
+                'detalle_motivo_id' => $detalle->id,
                 'estado_id' => 2,
                 'fechaCierre' => Carbon::now()->toDateString()
             ])->save();
@@ -1743,7 +1747,7 @@ class OfertaController extends Controller
             if ($seleccionadosCount >= $oferta->nPuestos) {
 
                 // SI SE HAN LLENADO TODAS LAS VACANTES:
-
+            $idDetalleExito = 1;//busca el asignada en detalleMotivo
                 // Cambiar a proceso '2' (Cerrada/No seleccionado) a los que sobran
                 $oferta->demandantes()
                     ->wherePivot('proceso_id', '!=', 3)
@@ -1755,6 +1759,7 @@ class OfertaController extends Controller
                 // Actualizar estado de la oferta
                 $oferta->estado_id = 2; // Cerrada
                 $oferta->motivo_id = 1; // Asignada/Cubierta
+                $oferta->detalle_motivo_id = $idDetalleExito;
                 $oferta->fechaCierre = Carbon::now()->toDateString();
                 $oferta->save();
 

@@ -31,6 +31,8 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\VerificarValidacion::cla
         Route::get('ofertas/estados-candidatos', [OfertaController::class, 'getEstadosCandidato']);
 
         Route::post('/ofertas', 'store');
+        Route::get('/ofertas/{id}/edit', 'edit');     
+        Route::put('/ofertas/{id}', 'update');
         Route::get('ofertas/{oferta}/candidatos', 'candidatosInscritos');
         Route::get('ofertas/{oferta}/candidatos/{demandante}', 'detalleCandidato');
         Route::get('/ofertas/{oferta}/noInscritos', 'candidatosNoInscritos');

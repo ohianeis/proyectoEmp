@@ -520,6 +520,78 @@ class OfertaController extends Controller
             ], 500);
         }
     }
+    //metodos para editar oferta de trabajo
+    //controla si hay inscritos ya para ver que datos puede editar la empresa
+    public function edit($id)
+{
+    try{
+         $oferta = Oferta::with('titulos:id')->findOrFail($id);
+    
+    return response()->json([
+       'message' => 'Datos cargados correctamente',
+            'data' => [
+                'oferta' => $oferta,
+                'bloqueado' => $oferta->tieneInscritos()
+            ]
+    ]);
+    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['errors' => 'La oferta no existe.'], 404);
+        
+    }catch(Exception $e){
+        return response()->json(['errors'=>'Error en la petición de editar'],500);
+    }
+   
+}
+public function update(Request $request, $id)
+    {
+        try {
+            $oferta = Oferta::findOrFail($id);
+            $bloqueado = $oferta->tieneInscritos();
+
+            // 1. Definimos qué campos se pueden editar SIEMPRE
+            $camposPermitidos = ['observacion', 'horario', 'nPuestos', 'incorporacion', 'esAnonima'];
+
+            // 2. Si NO hay inscritos, añadimos los campos críticos
+            if (!$bloqueado) {
+                array_push($camposPermitidos, 'nombre', 'tipoContrato', 'familia_id');
+            }
+
+            // 3. Solo filtramos los campos permitidos
+            $data = $request->only($camposPermitidos);
+            
+            // Actualizamos la tabla principal
+            $oferta->update($data);
+
+            // 4. Lógica para los títulos (Muchos a Muchos)
+            if (!$bloqueado && $request->has('titulo')) {
+                $oferta->titulos()->sync($request->titulo);
+            }
+
+            // 5. Respuesta según el estado de bloqueo
+            if ($bloqueado) {
+                return response()->json([
+                    'message' => 'La oferta tiene candidatos inscritos. Se han actualizado los campos permitidos, pero los datos académicos (Nombre, Familia, Títulos) ya no pueden editarlos.',
+        
+                ], 200);
+            }
+
+            return response()->json([
+                'message' => 'Oferta actualizada con éxito.',
+  
+            ], 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['errors' => 'No se encontró la oferta para actualizar.'], 404);
+        } catch (\Exception $e) {
+            // Si algo falla (BD, validación, etc.) capturamos el error
+            return response()->json([
+                'errors' => 'Ha ocurrido un error al actualizar la oferta.',
+           
+            ], 500);
+        }
+    }
+//método para editar la oferta
+
     /**
      * @OA\Patch(
      * path="/api/ofertas/{id}/anonimato",

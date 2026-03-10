@@ -111,4 +111,9 @@ public function familia()
 
     return $this->belongsTo(Familia::class, 'familia_id');
 }
+public function tieneInscritos(): bool
+{
+    // uso de exist para consulta rapida, no trae datos solo consulta 
+    return $this->demandantes()->exists();
+}
 }

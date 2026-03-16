@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserEstado;
 use App\Models\Demandante;
 use App\Models\Empresa;
 use App\Models\Oferta;
 use App\Models\Titulo;
+use App\Models\User;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -576,29 +578,58 @@ class InformeController extends Controller
     /**
      * Obtener todos los demandantes con sus títulos asociados
      */
-    public function getAllAlumnos()
+    public function getAllAlumnos(Request $request)
     {
         try {
-            $alumnos = Demandante::whereHas('user', function ($query) {
-                $query->where('validado', 1);
-            })
-                ->with(['titulos', 'user'])
-                ->get()
-                ->map(function ($alumno) {
+            $rows = $request->input('rows', 10);
+            $busqueda=$request->input('busqueda');
+            $query=Demandante::query();
+         $query->whereHas('user', function ($q) {
+            $q->where('status', UserEstado::ACTIVO->value)
+              ->where('validado', true);
+        });
+
+        // 2. Filtro de búsqueda (Si existe el parámetro search)
+        $query->when($busqueda, function ($q) use ($busqueda) {
+            $q->where(function ($inner) use ($busqueda) {
+                $inner->where('nombre', 'LIKE', "%{$busqueda}%")
+              
+                      ->orWhere('telefono', 'LIKE', "%{$busqueda}%")
+                      // Búsqueda por Email (está en la relación user)
+                      ->orWhereHas('user', function ($userQ) use ($busqueda) {
+                          $userQ->where('email', 'LIKE', "%{$busqueda}%");
+                      })
+                      // Búsqueda por Título (está en la relación titulos)
+                      ->orWhereHas('titulos', function ($tituloQ) use ($busqueda) {
+                          $tituloQ->where('nombre', 'LIKE', "%{$busqueda}%");
+                      });
+            });
+        });
+
+        // 3. Paginación y relaciones
+        $alumnos = $query->with(['titulos', 'user'])->paginate($rows);
+        $alumnos->through(function ($alumno) {
+            return [
+                'id'        => $alumno->id,
+                'user_id'   => $alumno->user_id,
+                'nombre'    => $alumno->nombre, // Concatenamos si prefieres
+                'email'     => $alumno->user->email ?? 'N/A',
+                'telefono'  => $alumno->telefono,
+                // Mapeamos los títulos para enviar solo el nombre y datos del pivot
+                'titulos'   => $alumno->titulos->map(function ($titulo) {
                     return [
-                        'id' => $alumno->id,
-                        'nombre' => $alumno->nombre . ' ' . $alumno->apellido,
-                        'email' => $alumno->user->email ?? 'Sin email',
-                        'validado' => $alumno->user->validado ?? 1, // Ya sabemos que es 1
-                        'titulos' => $alumno->titulos->pluck('nombre'),
-                        'telefono' => $alumno->telefono,
-                        'created_at' => $alumno->created_at
+                        'id'     => $titulo->id,
+                        'nombre' => $titulo->nombre,
+                        'centro' => $titulo->pivot->centro ?? '',
+                        'año'    => $titulo->pivot->año ?? '',
                     ];
-                });
-            return response()->json([
-                'message' => 'Datos cargados correctamente',
-                'data' => $alumnos
-            ], 200);
+                }),
+            ];
+        });
+        return response()->json([
+            'message' => 'Alumnos dados de alta obtenidos correctamente',
+            'data' => $alumnos 
+        ]);
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage()], 500);
         }
@@ -607,36 +638,47 @@ class InformeController extends Controller
     /**
      * Obtener todas las empresas con su estado de cuenta
      */
-    public function getAllEmpresas()
+    public function getAllEmpresas(Request $request)
     {
         try {
+            $rows = $request->input('rows', 10);
+            $busqueda=$request->input('busqueda');
             $empresas = Empresa::whereHas('user', function ($query) {
-                $query->where('validado', 1);
+               $query->where('status', UserEstado::ACTIVO->value)
+                  ->where('validado', true);
             })
-                ->with('user')
-                ->get()
-                ->map(function ($empresa) {
-                    return [
-                        'id' => $empresa->id,
-                        'nombre' => $empresa->nombre,
-                        'cif' => $empresa->cif,
-                        'email' => $empresa->user->email ?? 'Sin email',
-                        'validado' => 1, // es 1 por el filtro whereHas
-                        'telefono' => $empresa->telefono_contacto,
-                        'web' => $empresa->web,
-                        'created_at' => $empresa->created_at
-                    ];
+          ->when($busqueda, function ($query) use ($busqueda) {
+                $query->where(function ($q) use ($busqueda) {
+                    $q->where('nombre', 'LIKE', "%{$busqueda}%")
+                      ->orWhere('cif', 'LIKE', "%{$busqueda}%")
+                      ->orWhereRaw("REPLACE(telefono_contacto, ' ', '') LIKE ?", ["%" . str_replace(' ', '', $busqueda) . "%"])
+      ->orWhere('telefono_contacto', 'like', "%$busqueda%")
+                      ->orWhereHas('user', function ($u) use ($busqueda) {
+                          $u->where('email', 'LIKE', "%{$busqueda}%");
+                      });
                 });
-
-            return response()->json([
-                'message' => 'Datos cargados correctamente',
-                'data' => $empresas
-            ], 200);
+            })
+            ->with('user')
+            ->paginate($rows);
+            $empresas->through(function ($empresa) {
+            return [
+                'id'       => $empresa->id,
+                'nombre'   => $empresa->nombre,
+                'email'    => $empresa->user?->email, // Extraemos el mail de la relación
+                'cif'      => $empresa->cif,
+                'telefono' => $empresa->telefono_contacto, // Ajusta al nombre real de tu columna
+            ];
+        });
+        return response()->json([
+            'message' => 'Empresas dadas de alta obtenidas correctamente',
+            'data' => $empresas
+        ]);
         } catch (\Exception $e) {
             Log::error("Error en el dashboard: " . $e->getMessage());
             return response()->json(['message' => 'Error al conectar con la API, intentelo mas tarde']);
         }
     }
+
     public function getDetalleAlumnoAdmin($id)
     {
         try {

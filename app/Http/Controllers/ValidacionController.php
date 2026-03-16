@@ -82,16 +82,28 @@ class ValidacionController extends Controller
      *     )
      * )
      */
-    public function index()
+    public function index(Request $request)
     {
         //
         try {
-            $users = User::where('validado', 0)
-                ->where('status', '!=', \App\Enums\UserEstado::INACTIVO->value) // Filtro clave
-                ->select('id', 'name', 'email', 'validado', 'role_id', 'created_at')
-                ->with('rol:id,rol')
-                ->orderBy('created_at', 'desc')
-                ->get();
+            $busqueda=$request->input('busqueda');
+            $rows=$request->input('rows',10);
+           $query = User::where('validado', 0)
+            ->where('status', '!=', \App\Enums\UserEstado::INACTIVO->value)
+            ->with('rol:id,rol');
+
+        // 3. Filtro de búsqueda (si el usuario escribe en el input de Angular)
+        if (!empty($busqueda)) {
+            $query->where(function($q) use ($busqueda) {
+                $q->where('name', 'LIKE', "%{$busqueda}%")
+                  ->orWhere('email', 'LIKE', "%{$busqueda}%");
+            });
+        }
+
+        // 4. Ejecutamos la paginación
+        $users = $query->select('id', 'name', 'email', 'validado', 'role_id', 'created_at')
+            ->orderBy('created_at', 'desc')
+            ->paginate($rows);
             return response()->json([
                 'data' => $users,
                 'message' => 'Listado de validaciones obtenido correctamente'

@@ -9,6 +9,7 @@ class MotivoBaja extends Model
     //
     protected $fillable = [
     'nombre',
+    'motivo',
     'visible_alumno',
     'visible_empresa',
     'solo_admin',

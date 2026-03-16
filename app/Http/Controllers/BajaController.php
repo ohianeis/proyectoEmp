@@ -115,15 +115,26 @@ class BajaController extends Controller
     /**
      * Vista para el ADMIN: Ver quién se ha dado de baja y por qué.
      */
-    public function indexHistorialBajas()
+    public function indexHistorialBajas(Request $request)
     {
        try {
-        $bajas = User::with(['rol:id,rol', 'motivoBaja:id,motivo', 'demandante:id,user_id', 'empresa:id,user_id,cif'])
+        $busqueda=$request->query('busqueda');
+        $rows = $request->query('rows', 10);
+        $query = User::with(['rol:id,rol', 'motivoBaja:id,motivo', 'demandante:id,user_id', 'empresa:id,user_id,cif'])
             ->where('status', UserEstado::INACTIVO->value)
-            ->whereNotNull('fecha_baja')
-            ->select('id', 'name', 'email', 'role_id', 'motivo_baja_id', 'comentario_baja', 'fecha_baja') // Solo columnas de users
+            ->whereNotNull('fecha_baja');
+
+        // 3. APLICAMOS EL FILTRO (Si existe búsqueda)
+        if (!empty($busqueda)) {
+            $query->where(function($q) use ($busqueda) {
+                $q->where('name', 'LIKE', "%{$busqueda}%")
+                  ->orWhere('email', 'LIKE', "%{$busqueda}%");
+            });
+        }
+        
+       $bajas = $query->select('id', 'name', 'email', 'role_id', 'motivo_baja_id', 'comentario_baja', 'fecha_baja')
             ->orderBy('fecha_baja', 'desc')
-            ->paginate(10);
+            ->paginate($rows); 
 
         // Transformamos para aplanar la respuesta y que sea fácil de leer en Angular
         $bajas->getCollection()->transform(function ($user) {
@@ -161,12 +172,12 @@ public function storeMotivo(Request $request)
         ]);
 
         // 2. Preparar datos (Asegurar booleanos si no vienen en el request)
-        $data = $request->all();
-        $data['visible_alumno'] = $request->input('visible_alumno', false);
-        $data['visible_empresa'] = $request->input('visible_empresa', false);
-        $data['solo_admin'] = $request->input('solo_admin', false);
-
-        $motivo = MotivoBaja::create($data);
+      $motivo = MotivoBaja::create([
+            'motivo'          => $validatedData['motivo'],
+            'visible_alumno'  => $request->input('visible_alumno', false),
+            'visible_empresa' => $request->input('visible_empresa', false),
+            'solo_admin'      => $request->input('solo_admin', false),
+        ]);
 
         return response()->json([
             'message' => 'Motivo creado correctamente',
@@ -236,10 +247,9 @@ public function destroyMotivo($id)
         }
 
         // Si no tiene usuarios, borrado físico real
-        $motivo->delete();
-        
+ $motivo->update(['activo' => false]);        
         return response()->json([
-            'message' => 'Motivo eliminado físicamente con éxito.'
+            'message' => 'Motivo ha sido desactivado.'
         ]);
 
    
@@ -286,7 +296,7 @@ public function bajaPorAdmin(Request $request, $idUsuario)
                 DB::table('demandante_oferta')
                     ->where('demandante_id', $user->demandante->id)
                     ->where('proceso_id', 1) // En proceso
-                    ->update(['proceso_id' => 8]); // 8 = Retirado (según tu código previo)
+                    ->update(['estado_candidato_id' => 8]); // 8 = Retirado (según tu código previo)
             }
 
             // --- EJECUCIÓN DE LA BAJA DEL USUARIO ---

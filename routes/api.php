@@ -5,6 +5,7 @@ use App\Http\Controllers\BajaController;
 use App\Http\Controllers\InformeController;
 use App\Http\Controllers\OfertaController;
 use App\Http\Controllers\PerfilController;
+use App\Http\Controllers\StatsAlumnoController;
 use App\Http\Controllers\StatsEmpresaController;
 use App\Http\Controllers\TituloController;
 use App\Http\Controllers\ValidacionController;
@@ -69,8 +70,9 @@ Route::prefix('configuracion-cierre')->controller(\App\Http\Controllers\DetalleM
         Route::delete('ofertas/{oferta}/desapuntarse', 'desapuntarseOferta');
         Route::get('ofertas/inscritas/listado', 'ofertasInscritas');
     });
-
-
+//datos dashboard alumno
+Route::get('/demandante/stats-dashboard', [\App\Http\Controllers\StatsAlumnoController::class, 'getDashboardStats'])
+        ->middleware('ability:demandante');
 
     //rutas perfiles
     Route::get('/perfil', [PerfilController::class, 'index'])->middleware('ability:empresa,demandante');
@@ -126,6 +128,7 @@ Route::prefix('configuracion-cierre')->controller(\App\Http\Controllers\DetalleM
         Route::get('informes/oferta/{id}', 'detalleOfertaAdmin');
         Route::get('informes/all-alumnos', 'getAllAlumnos');
         Route::get('informes/all-empresas', 'getAllEmpresas');
+     
         Route::get('informes/alumno/{id}', [InformeController::class, 'getDetalleAlumnoAdmin']);
         Route::get('informes/reportes/{tipo}', [InformeController::class, 'getReportesEspeciales']);
     });

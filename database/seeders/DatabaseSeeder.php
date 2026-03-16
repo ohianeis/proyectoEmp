@@ -1,52 +1,52 @@
 <?php
 
 namespace Database\Seeders;
+
 use App\Enums\UserEstado;
 use App\Models\Demandante;
 use App\Models\DetalleMotivo;
+use App\Models\Direccione;
 use App\Models\Empresa;
-use App\Models\Notificacione;
 use App\Models\Oferta;
 use App\Models\Titulo;
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Familia;
+use App\Models\Nivele;
 use Illuminate\Database\Seeder;
-use Illuminate\Notifications\Notification;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // 1. Seeders de configuración base
+        $this->call([
+            RolesSeeder::class,
+            EstadoSeeder::class,
+            MotivoSeeder::class,
+            DetalleMotivoSeeder::class,
+            MensajeSeeder::class,
+            AccioneSeeder::class,
+            SituacionSeeder::class,
+            NivelesSeeder::class,
+            PorcesosSeeder::class,
+            EstadoCandidatoSeeder::class,
+            MotivoBajaSeeder::class,
+        ]);
 
-
-
-        $this->call(EstadoSeeder::class); //estado de una oferta
-        $this->call(MotivoSeeder::class);
-        $this->call(DetalleMotivoSeeder::class);
-        $this->call(MensajeSeeder::class);
-        $this->call(AccioneSeeder::class);
-        $this->call(RolesSeeder::class);
-        //  $this->call(DatosPruebaSeeder::class);
-        //crear admin ya para que no de fallo centroSeeder
+        // 2. Crear Administrador (ID 1 para CentroSeeder)
         User::factory()->create([
+            'id' => 1,
             'name' => 'Administrador CIP Burlada',
             'email' => 'admin@example.com',
-            'password' => bcrypt('administrador'), // uso admin para diferenciar del resto
+            'password' => bcrypt('administrador'),
             'role_id' => 1,
             'validado' => 1,
-            'status' => \App\Enums\UserEstado::ACTIVO,
+            'status' => UserEstado::ACTIVO,
         ]);
-        $this->call(CentroSeeder::class);
-        $this->call(SituacionSeeder::class);
-        $this->call(NivelesSeeder::class);
-        $this->call(PorcesosSeeder::class); //poner bien nombre seeder!!!
-        $this->call(EstadoCandidatoSeeder::class); //estado de un candidado en un proceso oferta
-        $this->call(MotivoBajaSeeder::class);//motivos de baja seeder creado
-        //creacion para ejemplo de familias titulos
+
+        $this->call([CentroSeeder::class]);
+
+        // 3. Crear Familias y Títulos
         $familiasData = [
             ['nombre' => 'Informática y Comunicaciones'],
             ['nombre' => 'Administración y Gestión'],
@@ -54,126 +54,86 @@ class DatabaseSeeder extends Seeder
             ['nombre' => 'Hostelería y Turismo'],
             ['nombre' => 'Comercio y Marketing']
         ];
+        foreach ($familiasData as $f) Familia::create($f);
 
-        foreach ($familiasData as $f) {
-            \App\Models\Familia::create($f);
-        }
-        //seeder de titulos
-        $superior = \App\Models\Nivele::where('nivel', 'Grado Superior')->first()->id;
-        $medio = \App\Models\Nivele::where('nivel', 'Grado Medio')->first()->id;
-        $basico = \App\Models\Nivele::where('nivel', 'Grado Básico')->first()->id;
-        // Obtenemos los IDs de las familias para asignar
-        $fInformática = \App\Models\Familia::where('nombre', 'Informática y Comunicaciones')->first()->id;
-        $fAdmin = \App\Models\Familia::where('nombre', 'Administración y Gestión')->first()->id;
-        $titulos = [
-            ['nombre' => 'Desarrollo de Aplicaciones Web', 'nivel' => $superior, 'familia' => $fInformática],
-            ['nombre' => 'Desarrollo de Aplicaciones Multiplataforma', 'nivel' => $superior, 'familia' => $fInformática],
-            ['nombre' => 'Sistemas Microinformáticos y Redes', 'nivel' => $medio, 'familia' => $fInformática],
-            ['nombre' => 'Administración y Finanzas', 'nivel' => $superior, 'familia' => $fAdmin],
+        $superior = Nivele::where('nivel', 'Grado Superior')->first()->id;
+        $medio = Nivele::where('nivel', 'Grado Medio')->first()->id;
+        $fInf = Familia::where('nombre', 'Informática y Comunicaciones')->first()->id;
+        $fAdm = Familia::where('nombre', 'Administración y Gestión')->first()->id;
+
+        $titulosSeed = [
+            ['nombre' => 'Desarrollo de Aplicaciones Web', 'nivele_id' => $superior, 'familia_id' => $fInf],
+            ['nombre' => 'Desarrollo de Aplicaciones Multiplataforma', 'nivele_id' => $superior, 'familia_id' => $fInf],
+            ['nombre' => 'Sistemas Microinformáticos y Redes', 'nivele_id' => $medio, 'familia_id' => $fInf],
+            ['nombre' => 'Administración y Finanzas', 'nivele_id' => $superior, 'familia_id' => $fAdm],
         ];
 
-        foreach ($titulos as $t) {
-            \App\Models\Titulo::create([
-                'nombre' => $t['nombre'],
-                'activado' => true,
-                'nivele_id' => $t['nivel'],
-                'familia_id' => $t['familia'],
-                'centro_id' => 1,
-            ]);
+        foreach ($titulosSeed as $t) {
+            Titulo::create(array_merge($t, ['activado' => true, 'centro_id' => 1]));
         }
 
+        $todosLosTitulosIds = Titulo::pluck('id')->toArray();
 
+        // 4. EMPRESAS (10 validadas con 11 ofertas cada una + 5 sin validar)
+        User::factory(10)
+            ->empresa()
+            ->conNombreEmpresa()
+            ->create(['validado' => 1, 'status' => UserEstado::ACTIVO])
+            ->each(function ($user) use ($todosLosTitulosIds) {
+                $empresa = $user->empresa()->create(['nombre' => $user->name]);
+                
+                for ($i = 1; $i <= 11; $i++) {
+                    // Oferta Abierta
+                    $o = Oferta::factory()->create(['empresa_id' => $empresa->id, 'estado_id' => 1, 'nombre' => "Oferta Abierta #$i"]);
+                    $o->titulos()->attach(fake()->randomElements($todosLosTitulosIds, rand(1, 2)));
+                    
+                    // Oferta Cerrada
+                    $oc = Oferta::factory()->create([
+                        'empresa_id' => $empresa->id, 
+                        'estado_id' => 2, 
+                        'nombre' => "Oferta Cerrada #$i", 
+                        'fechaCierre' => now(), 
+                        'motivo_id' => 2, 
+                        'detalle_motivo_id' => DetalleMotivo::where('motivo_id', 2)->first()->id
+                    ]);
+                    $oc->titulos()->attach(fake()->randomElements($todosLosTitulosIds, rand(1, 2)));
+                }
+            });
 
-        //  Crear empresas validadas y sus ofertas
- User::factory(5)
-    ->empresa()           // Asigna role_id 2
-    ->conNombreEmpresa()  // Genera nombre tipo "Empresa S.A."
-    ->create([
-        'validado' => 1,
-        'status' => UserEstado::ACTIVO
-    ])->each(function ($user) {
-        
-        // El nombre de la tabla 'empresas' será igual al del 'users'
-        $empresa = $user->empresa()->create(
-            \App\Models\Empresa::factory()->make([
-                'nombre' => $user->name 
-            ])->toArray()
-        );
+        User::factory(5)->create(['role_id' => 2, 'validado' => 0, 'status' => UserEstado::PENDIENTE_VALIDACION]);
 
-       // Creamos 1 oferta ABIERTA
-            $ofertaAbierta = Oferta::factory()->create([
-                'empresa_id' => $empresa->id,
-                'estado_id' => 1, // Abierta
-                'motivo_id' => null,
-                'detalle_motivo_id' => null
-            ]);
-
-            // Creamos 1 oferta CERRADA (Sin demandante) para probar la nueva lógica
-            $ofertaCerrada = Oferta::factory()->create([
-                'empresa_id' => $empresa->id,
-                'estado_id' => 2, // Cerrada
-                'fechaCierre' => now(),
-                'motivo_id' => 2, // Sin demandante
-                'detalle_motivo_id' => DetalleMotivo::where('motivo_id', 2)->inRandomOrder()->first()->id
-            ]);
-
-            // Asignar títulos a ambas
-            foreach([$ofertaAbierta, $ofertaCerrada] as $o) {
-                $o->titulos()->attach(Titulo::inRandomOrder()->take(rand(1, 2))->pluck('id'));
-            }
-        });
-        //crear con factory para demo 5 empresas no validadas
-   User::factory(5)
-    ->conNombreEmpresa() // Genera nombre de empresa para el usuario
-    ->create([
-        'role_id' => 2,
-        'validado' => 0,
-        'status' => UserEstado::PENDIENTE_VALIDACION 
-    ]);
-        //crear factory con 5 alumos validados
-        User::factory(5)->create([
+        // 5. ALUMNOS VALIDADOS (30) - Solución a campos obligatorios en pivote
+        User::factory(30)->create([
             'role_id' => 3,
             'validado' => 1,
-            'status' => \App\Enums\UserEstado::ACTIVO
-        ])->each(function ($user) {
-            // Creamos el perfil de demandante
+            'status' => UserEstado::ACTIVO
+        ])->each(function ($user) use ($todosLosTitulosIds) {
             $demandante = $user->demandante()->create(
-                \App\Models\Demandante::factory()->make([
-                    'nombre' => $user->name // Usamos el nombre del usuario para que coincidan
-                ])->toArray()
+                Demandante::factory()->make(['nombre' => $user->name])->toArray()
             );
 
-            // Creamos la dirección polimórfica para el demandante
-            $demandante->direccion()->create(
-                \App\Models\Direccione::factory()->make()->toArray()
-            );
+            $demandante->direccion()->create(Direccione::factory()->make()->toArray());
+
+            $titulosParaAsignar = fake()->randomElements($todosLosTitulosIds, rand(1, 2));
+            
+            foreach ($titulosParaAsignar as $id) {
+                // Aquí pasamos todos los campos que SQL nos ha ido reclamando
+                $demandante->titulos()->attach($id, [
+                    'centro' => 'CIP Burlada',
+                    'año' => rand(2020, 2025),
+                    'cursando' => rand(0, 1)
+                ]);
+            }
         });
-        //crear factory con 5 alumnos no validados
+
+        // 6. ALUMNOS NO VALIDADOS (5)
         User::factory(5)->create([
-            'role_id' => 3,
-            'validado' => 0, // Las empresas suelen estar validadas en la demo
-        ]);
-
-
-
-        //creo algun titulo de prueba en la tabla
-        /*Titulo::create([
-        'nombre'=>'Fontanería',
-        'activado'=>1,
-        'nivele_id'=>1,
-        'centro_id'=>1
-    ]);
-    Titulo::create([
-        'nombre'=>'técnico administrativo',
-        'activado'=>1,
-        'nivele_id'=>2,
-        'centro_id'=>1
-    ]);
-    Titulo::create([
-        'nombre'=>'desarrollo de aplicaciones web',
-        'activado'=>1,
-        'nivele_id'=>3,
-        'centro_id'=>1
-    ]);*/
+            'role_id' => 3, 
+            'validado' => 0, 
+            'status' => UserEstado::PENDIENTE_VALIDACION
+        ])->each(function ($user) {
+            $d = $user->demandante()->create(Demandante::factory()->make(['nombre' => $user->name])->toArray());
+            $d->direccion()->create(Direccione::factory()->make()->toArray());
+        });
     }
 }

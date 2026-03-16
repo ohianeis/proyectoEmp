@@ -100,9 +100,9 @@ public function scopeCumpleRequisitos($query, $oferta)
     {
         return $this->belongsTo(User::class);
     }
-    public function cvs()
+    public function cv()
     {
-        return $this->hasMany(Cv::class);
+        return $this->hasOne(Cv::class);
     }
     //muchos a muchos
     public function ofertas()

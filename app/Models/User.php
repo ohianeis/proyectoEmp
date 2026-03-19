@@ -25,6 +25,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'change_pass',
         'validado',
         'role_id',
         'status',           
@@ -55,6 +56,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'status' => UserEstado::class,//casting enums
             'fecha_baja' => 'datetime',
+            'force_password_change' => 'boolean'
         ];
     }
     protected function createdAt():Attribute{

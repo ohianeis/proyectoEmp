@@ -28,6 +28,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'ability'=>CheckForAnyAbility::class
         ]);
     })
+    ->withMiddleware(function (Middleware $middleware) {
+    $middleware->alias([
+        'change_pass' => \App\Http\Middleware\changePass::class,
+    ]);
+})
     ->withExceptions(function (Exceptions $exceptions) {
         //
        $exceptions->renderable(function (NotFoundHttpException $e, Request $request) {

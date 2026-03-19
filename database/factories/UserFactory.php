@@ -44,6 +44,7 @@ class UserFactory extends Factory
             return $slug . fake()->unique()->numberBetween(1, 99) . '@ejemplo.com';
         },
         'password' => bcrypt('prueba'),
+        'change_pass'=>false,
         'validado' => $this->faker->boolean(80),
         'status' => UserEstado::PENDIENTE_VALIDACION->value,
         'role_id' => 3, 

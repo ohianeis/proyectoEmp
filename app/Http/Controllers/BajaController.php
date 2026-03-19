@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Enums\UserEstado;
 use App\Models\MotivoBaja;
 use App\Models\User;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -354,6 +356,77 @@ public function reactivarUsuario($idUsuario)
         return response()->json([
             'message' => 'Hubo un error al intentar reactivar al usuario.',
             'errors'  => $e->getMessage()
+        ], 500);
+    }
+}
+/**
+ * Reseteo de contraseña por parte del Admin.
+ * Genera una clave temporal y obliga al usuario a cambiarla.
+ */
+public function changePassAdmin(Request $request, $idUsuario)
+{
+    try {
+        $user = User::findOrFail($idUsuario);
+
+        // generar clave temporal aleatoria de 8 caracteres
+        //  Str::random para que sea segura pero fácil de transmitir
+        $passwordTemporal = Str::random(8); 
+
+        // 2. Actualizamos al usuario
+        $user->update([
+            'password' => Hash::make($passwordTemporal),
+            'change_pass' => true
+        ]);
+
+       return response()->json([
+            'message' => 'Contraseña reseteada con éxito',
+            'data' => [
+                'pass_temporal' => $passwordTemporal,
+                'usuario' => $user->name,
+                'email' => $user->email,
+                'change_pass' => true
+            ]
+        ], 200);
+
+    } catch (Exception $e) {
+        return response()->json([
+            'message' => 'Error al resetear la contraseña',
+            'errors' => $e->getMessage()
+        ], 500);
+    }
+}
+
+/**
+ * Acción que ejecutará el usuario cuando sea forzado a cambiar su clave.
+ */
+public function changePassUser(Request $request)
+{
+    try {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        $request->validate([
+            'password' => 'required|min:6|confirmed',
+        ]);
+
+        // Actualizamos y liberamos el bloqueo
+        $user->update([
+            'password' => Hash::make($request->password),
+            'change_pass' => false
+        ]);
+
+       return response()->json([
+            'message' => 'Contraseña actualizada correctamente',
+            'data' => [
+                'status' => 'success',
+                'user_id' => $user->id
+            ]
+        ], 200);
+
+    } catch (Exception $e) {
+        return response()->json([
+            'message' => 'No se pudo actualizar la contraseña',
+            'errors' => $e->getMessage()
         ], 500);
     }
 }

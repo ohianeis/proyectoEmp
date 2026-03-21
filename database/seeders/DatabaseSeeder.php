@@ -34,15 +34,16 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // 2. Crear Administrador (ID 1 para CentroSeeder)
-        User::factory()->create([
-            'id' => 1,
-            'name' => 'Administrador CIP Burlada',
-            'email' => 'admin@example.com',
-            'password' => bcrypt('administrador'),
-            'role_id' => 1,
-            'validado' => 1,
-            'status' => UserEstado::ACTIVO,
-        ]);
+      User::create([
+    'id' => 1,
+    'name' => env('ADMIN_NAME', 'Administrador Sistema'), 
+    'email' => env('ADMIN_EMAIL', 'admin@centro.com'),
+    'password' => bcrypt(env('ADMIN_PASSWORD', 'secret1234')), // Password desde .env
+    'role_id' => 1,
+    'validado' => 1,
+    'status' => UserEstado::ACTIVO,
+    'change_pass' => 0, // El superadmin no resetea su pass
+]);
 
         $this->call([CentroSeeder::class]);
 
@@ -81,19 +82,19 @@ class DatabaseSeeder extends Seeder
             ->create(['validado' => 1, 'status' => UserEstado::ACTIVO])
             ->each(function ($user) use ($todosLosTitulosIds) {
                 $empresa = $user->empresa()->create(['nombre' => $user->name]);
-                
+
                 for ($i = 1; $i <= 11; $i++) {
                     // Oferta Abierta
                     $o = Oferta::factory()->create(['empresa_id' => $empresa->id, 'estado_id' => 1, 'nombre' => "Oferta Abierta #$i"]);
                     $o->titulos()->attach(fake()->randomElements($todosLosTitulosIds, rand(1, 2)));
-                    
+
                     // Oferta Cerrada
                     $oc = Oferta::factory()->create([
-                        'empresa_id' => $empresa->id, 
-                        'estado_id' => 2, 
-                        'nombre' => "Oferta Cerrada #$i", 
-                        'fechaCierre' => now(), 
-                        'motivo_id' => 2, 
+                        'empresa_id' => $empresa->id,
+                        'estado_id' => 2,
+                        'nombre' => "Oferta Cerrada #$i",
+                        'fechaCierre' => now(),
+                        'motivo_id' => 2,
                         'detalle_motivo_id' => DetalleMotivo::where('motivo_id', 2)->first()->id
                     ]);
                     $oc->titulos()->attach(fake()->randomElements($todosLosTitulosIds, rand(1, 2)));
@@ -115,7 +116,7 @@ class DatabaseSeeder extends Seeder
             $demandante->direccion()->create(Direccione::factory()->make()->toArray());
 
             $titulosParaAsignar = fake()->randomElements($todosLosTitulosIds, rand(1, 2));
-            
+
             foreach ($titulosParaAsignar as $id) {
                 // Aquí pasamos todos los campos que SQL nos ha ido reclamando
                 $demandante->titulos()->attach($id, [
@@ -128,8 +129,8 @@ class DatabaseSeeder extends Seeder
 
         // 6. ALUMNOS NO VALIDADOS (5)
         User::factory(5)->create([
-            'role_id' => 3, 
-            'validado' => 0, 
+            'role_id' => 3,
+            'validado' => 0,
             'status' => UserEstado::PENDIENTE_VALIDACION
         ])->each(function ($user) {
             $d = $user->demandante()->create(Demandante::factory()->make(['nombre' => $user->name])->toArray());

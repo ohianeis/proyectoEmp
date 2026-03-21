@@ -10,6 +10,7 @@ use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\Hash;
 use \stdClass;
+
 /**
  * @OA\Info(
  *              title="API Proyecto bolsa empleo",
@@ -23,227 +24,240 @@ class AuthController extends Controller
 {
     //
     /**
- * @OA\Get(
- *     path="/api/registro/roles",
- *     summary="Obtener lista de roles disponibles",
- *     description="Devuelve una lista de roles excepto el administrador (ID 1).",
- *     tags={"Auth"},
- *     security={
- *         {"bearerAuth": {}}
- *     },
- *     @OA\Response(
- *         response=200,
- *         description="Lista de roles obtenida correctamente.",
- *         @OA\JsonContent(
- *             type="array",
- *             @OA\Items(
- *                 type="object",
- *                 @OA\Property(property="id", type="integer", example=2, description="ID del rol."),
- *                 @OA\Property(property="rol", type="string", example="Empresa", description="Nombre del rol.")
- *             )
- *         )
- *     ),
- *     @OA\Response(
- *         response=500,
- *         description="Error interno del servidor.",
- *         @OA\JsonContent(
- *             type="object",
- *             @OA\Property(property="mensaje", type="string", example="Se produjo un error al obtener los roles.")
- *         )
- *     )
- * )
- */
+     * @OA\Get(
+     *     path="/api/registro/roles",
+     *     summary="Obtener lista de roles disponibles",
+     *     description="Devuelve una lista de roles excepto el administrador (ID 1).",
+     *     tags={"Auth"},
+     *     security={
+     *         {"bearerAuth": {}}
+     *     },
+     *     @OA\Response(
+     *         response=200,
+     *         description="Lista de roles obtenida correctamente.",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=2, description="ID del rol."),
+     *                 @OA\Property(property="rol", type="string", example="Empresa", description="Nombre del rol.")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Error interno del servidor.",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="mensaje", type="string", example="Se produjo un error al obtener los roles.")
+     *         )
+     *     )
+     * )
+     */
 
-    public function roles(){
-        try{
-            $tiposRoles=Role::select('id','rol')->where('id','!=',1)->orderby('id')->get();
-            return response()->json($tiposRoles,200);
-        }catch(Exception $e){
+    public function roles()
+    {
+        try {
+            $tiposRoles = Role::select('id', 'rol')->where('id', '!=', 1)->orderby('id')->get();
+            return response()->json($tiposRoles, 200);
+        } catch (Exception $e) {
             return response()->json([
-                'mensaje'=>$e->getMessage()
-            ],500);
+                'mensaje' => $e->getMessage()
+            ], 500);
         }
-    }
-   /**
- * Registro a la aplicación
- * @OA\Post(
- *      path="/api/registro",
- *      tags={"Auth"},
- *      @OA\RequestBody(
- *          required=true,
- *          @OA\JsonContent(
- *              required={"name","email","password","role"},
- *              @OA\Property(property="name", type="string", example="ohiane"),
- *              @OA\Property(property="email", type="string", format="email", example="ohiane@ejemplo.com"),
- *              @OA\Property(property="password", type="string", format="password", description="Debe tener al menos 6 caracteres", minLength=6, example="123456789"),
- *              @OA\Property(property="role", type="integer", description="Debe corresponder a un ID válido en la tabla roles", example=1)
- *          )
- *      ),
- *      @OA\Response(
- *          response=200,
- *          description="OK",
- *          @OA\JsonContent(
- *              @OA\Property(property="mensaje", type="boolean", example=true),
- *              @OA\Property(property="usuario", type="string", example="ohiane"),
- *              @OA\Property(property="token", type="string", example="6|LqkDJBeDDN94QsvagE40frw1I11sDOBs5XclO7es38384cb3"),
- *              @OA\Property(property="token_type", type="string", example="Bearer")
- *          )
- *      ),
- *      @OA\Response(
- *          response=422,
- *          description="Error de validación.",
- *          @OA\JsonContent(
- *              @OA\Property(property="message", type="string", example="El correo electrónico ya está registrado"),
- *              @OA\Property(property="errors", type="object",
- *                  @OA\Property(property="email", type="array",
- *                      @OA\Items(type="string", example="El correo electrónico ya está registrado")
- *                  ),
- *                  @OA\Property(property="role", type="array",
- *                      @OA\Items(type="string", example="El rol seleccionado no es válido")
- *                  )
- *              )
- *          )
- *      )
- * )
- */
-    public function registro(Request $request){
-        $usuarioExistente = User::where('email', $request->email)->first();
-
-    if ($usuarioExistente) {
-        // Caso A: Está inactivo (se dio de baja en el pasado)
-        if ($usuarioExistente->status === \App\Enums\UserEstado::INACTIVO->value) {
-            return response()->json([
-                'message' => 'Contacte con el centro.'
-            ], 409); 
-        }
-        
-        // Caso B: Está activo pero intenta registrarse de nuevo
-        return response()->json([
-            'message' => 'No se puede registrar con ese correo.'
-        ], 422);
-    }
-       $request->validate([
-            'name'=>'required|string|max:100',
-            'email'=>'required|string|email|max:255|unique:users',
-            'password'=>'required|string|min:6',
-            'role'=>'required|integer|in:2,3|exists:roles,id',
-       ], [
-                'role.exists'=>'El rol seleccionado no es válido',
-                'email.email'=>'Por favor, introduce un correo electrónico válido',
-                'email.unique'=>'El correo electrónico ya está registrado',
-            ]
-       );
-  
-
-       $user=User::create([
-            'name'=>$request->name,
-            'email'=>$request->email,
-            'password'=>Hash::make($request->password),
-            'validado'=>0,
-            'role_id'=>$request->role
-       ]);
-       $token=$user->createToken('auth_token')->plainTextToken;
-       return response()->json([
-            'data'=>$user,'access_token'=>$token,'token_type'=>'Bearer',
-       ]);
     }
     /**
- * Login a la aplicación
- * @OA\Post(
- *      path="/api/login",
- *      summary="Inicio de sesión de usuario",
- *      description="Permite a un usuario autenticarse en la aplicación.",
- *      tags={"Auth"},
- *      @OA\RequestBody(
- *          required=true,
- *          @OA\JsonContent(
- *              required={"email","password"},
- *              @OA\Property(property="email", type="string", format="email", example="ohiane@ejemplo.com"),
- *              @OA\Property(property="password", type="string", format="password", description="Debe tener al menos 6 caracteres", example="123456789")
- *          )
- *      ),
- *      @OA\Response(
- *          response=200,
- *          description="Inicio de sesión exitoso.",
- *          @OA\JsonContent(
- *              @OA\Property(property="mensaje", type="boolean", example=true),
- *              @OA\Property(property="usuario", type="string", example="ohiane"),
- *              @OA\Property(property="token", type="string", example="6|LqkDJBeDDN94QsvagE40frw1I11sDOBs5XclO7es38384cb3"),
- *              @OA\Property(property="token_type", type="string", example="Bearer")
- *          )
- *      ),
- *      @OA\Response(
- *          response=401,
- *          description="Error de autenticación.",
- *          @OA\JsonContent(
- *              @OA\Property(property="mensaje", type="string", example="Usuario no autorizado")
- *          )
- *      ),
- *      @OA\Response(
- *          response=422,
- *          description="Error de validación.",
- *          @OA\JsonContent(
- *              @OA\Property(property="message", type="string", example="Error de validación"),
- *              @OA\Property(property="errors", type="object",
- *                  @OA\Property(property="email", type="array",
- *                      @OA\Items(type="string", example="El campo email es obligatorio.")
- *                  ),
- *                  @OA\Property(property="password", type="array",
- *                      @OA\Items(type="string", example="El campo password es obligatorio.")
- *                  )
- *              )
- *          )
- *      )
- * )
- */
-    public function login(Request $request){
-         // Validación de los datos entrantes
-    $request->validate([
-        'email' => 'required|string|email',
-        'password' => 'required|string',
-    ]);
-      
-        $user =User::where('email',$request->email)->first();
+     * Registro a la aplicación
+     * @OA\Post(
+     *      path="/api/registro",
+     *      tags={"Auth"},
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              required={"name","email","password","role"},
+     *              @OA\Property(property="name", type="string", example="ohiane"),
+     *              @OA\Property(property="email", type="string", format="email", example="ohiane@ejemplo.com"),
+     *              @OA\Property(property="password", type="string", format="password", description="Debe tener al menos 6 caracteres", minLength=6, example="123456789"),
+     *              @OA\Property(property="role", type="integer", description="Debe corresponder a un ID válido en la tabla roles", example=1)
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="OK",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="mensaje", type="boolean", example=true),
+     *              @OA\Property(property="usuario", type="string", example="ohiane"),
+     *              @OA\Property(property="token", type="string", example="6|LqkDJBeDDN94QsvagE40frw1I11sDOBs5XclO7es38384cb3"),
+     *              @OA\Property(property="token_type", type="string", example="Bearer")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=422,
+     *          description="Error de validación.",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="message", type="string", example="El correo electrónico ya está registrado"),
+     *              @OA\Property(property="errors", type="object",
+     *                  @OA\Property(property="email", type="array",
+     *                      @OA\Items(type="string", example="El correo electrónico ya está registrado")
+     *                  ),
+     *                  @OA\Property(property="role", type="array",
+     *                      @OA\Items(type="string", example="El rol seleccionado no es válido")
+     *                  )
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function registro(Request $request)
+    {
+        $usuarioExistente = User::where('email', $request->email)->first();
+
+        if ($usuarioExistente) {
+            // Caso A: Está inactivo (se dio de baja en el pasado)
+            if ($usuarioExistente->status === \App\Enums\UserEstado::INACTIVO->value) {
+                return response()->json([
+                    'message' => 'Contacte con el centro.'
+                ], 409);
+            }
+
+            // Caso B: Está activo pero intenta registrarse de nuevo
+            return response()->json([
+                'message' => 'No se puede registrar con ese correo.'
+            ], 422);
+        }
+        $request->validate(
+            [
+                'name' => 'required|string|max:100',
+                'email' => 'required|string|email|max:255|unique:users',
+                'password' => 'required|string|min:6',
+                'role' => 'required|integer|in:2,3|exists:roles,id',
+            ],
+            [
+                'role.exists' => 'El rol seleccionado no es válido',
+                'email.email' => 'Por favor, introduce un correo electrónico válido',
+                'email.unique' => 'El correo electrónico ya está registrado',
+            ]
+        );
+
+
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'validado' => 0,
+            'role_id' => $request->role
+        ]);
+        $token = $user->createToken('auth_token')->plainTextToken;
+        return response()->json([
+            'data' => $user,
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+        ]);
+    }
+    /**
+     * Login a la aplicación
+     * @OA\Post(
+     *      path="/api/login",
+     *      summary="Inicio de sesión de usuario",
+     *      description="Permite a un usuario autenticarse en la aplicación.",
+     *      tags={"Auth"},
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              required={"email","password"},
+     *              @OA\Property(property="email", type="string", format="email", example="ohiane@ejemplo.com"),
+     *              @OA\Property(property="password", type="string", format="password", description="Debe tener al menos 6 caracteres", example="123456789")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Inicio de sesión exitoso.",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="mensaje", type="boolean", example=true),
+     *              @OA\Property(property="usuario", type="string", example="ohiane"),
+     *              @OA\Property(property="token", type="string", example="6|LqkDJBeDDN94QsvagE40frw1I11sDOBs5XclO7es38384cb3"),
+     *              @OA\Property(property="token_type", type="string", example="Bearer")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=401,
+     *          description="Error de autenticación.",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="mensaje", type="string", example="Usuario no autorizado")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=422,
+     *          description="Error de validación.",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="message", type="string", example="Error de validación"),
+     *              @OA\Property(property="errors", type="object",
+     *                  @OA\Property(property="email", type="array",
+     *                      @OA\Items(type="string", example="El campo email es obligatorio.")
+     *                  ),
+     *                  @OA\Property(property="password", type="array",
+     *                      @OA\Items(type="string", example="El campo password es obligatorio.")
+     *                  )
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function login(Request $request)
+    {
+        // Validación de los datos entrantes
+        $request->validate([
+            'email' => 'required|string|email',
+            'password' => 'required|string',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
         if (!$user || !Hash::check($request->password, $user->password)) {
-        return response()->json([
-            'mensaje' => 'Las credenciales introducidas no son correctas.'
-        ], 401);
-    }
-    $statusActual = ($user->status instanceof \BackedEnum) ? $user->status->value : $user->status;
-    // Si el usuario está inactivo, no le dejamos entrar aunque la contraseña sea correcta.
-   if ($statusActual === \App\Enums\UserEstado::INACTIVO->value) {
-        return response()->json([
-            'mensaje' => 'Tu cuenta ha sido desactivada. Contacta con el centro si deseas reactivarla.'
-        ], 403);
-    }
-    //  Si el usuario existe y la contraseña es correcta, pero NO ESTÁ VALIDADO
-   if (!(bool)$user->validado) {
-        return response()->json([
-            'mensaje' => 'Tu cuenta aún está pendiente de revisión por el centro.'
-        ], 403);
-    }
-    $user->tokens()->delete();//borrar tokens anteriores por seguridad y limpieza tabla
-        $abilities=[];
-        switch($user->role_id){
-            case 1://administrador
-                $abilities=['administrador'];
+            return response()->json([
+                'mensaje' => 'Las credenciales introducidas no son correctas.'
+            ], 401);
+        }
+        $statusActual = ($user->status instanceof \BackedEnum) ? $user->status->value : $user->status;
+        // Si el usuario está inactivo, no le dejamos entrar aunque la contraseña sea correcta.
+        if ($statusActual === \App\Enums\UserEstado::INACTIVO->value) {
+            return response()->json([
+                'mensaje' => 'Tu cuenta ha sido desactivada. Contacta con el centro si deseas reactivarla.'
+            ], 403);
+        }
+        //  Si el usuario existe y la contraseña es correcta, pero NO ESTÁ VALIDADO
+        if (!(bool)$user->validado) {
+            return response()->json([
+                'mensaje' => 'Tu cuenta aún está pendiente de revisión por el centro.'
+            ], 403);
+        }
+        $user->tokens()->delete(); //borrar tokens anteriores por seguridad y limpieza tabla
+        $abilities = [];
+        switch ($user->role_id) {
+            case 1: //administrador
+                $abilities = ['administrador'];
                 break;
-            case 2://empresa
-                $abilities=['empresa'];
+            case 2: //empresa
+                $abilities = ['empresa'];
                 break;
-            case 3://demandante
-                $abilities=['demandante'];
+            case 3: //demandante
+                $abilities = ['demandante'];
                 break;
         }
-        $token=$user->createToken('auth_token',$abilities)->plainTextToken;
+        $token = $user->createToken('auth_token', $abilities)->plainTextToken;
 
-        return response()->json([
-            'mensaje'=>true,
-            'usuario'=>$user->name,
-            'rol'=>strtolower($user->rol->rol),
-            'token'=>$token,
-            'token_type'=>'Bearer'
-        ]);
+        $responseData = [
+            'mensaje'    => true,
+            'usuario'    => $user->name,
+            'rol'        => strtolower($user->rol->rol),
+            'token'      => $token,
+            'token_type' => 'Bearer',
+        ];
+
+        if ($user->change_pass) {
+            $responseData['change_pass'] = 1;
+        }
+
+        return response()->json($responseData);
     }
     /**
      * @OA\Post(
@@ -277,22 +291,23 @@ class AuthController extends Controller
         }
     }
     /**
- * Obtener perfil del usuario autenticado
- * @OA\Get(
- * path="/api/perfil",
- * tags={"Auth"},
- * security={{"bearerAuth": {}}},
- * @OA\Response(response=200, description="Perfil del usuario")
- * )
- */
-public function perfil(Request $request)
-{
-    $user = $request->user();
-    
-    return response()->json([
-        'usuario' => $user->name,
-        'rol' => strtolower($user->rol->rol)  
-    
-    ], 200);
-}
+     * Obtener perfil del usuario autenticado
+     * @OA\Get(
+     * path="/api/perfil",
+     * tags={"Auth"},
+     * security={{"bearerAuth": {}}},
+     * @OA\Response(response=200, description="Perfil del usuario")
+     * )
+     */
+    public function perfil(Request $request)
+    {
+        $user = $request->user();
+
+        return response()->json([
+            'usuario' => $user->name,
+            'rol' => strtolower($user->rol->rol),
+            'change_pass' => (int) $user->change_pass
+
+        ], 200);
+    }
 }

@@ -25,6 +25,8 @@ class MotivoBajaSeeder extends Seeder
         // Solo para que el Admin los use al expulsar
         ['motivo' => 'Incumplimiento de términos', 'visible_alumno' => false, 'visible_empresa' => false, 'solo_admin' => true],
         ['motivo' => 'Comportamiento inadecuado', 'visible_alumno' => false, 'visible_empresa' => false, 'solo_admin' => true],
+        ['motivo' => 'Cese laboral', 'visible_alumno' => false, 'visible_empresa' => false, 'solo_admin' => true],
+
         
         // Genérico
         ['motivo' => 'Otros motivos', 'visible_alumno' => true, 'visible_empresa' => true, 'solo_admin' => false],

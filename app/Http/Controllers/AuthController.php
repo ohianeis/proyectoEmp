@@ -253,6 +253,9 @@ class AuthController extends Controller
             'token_type' => 'Bearer',
         ];
 
+        if($user->role_id===1){
+            $responseData['user']=$user->id;
+        }
         if ($user->change_pass) {
             $responseData['change_pass'] = 1;
         }
@@ -301,13 +304,36 @@ class AuthController extends Controller
      */
     public function perfil(Request $request)
     {
+       try {
+       
         $user = $request->user();
 
-        return response()->json([
-            'usuario' => $user->name,
-            'rol' => strtolower($user->rol->rol),
-            'change_pass' => (int) $user->change_pass
+     
+        if (!$user) {
+            return response()->json([
+                'mensaje' => 'No se encontró el perfil del usuario.'
+            ], 404);
+        }
 
-        ], 200);
+        
+        $responseData = [
+            'usuario'     => $user->name,
+            'rol'         => strtolower($user->rol->rol),
+            'change_pass' => (int) $user->change_pass
+        ];
+
+      
+        if ($user->role_id === 1) {
+            $responseData['user'] = $user->id;
+        }
+
+        return response()->json($responseData, 200);
+
+    } catch (Exception $e) {
+
+        return response()->json([
+            'message' => 'Error al recuperar los datos del perfil.',
+        ], 500);
+    }
     }
 }

@@ -266,7 +266,10 @@ public function bajaPorAdmin(Request $request, $idUsuario)
 {
     try {
         $user = User::findOrFail($idUsuario);
-
+        // Seguridad extra: que el Admin no se borre a sí mismo
+        if (Auth::id() === $user->id) {
+            return response()->json(['message' => 'No puedes darte de baja a ti mismo.'], 403);
+        }
         DB::transaction(function () use ($user, $request) {
             
             // --- GESTIÓN DE EMPRESA ---

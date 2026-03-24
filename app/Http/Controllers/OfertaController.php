@@ -999,9 +999,11 @@ class OfertaController extends Controller
 
             // 2. APLICAMOS EL FILTRO REAL SEGÚN LA PESTAÑA angular
             if ($filtro === 'activas') {
-                $query->wherePivotNotIn('estado_candidato_id', [6, 8]);
+                $query->wherePivotNotIn('estado_candidato_id', [6, 8, 7])
+                ->wherePivot('proceso_id', '!=', 3);
+                
             } elseif ($filtro === 'conseguidas') {
-                $query->wherePivot('proceso_id', 7);
+                $query->wherePivot('proceso_id', 3);
             } elseif ($filtro === 'retiradas') {
                 $query->wherePivot('estado_candidato_id', 8);
             } elseif ($filtro === 'finalizadas') {
@@ -1114,12 +1116,26 @@ class OfertaController extends Controller
     }
     private function getStats($demandante)
     {
-        return [
-            'activas'     => $demandante->ofertas()->wherePivotNotIn('estado_candidato_id', [6, 8])->count(),
-            'conseguidas' => $demandante->ofertas()->wherePivot('proceso_id', 7)->count(),
-            'retiradas'   => $demandante->ofertas()->wherePivot('estado_candidato_id', 8)->count(),
-            'finalizadas' => $demandante->ofertas()->wherePivot('estado_candidato_id', 6)->count(),
-        ];
+       return [
+        // Activas: No finalizadas, no retiradas y NO adjudicadas
+        'activas' => $demandante->ofertas()
+            ->wherePivotNotIn('estado_candidato_id', [6, 8,7])
+            ->wherePivot('proceso_id', '!=', 3)
+            ->count(),
+
+        // Conseguidas: Solo adjudicadas (Proceso 7)
+        'conseguidas' => $demandante->ofertas()
+            ->wherePivot('proceso_id', 3)
+            ->count(),
+
+        'retiradas' => $demandante->ofertas()
+            ->wherePivot('estado_candidato_id', 8)
+            ->count(),
+
+        'finalizadas' => $demandante->ofertas()
+            ->wherePivot('estado_candidato_id', 6)
+            ->count(),
+    ];
     }
     /**
      * @OA\Get(

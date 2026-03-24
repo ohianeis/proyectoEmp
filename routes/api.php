@@ -136,6 +136,12 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\VerificarValidacion::cla
             Route::get('informes/alumno/{id}', [InformeController::class, 'getDetalleAlumnoAdmin']);
             Route::get('informes/reportes/{tipo}', [InformeController::class, 'getReportesEspeciales']);
         });
+        // --- RUTAS DE GESTIÓN DE STAFF (SOLO SUPERADMIN ID: 1) ---
+Route::controller(\App\Http\Controllers\AdminGestion::class)->prefix('admin-staff')->middleware(['ability:administrador'])->group(function () {
+        Route::get('/listado', 'index');
+        Route::post('/crear', 'store');
+        Route::post('/reset-password/{id}', 'resetAdminPassword');
+    });
 
         // --- RUTAS DE GESTIÓN DE BAJAS ---
 

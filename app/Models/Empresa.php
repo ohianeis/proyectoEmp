@@ -18,11 +18,7 @@ class Empresa extends Model
         'telefono_contacto'
 
     ];
-    //no se pueda modificar extrnamente user_id ni centro_id
-    protected $guarded = [
-        'user_id',
-        'centro_id',
-    ];
+  
     //setters para guardar los datos en minúsculas en la tabla
     protected function cif(): Attribute
     {
@@ -42,15 +38,14 @@ class Empresa extends Model
             }
         );
     }
-    protected function localidad(): Attribute
-    {
-        return new Attribute(
-            set: function ($value) {
-
-                return strtolower($value);
-            }
-        );
-    }
+  protected function localidad(): Attribute
+{
+    return Attribute::make(
+        set: fn ($value) => $value ? strtolower($value) : null,
+        
+        get: fn ($value) => $value, 
+    );
+}
     protected function createdAt(): Attribute
     {
         return new Attribute(
@@ -87,11 +82,8 @@ class Empresa extends Model
     {
         return $this->hasMany(Oferta::class);
     }
-    //reacion 1 a mcuhos polimorfica
-    public function notificaciones()
-    {
-        return $this->morphMany(Notificacione::class, 'notificacioneable');
-    }
+   
+  
     //relacion 1:1 polimorfica
     public function direccion()
     {

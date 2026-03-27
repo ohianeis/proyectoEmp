@@ -17,6 +17,8 @@ use App\Http\Controllers\CvController;
 
 
 
+
+
 Route::post('/registro', [AuthController::class, 'registro']);
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::get('/registro/roles', [AuthController::class, 'roles']);
@@ -33,7 +35,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\VerificarValidacion::cla
             Route::get('/empresa/stats', [StatsEmpresaController::class, 'getStatsEmpresa'])->middleware('ability:empresa');
         });
         Route::controller(OfertaController::class)->middleware(['ability:empresa'])->group(function () {
-            Route::get('ofertas/estados-candidatos', [OfertaController::class, 'getEstadosCandidato']);
+            Route::get('ofertas/estados-candidatos', 'getEstadosCandidato');
 
             Route::post('/ofertas', 'store');
             Route::get('/ofertas/{id}/edit', 'edit');
@@ -45,7 +47,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\VerificarValidacion::cla
             Route::patch('ofertas/{oferta}/cerrar', 'cerrarOferta');
             Route::patch('ofertas/{oferta}/asignar/{demandante}', 'asignarCandidato');
             Route::patch('/ofertas/{oferta}/candidatos/{demandante}/seguimiento', 'actualizarSeguimiento');
-            Route::patch('ofertas/{id}/toggle-anonimo', [OfertaController::class, 'cambiarAnonimato']);
+            Route::patch('ofertas/{id}/toggle-anonimo', 'cambiarAnonimato');
         });
         // --- RUTAS DE GESTIÓN DE MOTIVOS DE CIERRE (OFERTAS) ---
         Route::prefix('configuracion-cierre')->controller(\App\Http\Controllers\DetalleMotivoController::class)->group(function () {

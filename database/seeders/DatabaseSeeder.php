@@ -24,8 +24,6 @@ class DatabaseSeeder extends Seeder
             EstadoSeeder::class,
             MotivoSeeder::class,
             DetalleMotivoSeeder::class,
-            MensajeSeeder::class,
-            AccioneSeeder::class,
             SituacionSeeder::class,
             NivelesSeeder::class,
             PorcesosSeeder::class,
@@ -128,13 +126,10 @@ class DatabaseSeeder extends Seeder
         });
 
         // 6. ALUMNOS NO VALIDADOS (5)
-        User::factory(5)->create([
-            'role_id' => 3,
-            'validado' => 0,
-            'status' => UserEstado::PENDIENTE_VALIDACION
-        ])->each(function ($user) {
-            $d = $user->demandante()->create(Demandante::factory()->make(['nombre' => $user->name])->toArray());
-            $d->direccion()->create(Direccione::factory()->make()->toArray());
-        });
+       User::factory(5)->create([
+    'role_id' => 3,
+    'validado' => 0,
+    'status' => UserEstado::PENDIENTE_VALIDACION
+]);
     }
 }

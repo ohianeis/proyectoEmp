@@ -9,180 +9,175 @@ use App\Http\Controllers\StatsAlumnoController;
 use App\Http\Controllers\StatsEmpresaController;
 use App\Http\Controllers\TituloController;
 use App\Http\Controllers\ValidacionController;
-use App\Http\Middleware\authValidacion;
-use App\Http\Middleware\VerificarValidacion;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CvController;
+use Illuminate\Support\Facades\Route;
 
-
-
-
-
+/*
+|--------------------------------------------------------------------------
+| RUTAS PÚBLICAS
+|--------------------------------------------------------------------------
+*/
 Route::post('/registro', [AuthController::class, 'registro']);
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::get('/registro/roles', [AuthController::class, 'roles']);
 
+/*
+|--------------------------------------------------------------------------
+| RUTAS PROTEGIDAS (AUTENTICACIÓN Y VALIDACIÓN)
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth:sanctum', \App\Http\Middleware\VerificarValidacion::class])->group(function () {
-    //logout
+
+    // Gestionar sesión y credenciales básicas
     Route::post('/logout', [AuthController::class, 'logout']);
-    //compoprbacion rol usuario
     Route::get('/perfil-auth', [AuthController::class, 'perfil']);
     Route::post('/change-password-user', [BajaController::class, 'changePassUser']);
 
+    // Rutas que requieren haber superado el cambio de contraseña obligatorio
     Route::middleware([\App\Http\Middleware\changePass::class])->group(function () {
+
+        /* --- ACCESO EMPRESA --- */
         Route::middleware(['ability:empresa'])->group(function () {
-            Route::get('/empresa/stats', [StatsEmpresaController::class, 'getStatsEmpresa'])->middleware('ability:empresa');
-        });
-        Route::controller(OfertaController::class)->middleware(['ability:empresa'])->group(function () {
-            Route::get('ofertas/estados-candidatos', 'getEstadosCandidato');
-
-            Route::post('/ofertas', 'store');
-            Route::get('/ofertas/{id}/edit', 'edit');
-            Route::put('/ofertas/{id}', 'update');
-            Route::get('ofertas/{oferta}/candidatos', 'candidatosInscritos');
-            Route::get('ofertas/{oferta}/candidatos/{demandante}', 'detalleCandidato');
-            Route::get('/ofertas/{oferta}/noInscritos', 'candidatosNoInscritos');
-            Route::post('/ofertas/{oferta}/candidatos/{demandante}/inscribir', 'añadirCandidato');
-            Route::patch('ofertas/{oferta}/cerrar', 'cerrarOferta');
-            Route::patch('ofertas/{oferta}/asignar/{demandante}', 'asignarCandidato');
-            Route::patch('/ofertas/{oferta}/candidatos/{demandante}/seguimiento', 'actualizarSeguimiento');
-            Route::patch('ofertas/{id}/toggle-anonimo', 'cambiarAnonimato');
-        });
-        // --- RUTAS DE GESTIÓN DE MOTIVOS DE CIERRE (OFERTAS) ---
-        Route::prefix('configuracion-cierre')->controller(\App\Http\Controllers\DetalleMotivoController::class)->group(function () {
-
-            //  SOLO EMPRESA: Listar detalles activos para el selector de cierre de oferta
-
-            Route::get('/detalles/activos', 'listarActivosPorMotivo')
-                ->middleware('ability:empresa');
-
-            //  SOLO ADMINISTRADOR: CRUD y Gestión de la configuración
-            Route::middleware(['ability:administrador'])->group(function () {
-                Route::get('/motivos-admin', 'index');           // Ver árbol completo (Activos e Inactivos)
-                Route::post('/detalles', 'store');               // Crear nuevo detalle (ej: "Puesto cancelado")
-                Route::patch('/detalles/{id}', 'update');        // Editar nombre o activar/desactivar
+            Route::get('/empresa/stats', [StatsEmpresaController::class, 'getStatsEmpresa']);
+            
+            Route::controller(OfertaController::class)->group(function () {
+                Route::get('ofertas/estados-candidatos', 'getEstadosCandidato');
+                Route::post('/ofertas', 'store');
+                Route::get('/ofertas/{id}/edit', 'edit');
+                Route::put('/ofertas/{id}', 'update');
+                Route::get('ofertas/{oferta}/candidatos', 'candidatosInscritos');
+                Route::get('ofertas/{oferta}/candidatos/{demandante}', 'detalleCandidato');
+                Route::get('/ofertas/{oferta}/noInscritos', 'candidatosNoInscritos');
+                Route::post('/ofertas/{oferta}/candidatos/{demandante}/inscribir', 'añadirCandidato');
+                Route::patch('ofertas/{oferta}/cerrar', 'cerrarOferta');
+                Route::patch('ofertas/{oferta}/asignar/{demandante}', 'asignarCandidato');
+                Route::patch('/ofertas/{oferta}/candidatos/{demandante}/seguimiento', 'actualizarSeguimiento');
+                Route::patch('ofertas/{id}/toggle-anonimo', 'cambiarAnonimato');
             });
         });
-        //rutas ofertas accesible por empresa y demandate
+
+        /* --- CONFIGURACIÓN DE MOTIVOS DE CIERRE --- */
+        Route::prefix('configuracion-cierre')->controller(\App\Http\Controllers\DetalleMotivoController::class)->group(function () {
+            // Listar detalles activos para el selector de cierre (Empresa)
+            Route::get('/detalles/activos', 'listarActivosPorMotivo')->middleware('ability:empresa');
+
+            // Gestionar configuración de motivos (Administrador)
+            Route::middleware(['ability:administrador'])->group(function () {
+                Route::get('/motivos-admin', 'index');
+                Route::post('/detalles', 'store');
+                Route::patch('/detalles/{id}', 'update');
+            });
+        });
+
+        /* --- ACCESO MULTIPERFIL (EMPRESA Y DEMANDANTE) --- */
         Route::controller(OfertaController::class)->middleware(['ability:empresa,demandante'])->group(function () {
             Route::get('/ofertas', 'index');
             Route::get('ofertas/{oferta}', 'show');
         });
 
-        //rutas accesibles por demandante
-        Route::controller(OfertaController::class)->middleware(['ability:demandante'])->group(function () {
-            Route::post('/ofertas/{oferta}/apuntarse', 'apuntarseOferta');
-            Route::delete('ofertas/{oferta}/desapuntarse', 'desapuntarseOferta');
-            Route::get('ofertas/inscritas/listado', 'ofertasInscritas');
+        /* --- ACCESO DEMANDANTE --- */
+        Route::middleware(['ability:demandante'])->group(function () {
+            Route::controller(OfertaController::class)->group(function () {
+                Route::post('/ofertas/{oferta}/apuntarse', 'apuntarseOferta');
+                Route::delete('ofertas/{oferta}/desapuntarse', 'desapuntarseOferta');
+                Route::get('ofertas/inscritas/listado', 'ofertasInscritas');
+            });
+            Route::get('/demandante/stats-dashboard', [StatsAlumnoController::class, 'getDashboardStats']);
         });
-        //datos dashboard alumno
-        Route::get('/demandante/stats-dashboard', [\App\Http\Controllers\StatsAlumnoController::class, 'getDashboardStats'])
-            ->middleware('ability:demandante');
 
-        //rutas perfiles
+        /* --- GESTIÓN DE PERFIL Y TÍTULOS --- */
         Route::get('/perfil', [PerfilController::class, 'index'])->middleware('ability:empresa,demandante');
         Route::patch('/perfil/editar', [PerfilController::class, 'update'])->middleware('ability:empresa,demandante');
         Route::post('perfil/direccion', [PerfilController::class, 'store'])->middleware('ability:empresa,demandante');
         Route::get('/perfil/situaciones', [PerfilController::class, 'listarSituaciones'])->middleware('ability:demandante');
 
-
-        Route::get('/titulos/familias', [TituloController::class, 'familias'])->middleware(['ability:administrador,demandante,empresa']); //pueden acceder los tres roles
-
-        Route::get('/titulos/activos', [TituloController::class, 'titulosActivos'])->middleware(['ability:administrador,demandante,empresa']); //pueden acceder los tres roles
-        Route::post('/titulos/demandante', [TituloController::class, 'agregarTitulos'])->middleware(['ability:demandante']); //pueden acceder solo los demandantes
-        Route::get('/titulos/demandante', [TituloController::class, 'titulosDemandante'])->middleware(['ability:demandante']);
-        Route::delete('/titulos/demandante/{id}', [TituloController::class, 'tituloDemandante'])->middleware(['ability:demandante']);
-
-
-        //grupo rutas titulos solo accesible por administrador (el centro)
-        Route::controller(TituloController::class)->middleware(['ability:administrador'])->group(function () {
-            Route::get('/titulos', 'index');
-            Route::get('/titulos/{titulo}', 'show');
-            Route::get('/titulos/niveles/listado', 'nivel');
-            //para administrar familias
-
-            Route::post('titulos/familias', 'storeFamilia');
-            Route::patch('titulos/familias/{id}', 'updateFamilia');
-            Route::delete('titulos/familias/{id}', 'destroyFamilia');
-            //administrar titulos
-            Route::patch('/titulos/{titulo}', 'update');
-            Route::post('/titulos', 'store');
-            Route::delete('/titulos/{titulo}', 'destroy');
+        Route::get('/titulos/familias', [TituloController::class, 'familias'])->middleware(['ability:administrador,demandante,empresa']);
+        Route::get('/titulos/activos', [TituloController::class, 'titulosActivos'])->middleware(['ability:administrador,demandante,empresa']);
+        
+        Route::controller(TituloController::class)->middleware(['ability:demandante'])->group(function () {
+            Route::post('/titulos/demandante', 'agregarTitulos');
+            Route::get('/titulos/demandante', 'titulosDemandante');
+            Route::delete('/titulos/demandante/{id}', 'tituloDemandante');
         });
 
-        //rutas para las validaciones solo accesible por el centro
-        Route::controller(ValidacionController::class)->middleware('ability:administrador')->group(function () {
-            Route::get('/usuarios/validaciones', 'index');
-            Route::get('/usuarios/validaciones/pendientes', 'getPendientesCount');
-            Route::patch('/usuarios/validaciones/{user}', 'update');
-            Route::delete('/usuarios/validaciones/{user}', 'destroy');
+        /* --- ACCESO ADMINISTRADOR (CENTRO) --- */
+        Route::middleware(['ability:administrador'])->group(function () {
+            
+            // Administrar catálogo de títulos y familias
+            Route::controller(TituloController::class)->group(function () {
+                Route::get('/titulos', 'index');
+                Route::get('/titulos/{titulo}', 'show');
+                Route::get('/titulos/niveles/listado', 'nivel');
+                Route::post('titulos/familias', 'storeFamilia');
+                Route::patch('titulos/familias/{id}', 'updateFamilia');
+                Route::delete('titulos/familias/{id}', 'destroyFamilia');
+                Route::patch('/titulos/{titulo}', 'update');
+                Route::post('/titulos', 'store');
+                Route::delete('/titulos/{titulo}', 'destroy');
+            });
+
+            // Gestionar validaciones de usuarios
+            Route::controller(ValidacionController::class)->group(function () {
+                Route::get('/usuarios/validaciones', 'index');
+                Route::get('/usuarios/validaciones/pendientes', 'getPendientesCount');
+                Route::patch('/usuarios/validaciones/{user}', 'update');
+                Route::delete('/usuarios/validaciones/{user}', 'destroy');
+            });
+
+            // Generar informes y estadísticas
+            Route::controller(InformeController::class)->group(function () {
+                Route::get('/informes/ofertasAsignadas', 'ofertasAsignadas');
+                Route::get('informes/detalleOfertasAsignadas', 'detalleOfertasAsignadas');
+                Route::get('informes/ofertasCerradas', 'ofertasCerradas');
+                Route::get('informes/ofertasAbiertas', 'ofertasAbiertas');
+                Route::get('informes/totalDemandantes', 'totalDemandantes');
+                Route::get('informes/totalEmpresas', 'totalEmpresas');
+                Route::get('informes/titulosEstado', 'titulosEstado');
+                Route::get('informes/empresasSinOfertas', 'empresasSinOfertas');
+                Route::get('informes/ofertasSinPostulantes', 'ofertasSinPostulantes');
+                Route::get('/informes/empresa/{id}', 'detalleEmpresaAdmin');
+                Route::get('informes/oferta/{id}', 'detalleOfertaAdmin');
+                Route::get('informes/all-alumnos', 'getAllAlumnos');
+                Route::get('informes/all-empresas', 'getAllEmpresas');
+                Route::get('informes/alumno/{id}', 'getDetalleAlumnoAdmin');
+                Route::get('informes/reportes/{tipo}', 'getReportesEspeciales');
+            });
+
+            // Gestionar personal de administración
+            Route::controller(\App\Http\Controllers\AdminGestion::class)->prefix('admin-staff')->group(function () {
+                Route::get('/listado', 'index');
+                Route::post('/crear', 'store');
+                Route::post('/reset-password/{id}', 'resetAdminPassword');
+            });
         });
-        //rutas para informes accesible por el centro
-        Route::controller(InformeController::class)->middleware('ability:administrador')->group(function () {
-            Route::get('/informes/ofertasAsignadas', 'ofertasAsignadas');
-            Route::get('informes/detalleOfertasAsignadas', 'detalleOfertasAsignadas');
-            Route::get('informes/ofertasCerradas', 'ofertasCerradas');
-            Route::get('informes/ofertasAbiertas', 'ofertasAbiertas');
-            Route::get('informes/detalleOfertasAsignadas', 'detallesOfertasAsignadas');
-            Route::get('informes/totalDemandantes', 'totalDemandantes');
-            Route::get('informes/totalEmpresas', 'totalEmpresas');
-            Route::get('informes/titulosEstado', 'titulosEstado');
-            Route::get('informes/empresasSinOfertas', 'empresasSinOfertas');
-            Route::get('informes/ofertasSinPostulantes', 'ofertasSinPostulantes');
-            Route::get('/informes/empresa/{id}', 'detalleEmpresaAdmin');
-            Route::get('informes/oferta/{id}', 'detalleOfertaAdmin');
-            Route::get('informes/all-alumnos', 'getAllAlumnos');
-            Route::get('informes/all-empresas', 'getAllEmpresas');
 
-            Route::get('informes/alumno/{id}', [InformeController::class, 'getDetalleAlumnoAdmin']);
-            Route::get('informes/reportes/{tipo}', [InformeController::class, 'getReportesEspeciales']);
-        });
-        // --- RUTAS DE GESTIÓN DE STAFF (SOLO SUPERADMIN ID: 1) ---
-Route::controller(\App\Http\Controllers\AdminGestion::class)->prefix('admin-staff')->middleware(['ability:administrador'])->group(function () {
-        Route::get('/listado', 'index');
-        Route::post('/crear', 'store');
-        Route::post('/reset-password/{id}', 'resetAdminPassword');
-    });
-
-        // --- RUTAS DE GESTIÓN DE BAJAS ---
-
-        // Rutas accesibles por todos (Empresa, Demandante y Administrador)
+        /* --- GESTIÓN DE BAJAS --- */
         Route::prefix('bajas')->controller(BajaController::class)->group(function () {
-
-            //  Ruta común para TODOS (Admin, Empresa, Demandante)
-            // El controlador filtra qué motivos ve cada uno internamente
             Route::get('/motivos', 'listarMotivos');
-
-            //Rutas exclusivas para Usuarios (Empresa/Demandante)
+            
             Route::middleware(['ability:empresa,demandante'])->group(function () {
                 Route::post('/ejecutar', 'ejecutarBaja');
             });
 
-            //  Rutas exclusivas para el Administrador
             Route::middleware(['ability:administrador'])->group(function () {
                 Route::get('/historial', 'indexHistorialBajas');
                 Route::post('/motivos', 'storeMotivo');
                 Route::put('/motivos/{id}', 'updateMotivo');
                 Route::delete('/motivos/{id}', 'destroyMotivo');
-
-                // baja forzosa por admin
                 Route::post('/admin/baja-forzosa/{idUsuario}', 'bajaPorAdmin');
-                //reactivar baja
-                Route::patch('/reactivar/{idUsuario}', [BajaController::class, 'reactivarUsuario']);
-            Route::post('/admin/reset-password/{idUsuario}', [BajaController::class, 'changePassAdmin']);
-           
-                });
+                Route::patch('/reactivar/{idUsuario}', 'reactivarUsuario');
+                Route::post('/admin/reset-password/{idUsuario}', 'changePassAdmin');
+            });
         });
-        //--RUTAS PARA GESTION CV---
-        //PARA DEMANDANTE
-        Route::controller(CvController::class)->middleware(['ability:demandante'])->group(function () {
-            Route::get('/cv', 'show');          // Ver datos de su propio CV
-            Route::post('/cv', 'upload');       // Subir o reemplazar CV
-            Route::delete('/cv', 'destroy');    // Eliminar su CV
+
+        /* --- GESTIÓN DE CURRÍCULUM (CV) --- */
+        Route::controller(CvController::class)->group(function () {
+            Route::middleware(['ability:demandante'])->group(function () {
+                Route::get('/cv', 'show');
+                Route::post('/cv', 'upload');
+                Route::delete('/cv', 'destroy');
+            });
+            Route::get('/cv/empresa/{oferta_id}/{demandante_id}', 'showEmpresa')->middleware('ability:empresa');
         });
-        //PARA EMPRESA
-        Route::get('/cv/empresa/{oferta_id}/{demandante_id}', [CvController::class, 'showEmpresa'])
-            ->middleware('ability:empresa');
     });
 });

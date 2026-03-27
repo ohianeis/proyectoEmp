@@ -9,20 +9,31 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * @OA\Tag(name="Detalles de Motivos", description="Gestión de sub-categorías para el cierre de ofertas")
+ */
 class DetalleMotivoController extends Controller
 {
     /**
-     * Lista todos los motivos y sus detalles (Para el Panel de Admin)
+     * @OA\Get(
+     * path="/api/admin/motivos-detalles",
+     * summary="Listado completo de motivos y detalles (Admin)",
+     * description="Retorna la jerarquía completa de motivos con sus sub-detalles para gestión.",
+     * tags={"Detalles de Motivos"},
+     * security={{"sanctum": {}}},
+     * @OA\Response(response=200, description="Listado jerárquico cargado"),
+     * @OA\Response(response=403, description="No tienes permisos de administrador")
+     * )
      */
     public function index()
     {
         try {
 
-            // Admin querrá ver la jerarquía completa para gestionar
+           
 
             $usuario = Auth::user();
 
-            // Control de acceso: Solo el administrador (Rol 1) debería ver TODO
+            // Control de acceso: Solo el administrador (Rol 1)  ve todo
             if ($usuario->role_id != 1) {
                 return response()->json([
 
@@ -47,8 +58,16 @@ class DetalleMotivoController extends Controller
         }
     }
 
-    /**
-     * Lista detalles filtrados por motivo y que estén activos (Para la Empresa al cerrar oferta)
+   /**
+     * @OA\Get(
+     * path="/api/empresa/motivos-cierre",
+     * summary="Listar detalles activos para cierre (Empresa)",
+     * description="Retorna los detalles disponibles para que una empresa cierre una oferta.",
+     * tags={"Detalles de Motivos"},
+     * security={{"sanctum": {}}},
+     * @OA\Response(response=200, description="Detalles recuperados"),
+     * @OA\Response(response=403, description="Solo accesible para empresas")
+     * )
      */
     public function listarActivosPorMotivo()
     {
@@ -79,8 +98,23 @@ class DetalleMotivoController extends Controller
         }
     }
 
-    /**
-     * Crear un nuevo detalle de motivo (Solo Admin)
+   /**
+     * @OA\Post(
+     * path="/api/admin/motivos-detalles",
+     * summary="Crear nuevo detalle de motivo (Admin)",
+     * tags={"Detalles de Motivos"},
+     * security={{"sanctum": {}}},
+     * @OA\RequestBody(
+     * required=true,
+     * @OA\JsonContent(
+     * required={"nombre", "motivo_id"},
+     * @OA\Property(property="nombre", type="string", example="Cubierto por otra plataforma"),
+     * @OA\Property(property="motivo_id", type="integer", example=2)
+     * )
+     * ),
+     * @OA\Response(response=201, description="Detalle creado"),
+     * @OA\Response(response=422, description="Error de validación")
+     * )
      */
     public function store(Request $request)
     {
@@ -123,8 +157,17 @@ class DetalleMotivoController extends Controller
         }
     }
 
-    /**
-     * Actualizar detalle (Nombre o Estado activo/inactivo)
+   /**
+     * @OA\Patch(
+     * path="/api/admin/motivos-detalles/{id}",
+     * summary="Actualizar detalle o estado (Admin)",
+     * description="Permite cambiar el nombre, el motivo padre o activar/desactivar el detalle.",
+     * tags={"Detalles de Motivos"},
+     * security={{"sanctum": {}}},
+     * @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     * @OA\Response(response=200, description="Actualizado con éxito"),
+     * @OA\Response(response=403, description="Intento de modificar un motivo protegido (ID 1)")
+     * )
      */
     public function update(Request $request, $id)
     {

@@ -10,76 +10,28 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
+
+/**
+ * @OA\Tag(name="Validaciones", description="Gestión de aprobación de nuevos usuarios por parte del centro")
+ */
 class ValidacionController extends Controller
 {
-    /**
-     * empresas y demandantes a validar listado
-     */
-    /**
+   /**
      * @OA\Get(
-     *     path="/api/usuarios/validaciones",
-     *     summary="Obtiene los usuarios no validados",
-     *     description="Este endpoint devuelve la lista de usuarios que no están validados, junto con su rol ordenados por fecha registro.",
-     *     tags={"Validaciones"},
-     *     security={{"sanctum": {}}},
-     *     @OA\Parameter(
-     *         name="Authorization",
-     *         in="header",
-     *         required=true,
-     *         description="Token de autenticación en formato Bearer",
-     *         @OA\Schema(
-     *             type="string",
-     *             example="Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Lista de usuarios no validados",
-     *         @OA\JsonContent(
-     *             type="array",
-     *             @OA\Items(
-     *                 type="object",
-     *                 @OA\Property(property="id", type="integer", example=1, description="ID del usuario"),
-     *                 @OA\Property(property="name", type="string", example="Empresa", description="Nombre del usuario"),
-     *                 @OA\Property(property="email", type="string", example="empresa@example.com", description="Correo electrónico"),
-     *                 @OA\Property(property="validado", type="integer", example=0, description="Estado de validación del usuario"),
-     *                 @OA\Property(property="role_id", type="integer", example=2, description="ID del rol asociado"),
-     *                 @OA\Property(property="created_at", type="string", format="date-time", example="29/03/2025", description="Fecha de creación del usuario")
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No estás autenticado. Por favor, inicia sesión para continuar.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=403,
-     *         description="Acceso denegado. No tienes permisos para realizar esta acción.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="message", type="string", example="Usuario no autorizado.")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Recurso no encontrado. La ruta solicitada no existe.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="message", type="string", example="Recurso no encontrado.")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error interno del servidor.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="mensaje", type="string", example="Ocurrió un error inesperado. Por favor, inténtalo nuevamente.")
-     *         )
-     *     )
+     * path="/api/usuarios/validaciones",
+     * summary="Listar usuarios pendientes de validación",
+     * tags={"Validaciones"},
+     * security={{"sanctum": {}}},
+     * @OA\Parameter(name="busqueda", in="query", description="Filtrar por nombre o email", @OA\Schema(type="string")),
+     * @OA\Parameter(name="rows", in="query", description="Número de registros por página", @OA\Schema(type="integer", default=10)),
+     * @OA\Response(
+     * response=200,
+     * description="Listado obtenido correctamente",
+     * @OA\JsonContent(
+     * @OA\Property(property="data", type="object"),
+     * @OA\Property(property="message", type="string")
+     * )
+     * )
      * )
      */
     public function index(Request $request)
@@ -92,7 +44,7 @@ class ValidacionController extends Controller
             ->where('status', '!=', \App\Enums\UserEstado::INACTIVO->value)
             ->with('rol:id,rol');
 
-        // 3. Filtro de búsqueda (si el usuario escribe en el input de Angular)
+        //Filtro de búsqueda (si el usuario escribe en el input de Angular)
         if (!empty($busqueda)) {
             $query->where(function($q) use ($busqueda) {
                 $q->where('name', 'LIKE', "%{$busqueda}%")
@@ -111,113 +63,27 @@ class ValidacionController extends Controller
         } catch (Exception $e) {
             return response()->json([
                 'data' => [],
-                'message' => 'Error al obtener usuarios: ' . $e->getMessage()
+                'message' => 'Error al obtener usuarios: ' 
             ], 500);
         }
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * valida al usuario
-     */
-    /**
+   
+/**
      * @OA\Patch(
-     *     path="/api/usuarios/validaciones/{user}",
-     *     summary="Valida un usuario y lo registra como Empresa o Demandante",
-     *     description="Este endpoint valida a un usuario y lo registra en la tabla correspondiente (Empresa o Demandante) según su rol.",
-     *     tags={"Validaciones"},
-     *        security={{"sanctum": {}}},
-     *     @OA\Parameter(
-     *         name="Authorization",
-     *         in="header",
-     *         required=true,
-     *         description="Token de autenticación en formato Bearer",
-     *         @OA\Schema(
-     *             type="string",
-     *             example="Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
-     *         )
-     *     ),
-     *     @OA\Parameter(
-     *         name="user",
-     *         in="path",
-     *         required=true,
-     *         description="ID del usuario que será validado",
-     *         @OA\Schema(
-     *             type="integer",
-     *             example=1
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Usuario validado correctamente y registrado",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="mensaje", type="string", example="Usuario validado correctamente y registrado")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No estás autenticado. Por favor, inicia sesión para continuar.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=403,
-     *         description="Acceso denegado. No tienes permisos para realizar esta acción.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="message", type="string", example="Usuario no autorizado.")
-     *         )
-     *     ),
-     *       @OA\Response(
-     *         response=404,
-     *         description="Recurso no encontrado. La ruta solicitada no existe.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="message", type="string", example="Recurso no encontrado.")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error interno del servidor.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="mensaje", type="string", example="Ocurrió un error inesperado. Por favor, inténtalo nuevamente.")
-     *         )
-     *     )
+     * path="/api/usuarios/validaciones/{user}",
+     * summary="Validar usuario y crear perfil",
+     * tags={"Validaciones"},
+     * security={{"sanctum": {}}},
+     * @OA\Parameter(
+     * name="user",
+     * in="path",
+     * required=true,
+     * description="ID del usuario",
+     * @OA\Schema(type="integer")
+     * ),
+     * @OA\Response(response=200, description="Validado correctamente"),
+     * @OA\Response(response=404, description="No encontrado")
      * )
      */
     public function update(User $user)
@@ -227,12 +93,13 @@ class ValidacionController extends Controller
 
         try {
             return DB::transaction(function () use ($user) {
-
+    // Registrar el ID del administrador que valida
                 $centro = Auth::user()->id;
+                // Actualizar estado del usuario
                 $user->validado = true;
                 $user->status = \App\Enums\UserEstado::ACTIVO;
                 $user->save();
-
+// Crear perfil según el rol (2: Empresa, 3: Demandante) usando updateOrCreate para evitar duplicados
                 if ($user->role_id == 2) {
                     $empresa = new Empresa();
                     $empresa->nombre = $user->name;
@@ -255,81 +122,24 @@ class ValidacionController extends Controller
         } catch (Exception $e) {
             return response()->json([
                 'data' => null,
-                'message' => 'Error al validar: ' . $e->getMessage()
+                'message' => 'Error al validar: '
             ], 500);
         }
     }
-
-    /**
-     * No se acepta la validacion
-     */
-    /**
+/**
      * @OA\Delete(
-     *     path="/api/usuarios/validaciones/{user}",
-     *     summary="Elimina un usuario del registro",
-     *     description="Este endpoint elimina a un usuario del sistema. Se utiliza cuando no se acepta su validación.",
-     *     tags={"Validaciones"},
-     *        security={{"sanctum": {}}},
-     *     @OA\Parameter(
-     *         name="Authorization",
-     *         in="header",
-     *         required=true,
-     *         description="Token de autenticación en formato Bearer",
-     *         @OA\Schema(
-     *             type="string",
-     *             example="Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
-     *         )
-     *     ),
-     *     @OA\Parameter(
-     *         name="user",
-     *         in="path",
-     *         required=true,
-     *         description="ID del usuario que será eliminado",
-     *         @OA\Schema(
-     *             type="integer",
-     *             example=1
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Usuario eliminado del registro correctamente",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="mensaje", type="string", example="Usuario eliminado del registro correctamente")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No estás autenticado. Por favor, inicia sesión para continuar.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=403,
-     *         description="Acceso denegado. No tienes permisos para realizar esta acción.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="message", type="string", example="Usuario no autorizado.")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Usuario no encontrado. Verifica el ID proporcionado.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="message", type="string", example="Usuario no encontrado.")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error interno del servidor.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="mensaje", type="string", example="Error al eliminar el usuario. Por favor, inténtelo de nuevo.")
-     *         )
-     *     )
+     * path="/api/usuarios/validaciones/{user}",
+     * summary="Rechazar y eliminar usuario",
+     * tags={"Validaciones"},
+     * security={{"sanctum": {}}},
+     * @OA\Parameter(
+     * name="user",
+     * in="path",
+     * required=true,
+     * description="ID del usuario",
+     * @OA\Schema(type="integer")
+     * ),
+     * @OA\Response(response=200, description="Eliminado correctamente")
      * )
      */
     public function destroy(User $user)
@@ -345,13 +155,28 @@ class ValidacionController extends Controller
         } catch (Exception $e) {
             return response()->json([
                 'data' => null,
-                'message' => 'Error al eliminar: ' . $e->getMessage()
+                'message' => 'Error al eliminar: '
             ], 500);
         }
     }
 
-    //obtiene el total de validaciones que tiene pendientes el centro
-    public function getPendientesCount()
+/**
+     * @OA\Get(
+     * path="/api/usuarios/validaciones/pendientes",
+     * summary="Contar validaciones pendientes",
+     * tags={"Validaciones"},
+     * security={{"sanctum": {}}},
+     * @OA\Response(
+     * response=200, 
+     * description="Conteo obtenido",
+     * @OA\JsonContent(
+     * @OA\Property(property="data", type="integer", example=5),
+     * @OA\Property(property="message", type="string")
+     * )
+     * )
+     * )
+     */
+       public function getPendientesCount()
     {
         try {
             // Contamos usuarios (alumnos y empresas) con validado = 0

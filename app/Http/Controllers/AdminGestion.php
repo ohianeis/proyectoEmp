@@ -10,11 +10,21 @@ use Illuminate\Support\Facades\Log;
 use Exception;
 use Illuminate\Support\Str;
 
+/**
+ * @OA\Tag(name="Gestión Admin", description="Operaciones exclusivas del SuperAdmin para el control de cuentas de administradores")
+ */
 class AdminGestion extends Controller
 {
-  /**
-     * Listar administradores
-     * 
+ /**
+     * @OA\Get(
+     * path="/api/admin/gestion",
+     * summary="Listar usuarios administradores",
+     * tags={"Gestión Admin"},
+     * security={{"sanctum": {}}},
+     * @OA\Parameter(name="rows", in="query", @OA\Schema(type="integer", example=10)),
+     * @OA\Response(response=200, description="Listado obtenido"),
+     * @OA\Response(response=403, description="No es SuperAdmin")
+     * )
      */
     public function index(Request $request)
     {
@@ -27,7 +37,7 @@ class AdminGestion extends Controller
 
       $perPage = $request->get('rows', 10);
 
-            // Importante: usar paginate() para que Angular reciba el objeto 'total', 'data', etc.
+            //  usar paginate() para que Angular reciba el objeto 'total', 'data', etc.
             $admins = User::where('role_id', 1)
                 ->select('id', 'name', 'email', 'status', 'change_pass')
                 ->paginate($perPage);
@@ -45,7 +55,20 @@ class AdminGestion extends Controller
     }
 
     /**
-     * Crear un nuevo administrador (Solo por SuperAdmin)
+     * @OA\Post(
+     * path="/api/admin/gestion",
+     * summary="Crear nuevo administrador",
+     * tags={"Gestión Admin"},
+     * security={{"sanctum": {}}},
+     * @OA\RequestBody(
+     * @OA\JsonContent(
+     * required={"name","email"},
+     * @OA\Property(property="name", type="string"),
+     * @OA\Property(property="email", type="string")
+     * )
+     * ),
+     * @OA\Response(response=201, description="Admin creado con clave temporal")
+     * )
      */
     public function store(Request $request)
     {
@@ -70,7 +93,7 @@ class AdminGestion extends Controller
                 'password' => Hash::make($passwordTemporal),
                 'role_id' => 1,
                 'validado' => 1,
-                'change_pass' => true, // Reutilizamos tu lógica de cambio forzoso
+                'change_pass' => true, // cambio a true par acambio contraseña
                 'status' => UserEstado::ACTIVO->value
             ]);
 
@@ -78,7 +101,7 @@ class AdminGestion extends Controller
              
                 'message' => 'Administrador creado. Debe cambiar su clave al entrar.',
                 'data' => [
-                    'pass_temporal' => $passwordTemporal, // Se la das al compañero
+                    'pass_temporal' => $passwordTemporal, 
                    
                 ]
             ], 201);
@@ -90,8 +113,16 @@ class AdminGestion extends Controller
         }
     }
 
-    /**
-     * Resetear password (Crea uno temporal y marca change_pass)
+ /**
+     * @OA\Patch(
+     * path="/api/admin/gestion/{id}/reset-password",
+     * summary="Resetear password de un administrador",
+     * tags={"Gestión Admin"},
+     * security={{"sanctum": {}}},
+     * @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     * @OA\Response(response=200, description="Password reseteado"),
+     * @OA\Response(response=403, description="Intento de resetear al SuperAdmin o acceso no permitido")
+     * )
      */
   public function resetAdminPassword(Request $request, $id)
     {

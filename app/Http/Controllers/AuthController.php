@@ -12,52 +12,26 @@ use Illuminate\Support\Facades\Hash;
 use \stdClass;
 
 /**
- * @OA\Info(
- *              title="API Proyecto bolsa empleo",
- *              version="1.0",
- *              description="Listado de URI'S para el proyecto bolsa empleo"
- * )
- * 
- * @OA\Server(url="http://localhost:8000")//url para la docum de wagger añadir /api/documentation en url
+ * @OA\Tag(name="Auth", description="Operaciones de autenticación y registro")
  */
 class AuthController extends Controller
 {
-    //
-    /**
+   /**
      * @OA\Get(
-     *     path="/api/registro/roles",
-     *     summary="Obtener lista de roles disponibles",
-     *     description="Devuelve una lista de roles excepto el administrador (ID 1).",
-     *     tags={"Auth"},
-     *     security={
-     *         {"bearerAuth": {}}
-     *     },
-     *     @OA\Response(
-     *         response=200,
-     *         description="Lista de roles obtenida correctamente.",
-     *         @OA\JsonContent(
-     *             type="array",
-     *             @OA\Items(
-     *                 type="object",
-     *                 @OA\Property(property="id", type="integer", example=2, description="ID del rol."),
-     *                 @OA\Property(property="rol", type="string", example="Empresa", description="Nombre del rol.")
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error interno del servidor.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="mensaje", type="string", example="Se produjo un error al obtener los roles.")
-     *         )
-     *     )
+     * path="/api/registro/roles",
+     * summary="Roles disponibles para registro",
+     * tags={"Auth"},
+     * @OA\Response(
+     * response=200,
+     * description="Lista de roles (excluye Admin)",
+     * @OA\JsonContent(type="array", @OA\Items(type="object"))
+     * )
      * )
      */
-
     public function roles()
     {
         try {
+            //exlcuir id 1 super Admin
             $tiposRoles = Role::select('id', 'rol')->where('id', '!=', 1)->orderby('id')->get();
             return response()->json($tiposRoles, 200);
         } catch (Exception $e) {
@@ -66,61 +40,40 @@ class AuthController extends Controller
             ], 500);
         }
     }
-    /**
-     * Registro a la aplicación
+   /**
      * @OA\Post(
-     *      path="/api/registro",
-     *      tags={"Auth"},
-     *      @OA\RequestBody(
-     *          required=true,
-     *          @OA\JsonContent(
-     *              required={"name","email","password","role"},
-     *              @OA\Property(property="name", type="string", example="ohiane"),
-     *              @OA\Property(property="email", type="string", format="email", example="ohiane@ejemplo.com"),
-     *              @OA\Property(property="password", type="string", format="password", description="Debe tener al menos 6 caracteres", minLength=6, example="123456789"),
-     *              @OA\Property(property="role", type="integer", description="Debe corresponder a un ID válido en la tabla roles", example=1)
-     *          )
-     *      ),
-     *      @OA\Response(
-     *          response=200,
-     *          description="OK",
-     *          @OA\JsonContent(
-     *              @OA\Property(property="mensaje", type="boolean", example=true),
-     *              @OA\Property(property="usuario", type="string", example="ohiane"),
-     *              @OA\Property(property="token", type="string", example="6|LqkDJBeDDN94QsvagE40frw1I11sDOBs5XclO7es38384cb3"),
-     *              @OA\Property(property="token_type", type="string", example="Bearer")
-     *          )
-     *      ),
-     *      @OA\Response(
-     *          response=422,
-     *          description="Error de validación.",
-     *          @OA\JsonContent(
-     *              @OA\Property(property="message", type="string", example="El correo electrónico ya está registrado"),
-     *              @OA\Property(property="errors", type="object",
-     *                  @OA\Property(property="email", type="array",
-     *                      @OA\Items(type="string", example="El correo electrónico ya está registrado")
-     *                  ),
-     *                  @OA\Property(property="role", type="array",
-     *                      @OA\Items(type="string", example="El rol seleccionado no es válido")
-     *                  )
-     *              )
-     *          )
-     *      )
+     * path="/api/registro",
+     * summary="Registro de nuevo usuario",
+     * tags={"Auth"},
+     * @OA\RequestBody(
+     * required=true,
+     * @OA\JsonContent(
+     * required={"name","email","password","role"},
+     * @OA\Property(property="name", type="string", example="Usuario Ejemplo"),
+     * @OA\Property(property="email", type="string", format="email", example="user@ejemplo.com"),
+     * @OA\Property(property="password", type="string", format="password", minLength=6),
+     * @OA\Property(property="role", type="integer", description="2 para Empresa, 3 para Alumno", example=3)
+     * )
+     * ),
+     * @OA\Response(response=200, description="Usuario creado y token generado"),
+     * @OA\Response(response=409, description="Usuario inactivo (requiere reactivación)"),
+     * @OA\Response(response=422, description="Error de validación o email duplicado")
      * )
      */
     public function registro(Request $request)
     {
+        // 1. Verifir existencia 
         $usuarioExistente = User::where('email', $request->email)->first();
 
         if ($usuarioExistente) {
-            // Caso A: Está inactivo (se dio de baja en el pasado)
+            //  Está inactivo (se dio de baja en el pasado)
             if ($usuarioExistente->status === \App\Enums\UserEstado::INACTIVO->value) {
                 return response()->json([
                     'message' => 'Contacte con el centro.'
                 ], 409);
             }
 
-            // Caso B: Está activo pero intenta registrarse de nuevo
+            //  Está activo pero intenta registrarse de nuevo
             return response()->json([
                 'message' => 'No se puede registrar con ese correo.'
             ], 422);
@@ -154,53 +107,22 @@ class AuthController extends Controller
             'token_type' => 'Bearer',
         ]);
     }
-    /**
-     * Login a la aplicación
+  /**
      * @OA\Post(
-     *      path="/api/login",
-     *      summary="Inicio de sesión de usuario",
-     *      description="Permite a un usuario autenticarse en la aplicación.",
-     *      tags={"Auth"},
-     *      @OA\RequestBody(
-     *          required=true,
-     *          @OA\JsonContent(
-     *              required={"email","password"},
-     *              @OA\Property(property="email", type="string", format="email", example="ohiane@ejemplo.com"),
-     *              @OA\Property(property="password", type="string", format="password", description="Debe tener al menos 6 caracteres", example="123456789")
-     *          )
-     *      ),
-     *      @OA\Response(
-     *          response=200,
-     *          description="Inicio de sesión exitoso.",
-     *          @OA\JsonContent(
-     *              @OA\Property(property="mensaje", type="boolean", example=true),
-     *              @OA\Property(property="usuario", type="string", example="ohiane"),
-     *              @OA\Property(property="token", type="string", example="6|LqkDJBeDDN94QsvagE40frw1I11sDOBs5XclO7es38384cb3"),
-     *              @OA\Property(property="token_type", type="string", example="Bearer")
-     *          )
-     *      ),
-     *      @OA\Response(
-     *          response=401,
-     *          description="Error de autenticación.",
-     *          @OA\JsonContent(
-     *              @OA\Property(property="mensaje", type="string", example="Usuario no autorizado")
-     *          )
-     *      ),
-     *      @OA\Response(
-     *          response=422,
-     *          description="Error de validación.",
-     *          @OA\JsonContent(
-     *              @OA\Property(property="message", type="string", example="Error de validación"),
-     *              @OA\Property(property="errors", type="object",
-     *                  @OA\Property(property="email", type="array",
-     *                      @OA\Items(type="string", example="El campo email es obligatorio.")
-     *                  ),
-     *                  @OA\Property(property="password", type="array",
-     *                      @OA\Items(type="string", example="El campo password es obligatorio.")
-     *                  )
-     *              )
-     *          )
-     *      )
+     * path="/api/login",
+     * summary="Inicio de sesión",
+     * tags={"Auth"},
+     * @OA\RequestBody(
+     * required=true,
+     * @OA\JsonContent(
+     * required={"email","password"},
+     * @OA\Property(property="email", type="string", format="email"),
+     * @OA\Property(property="password", type="string", format="password")
+     * )
+     * ),
+     * @OA\Response(response=200, description="Login exitoso con token y rol"),
+     * @OA\Response(response=401, description="Credenciales incorrectas"),
+     * @OA\Response(response=403, description="Cuenta inactiva o pendiente de validación")
      * )
      */
     public function login(Request $request)
@@ -212,6 +134,7 @@ class AuthController extends Controller
         ]);
 
         $user = User::where('email', $request->email)->first();
+        // Verificar  existencia y contraseña
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
                 'mensaje' => 'Las credenciales introducidas no son correctas.'
@@ -231,6 +154,7 @@ class AuthController extends Controller
             ], 403);
         }
         $user->tokens()->delete(); //borrar tokens anteriores por seguridad y limpieza tabla
+       // Asignación de Habilidades (Abilities) según el rol
         $abilities = [];
         switch ($user->role_id) {
             case 1: //administrador
@@ -262,20 +186,13 @@ class AuthController extends Controller
 
         return response()->json($responseData);
     }
-    /**
+   /**
      * @OA\Post(
      * path="/api/logout",
      * summary="Cierre de sesión",
-     * description="Invalida el token actual del usuario.",
      * tags={"Auth"},
-     * security={{"bearerAuth": {}}},
-     * @OA\Response(
-     * response=200,
-     * description="Sesión cerrada correctamente.",
-     * @OA\JsonContent(
-     * @OA\Property(property="mensaje", type="string", example="Sesión cerrada con éxito")
-     * )
-     * )
+     * security={{"sanctum": {}}},
+     * @OA\Response(response=200, description="Token eliminado correctamente")
      * )
      */
     public function logout(Request $request)
@@ -293,13 +210,13 @@ class AuthController extends Controller
             ], 500);
         }
     }
-    /**
-     * Obtener perfil del usuario autenticado
+   /**
      * @OA\Get(
-     * path="/api/perfil",
+     * path="/api/perfil-auth",
+     * summary="Datos del usuario autenticado",
      * tags={"Auth"},
-     * security={{"bearerAuth": {}}},
-     * @OA\Response(response=200, description="Perfil del usuario")
+     * security={{"sanctum": {}}},
+     * @OA\Response(response=200, description="Datos de perfil")
      * )
      */
     public function perfil(Request $request)
@@ -308,7 +225,7 @@ class AuthController extends Controller
        
         $user = $request->user();
 
-     
+     //para refresh en angular f5
         if (!$user) {
             return response()->json([
                 'mensaje' => 'No se encontró el perfil del usuario.'

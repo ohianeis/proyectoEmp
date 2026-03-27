@@ -12,11 +12,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * @OA\Tag(name="Bajas", description="Gestión de motivos, autogestión de bajas y auditoría administrativa")
+ */
 class BajaController extends Controller
 {
-    /**
-     * Lista los motivos de baja según el rol del usuario autenticado.
-     */
+    
     public function listarMotivos()
     {
         try {
@@ -41,7 +42,22 @@ class BajaController extends Controller
     }
 
     /**
-     * Ejecuta la baja inmediata del usuario si cumple los requisitos.
+     * @OA\Post(
+     * path="/api/bajas/ejecutar",
+     * summary="Darse de baja del portal (Usuario)",
+     * description="El usuario se desactiva a sí mismo. Valida que no tenga procesos activos.",
+     * tags={"Bajas"},
+     * security={{"sanctum": {}}},
+     * @OA\RequestBody(
+     * @OA\JsonContent(
+     * required={"motivo_baja_id"},
+     * @OA\Property(property="motivo_baja_id", type="integer"),
+     * @OA\Property(property="comentario", type="string", maxLength=500)
+     * )
+     * ),
+     * @OA\Response(response=200, description="Cuenta desactivada y sesión cerrada"),
+     * @OA\Response(response=422, description="Error: Tiene ofertas o candidaturas activas")
+     * )
      */
     public function ejecutarBaja(Request $request)
     {
@@ -72,11 +88,11 @@ class BajaController extends Controller
 
             // alumno no puede si esta inscrito en alguna oferta, controla si esta ha conseguido el puesto pero oferta sigue abierta x si esta no termino
   if ($user->role_id == 3) { 
-    // Comprobamos si tiene inscripciones en ofertas NO cerradas
-    // PERO solo contamos aquellas donde NO esté ya "Retirado" (ID 8)
+    // Comprobar si tiene inscripciones en ofertas NO cerradas
+    // solo contamos aquellas donde NO esté ya "Retirado" (ID 8)
     $tieneProcesosActivos = $user->demandante->ofertas()
         ->where('ofertas.estado_id', 1) // La oferta esta abierta
-        ->wherePivot('estado_candidato_id', '!=', 8) // ¡CLAVE! Que no esté ya retirado
+        ->wherePivot('estado_candidato_id', '!=', 8) // Que no esté ya retirado
         ->exists();
 
     if ($tieneProcesosActivos) {
@@ -115,7 +131,14 @@ class BajaController extends Controller
     }
 
     /**
-     * Vista para el ADMIN: Ver quién se ha dado de baja y por qué.
+     * @OA\Get(
+     * path="/api/admin/bajas/historial",
+     * summary="Historial de bajas (Admin)",
+     * tags={"Bajas"},
+     * security={{"sanctum": {}}},
+     * @OA\Parameter(name="busqueda", in="query", @OA\Schema(type="string")),
+     * @OA\Response(response=200, description="Listado paginado de usuarios inactivos")
+     * )
      */
     public function indexHistorialBajas(Request $request)
     {
@@ -126,7 +149,7 @@ class BajaController extends Controller
             ->where('status', UserEstado::INACTIVO->value)
             ->whereNotNull('fecha_baja');
 
-        // 3. APLICAMOS EL FILTRO (Si existe búsqueda)
+        //  APLICAL FILTRO (Si existe búsqueda)
         if (!empty($busqueda)) {
             $query->where(function($q) use ($busqueda) {
                 $q->where('name', 'LIKE', "%{$busqueda}%")
@@ -159,13 +182,19 @@ class BajaController extends Controller
             return response()->json(['message' => 'Error al recuperar historial','errors'=>$e->getMessage()], 500);
         }
     }
-    /**
- * Guardar un nuevo motivo de baja (Solo Admin)
- */
+ /**
+     * @OA\Post(
+     * path="/api/admin/bajas/motivos",
+     * summary="Crear nuevo motivo de baja (Admin)",
+     * tags={"Bajas"},
+     * security={{"sanctum": {}}},
+     * @OA\Response(response=201, description="Motivo creado")
+     * )
+     */
 public function storeMotivo(Request $request)
 {
     try {
-        // 1. La validación (Si falla, lanza una ValidationException automáticamente)
+        //  La validación dara error
         $validatedData = $request->validate([
             'motivo' => 'required|string|max:255',
             'visible_alumno' => 'boolean',
@@ -173,7 +202,7 @@ public function storeMotivo(Request $request)
             'solo_admin' => 'boolean'
         ]);
 
-        // 2. Preparar datos (Asegurar booleanos si no vienen en el request)
+        // Preparar datos (Asegurar booleanos si no vienen en el request)
       $motivo = MotivoBaja::create([
             'motivo'          => $validatedData['motivo'],
             'visible_alumno'  => $request->input('visible_alumno', false),
@@ -203,13 +232,28 @@ public function storeMotivo(Request $request)
 }
 
 /**
- * Actualizar un motivo existente (Solo Admin)
- */
+     * @OA\Patch(
+     * path="/api/admin/bajas/motivos/{id}",
+     * summary="Actualizar un motivo de baja",
+     * tags={"Bajas"},
+     * security={{"sanctum": {}}},
+     * @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     * @OA\RequestBody(
+     * @OA\JsonContent(
+     * @OA\Property(property="motivo", type="string", example="Motivo actualizado"),
+     * @OA\Property(property="visible_alumno", type="boolean", example=true),
+     * @OA\Property(property="visible_empresa", type="boolean", example=false)
+     * )
+     * ),
+     * @OA\Response(response=200, description="Motivo actualizado correctamente"),
+     * @OA\Response(response=404, description="Motivo no encontrado")
+     * )
+     */
 public function updateMotivo(Request $request, $id)
 {
     try {
         $motivo = MotivoBaja::findOrFail($id);
-        
+        //validacion
         $request->validate([
             'motivo' => 'string|max:255',
             'visible_alumno' => 'boolean',
@@ -231,8 +275,16 @@ public function updateMotivo(Request $request, $id)
 }
 
 /**
- * Eliminar un motivo (Solo Admin)
- */
+     * @OA\Delete(
+     * path="/api/admin/bajas/motivos/{id}",
+     * summary="Eliminar o desactivar un motivo de baja",
+     * description="Si el motivo tiene historial, solo se desactiva. Si no, se podría eliminar.",
+     * tags={"Bajas"},
+     * security={{"sanctum": {}}},
+     * @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     * @OA\Response(response=200, description="Acción realizada correctamente")
+     * )
+     */
 public function destroyMotivo($id)
 {
     try {
@@ -245,10 +297,10 @@ public function destroyMotivo($id)
             
             return response()->json([
                 'message' => 'El motivo no se puede eliminar porque tiene historial, pero ha sido DESACTIVADO para nuevos usuarios.'
-            ], 200); // Devolvemos 200 porque la acción de "quitarlo de en medio" se ha logrado
+            ], 200); 
         }
 
-        // Si no tiene usuarios, borrado físico real
+        // Si no tiene usuarios
  $motivo->update(['activo' => false]);        
         return response()->json([
             'message' => 'Motivo ha sido desactivado.'
@@ -260,8 +312,24 @@ public function destroyMotivo($id)
     }
 }
 /**
- * Baja forzosa ejecutada por el Administrador.
- */
+     * @OA\Post(
+     * path="/api/admin/bajas/forzosa/{idUsuario}",
+     * summary="Baja administrativa de un usuario",
+     * description="Desactiva al usuario, cierra sus ofertas (si es empresa) o retira candidaturas (si es alumno).",
+     * tags={"Bajas"},
+     * security={{"sanctum": {}}},
+     * @OA\Parameter(name="idUsuario", in="path", required=true, @OA\Schema(type="integer")),
+     * @OA\RequestBody(
+     * @OA\JsonContent(
+     * required={"motivo_baja_id"},
+     * @OA\Property(property="motivo_baja_id", type="integer", example=1),
+     * @OA\Property(property="comentario_baja", type="string", example="Baja por incumplimiento de normas")
+     * )
+     * ),
+     * @OA\Response(response=200, description="Usuario y procesos gestionados correctamente"),
+     * @OA\Response(response=403, description="No puedes darte de baja a ti mismo")
+     * )
+     */
 public function bajaPorAdmin(Request $request, $idUsuario)
 {
     try {
@@ -274,34 +342,34 @@ public function bajaPorAdmin(Request $request, $idUsuario)
             
             // --- GESTIÓN DE EMPRESA ---
             if ($user->role_id == 2) { 
-                // 1. Buscamos todas las ofertas que NO estén cerradas (ID 1 es Abierta)
+                // Buscar todas las ofertas que NO estén cerradas (ID 1 es Abierta)
                 $ofertasIds = $user->empresa->ofertas()
                     ->where('estado_id', 1)
                     ->pluck('id');
 
                 if ($ofertasIds->isNotEmpty()) {
-                    // 2. Cerramos las ofertas (Cambiamos a ID 2, que es 'Cerrada')
+                    //. Cerrar las ofertas (Cambiar a ID 2, que es 'Cerrada')
                     $user->empresa->ofertas()->whereIn('id', $ofertasIds)->update([
                         'estado_id' => 2, 
                         'motivo_id' => 2, 
                         'fechaCierre' => now(),
                     ]);
 
-                    // 3. Liberamos a los alumnos en la tabla pivote
+                    //  Liberr a los alumnos en la tabla pivote
                     DB::table('demandante_oferta')
                         ->whereIn('oferta_id', $ofertasIds)
-                        ->where('proceso_id', '!=', 3) // No tocamos a contratados
-                        ->update(['proceso_id' => 2]); // 2 = Proceso Cerrado
+                        ->where('proceso_id', '!=', 3) // No tocar contratados
+                        ->update(['proceso_id' => 2]); //  Proceso Cerrado
                 }
             }
 
             // --- GESTIÓN DE ALUMNO ---
             if ($user->role_id == 3) {
-                // Si el alumno se va por el admin, lo retiramos de procesos abiertos
+                // Si el alumno se va por el admin, retirar de procesos abiertos
                 DB::table('demandante_oferta')
                     ->where('demandante_id', $user->demandante->id)
                     ->where('proceso_id', 1) // En proceso
-                    ->update(['estado_candidato_id' => 8]); // 8 = Retirado (según tu código previo)
+                    ->update(['estado_candidato_id' => 8]); // 8 = Retirado 
             }
 
             // --- EJECUCIÓN DE LA BAJA DEL USUARIO ---
@@ -326,13 +394,24 @@ public function bajaPorAdmin(Request $request, $idUsuario)
         ], 500);
     }
 }
+/**
+     * @OA\Patch(
+     * path="/api/admin/usuarios/{idUsuario}/reactivar",
+     * summary="Reactivar un usuario inactivo (Admin)",
+     * tags={"Bajas"},
+     * security={{"sanctum": {}}},
+     * @OA\Parameter(name="idUsuario", in="path", required=true, @OA\Schema(type="integer")),
+     * @OA\Response(response=200, description="Usuario reactivado y datos de baja limpiados"),
+     * @OA\Response(response=404, description="Usuario no encontrado")
+     * )
+     */
 public function reactivarUsuario($idUsuario)
 {
     try {
-        // 1. Buscamos el usuario o lanzamos 404 si no existe
+        //  Buscar el usuario 
         $user = User::findOrFail($idUsuario);
 
-        // 2. Ejecutamos la reactivación en una transacción
+        //  Ejecutar la reactivación en una transacción
         DB::transaction(function () use ($user) {
             
             $user->update([
@@ -363,16 +442,23 @@ public function reactivarUsuario($idUsuario)
     }
 }
 /**
- * Reseteo de contraseña por parte del Admin.
- * Genera una clave temporal y obliga al usuario a cambiarla.
- */
+     * @OA\Patch(
+     * path="/api/admin/usuarios/{idUsuario}/reset-password",
+     * summary="Resetear contraseña de usuario (Admin)",
+     * description="Genera una clave de 8 caracteres y activa el flag change_pass.",
+     * tags={"Bajas"},
+     * security={{"sanctum": {}}},
+     * @OA\Parameter(name="idUsuario", in="path", required=true, @OA\Schema(type="integer")),
+     * @OA\Response(response=200, description="Clave temporal generada")
+     * )
+     */
 public function changePassAdmin(Request $request, $idUsuario)
 {
     try {
         $user = User::findOrFail($idUsuario);
 
         // generar clave temporal aleatoria de 8 caracteres
-        //  Str::random para que sea segura pero fácil de transmitir
+        //  Str::random para ello
         $passwordTemporal = Str::random(8); 
 
         // 2. Actualizamos al usuario
@@ -400,19 +486,33 @@ public function changePassAdmin(Request $request, $idUsuario)
 }
 
 /**
- * Acción que ejecutará el usuario cuando sea forzado a cambiar su clave.
- */
+     * @OA\Patch(
+     * path="/api/usuarios/actualizar-password",
+     * summary="Actualizar contraseña por cambio forzoso (Usuario)",
+     * description="Limpia el flag change_pass tras la actualización exitosa.",
+     * tags={"Auth"},
+     * security={{"sanctum": {}}},
+     * @OA\RequestBody(
+     * @OA\JsonContent(
+     * required={"password","password_confirmation"},
+     * @OA\Property(property="password", type="string", format="password", minLength=6),
+     * @OA\Property(property="password_confirmation", type="string", format="password")
+     * )
+     * ),
+     * @OA\Response(response=200, description="Contraseña actualizada")
+     * )
+     */
 public function changePassUser(Request $request)
 {
     try {
         /** @var \App\Models\User $user */
         $user = Auth::user();
-
+        //validacion
         $request->validate([
             'password' => 'required|min:6|confirmed',
         ]);
 
-        // Actualizamos y liberamos el bloqueo
+        // Actualizar y liberar el bloqueo
         $user->update([
             'password' => Hash::make($request->password),
             'change_pass' => false

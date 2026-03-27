@@ -10,10 +10,11 @@ use Symfony\Component\HttpFoundation\Response;
 
 class VerificarValidacion
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+   /**
+     * Verificar el estado de activación y validación del usuario.
+     * * Comprobar la autenticación del usuario, validar que su estado sea 'Activo'
+     * y asegurar que perfiles de empresa o alumno hayan sido aprobados por el centro
+     * para permitir el acceso a las funciones del sistema.
      */
     public function handle(Request $request, Closure $next): Response
     {

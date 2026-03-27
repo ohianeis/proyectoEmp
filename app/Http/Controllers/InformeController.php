@@ -14,49 +14,31 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 use Illuminate\Http\Request;
-
+/**
+ * @OA\Tag(name="Informes", description="Estadísticas y reportes del sistema para el Dashboard de Admin")
+ */
 class InformeController extends Controller
 {
-    /**
+    
+   /**
      * @OA\Get(
-     *     path="/api/informes/ofertasAsignadas",
-     *     summary="Obtener el total de ofertas asignadas",
-     *     description="Devuelve el número total de ofertas asignadas a demandantes.",
-     *     operationId="ofertasAsignadas",
-     *     tags={"Informes"},
-     *     security={{"sanctum": {}}},
-     *     @OA\Parameter(
-     *         name="Authorization",
-     *         in="header",
-     *         required=true,
-     *         description="Token de autenticación en formato Bearer",
-     *         @OA\Schema(
-     *             type="string",
-     *             example="Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Número de ofertas asignadas"),
+     * path="/api/informes/resumen",
+     * summary="Resumen general del Dashboard (Admin)",
+     * description="Obtiene todos los contadores principales en una sola petición para optimizar la carga del frontend.",
+     * tags={"Informes"},
+     * security={{"sanctum": {}}},
      * @OA\Response(
-     *         response=403,
-     *         description="Acceso denegado. No tienes permisos para realizar esta acción.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="message", type="string", example="Usuario no autorizado.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Recurso no encontrado.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="error", type="string", example="Recurso no encontrado.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(response=500, description="Error interno del servidor")
+     * response=200,
+     * description="Resumen de estadísticas recuperado",
+     * @OA\JsonContent(
+     * @OA\Property(property="data", type="object",
+     * @OA\Property(property="abiertas", type="integer", example=15),
+     * @OA\Property(property="cerradas", type="integer", example=40),
+     * @OA\Property(property="demandantes", type="integer", example=120),
+     * @OA\Property(property="contrataciones", type="integer", example=25)
+     * )
+     * )
+     * )
      * )
      */
     public function ofertasAsignadas()
@@ -68,7 +50,7 @@ class InformeController extends Controller
                 ->count();
 
             return response()->json([
-                'data' => $totalAsignadas, // Envolvemos el resultado en data
+                'data' => $totalAsignadas, // Envolver el resultado en data
                 'message' => 'Total de ofertas asignadas recuperado'
             ]);
         } catch (Exception $e) {
@@ -79,47 +61,14 @@ class InformeController extends Controller
     }
 
 
-
-    /**
+/**
      * @OA\Get(
-     *     path="/api/informes/ofertasCerradas",
-     *     summary="Obtener el total de ofertas cerradas",
-     *     description="Devuelve la cantidad y detalles de ofertas cerradas.",
-     *     operationId="ofertasCerradas",
-     *     tags={"Informes"},       
-     *      security={{"sanctum": {}}},
-     *     @OA\Parameter(
-     *         name="Authorization",
-     *         in="header",
-     *         required=true,
-     *         description="Token de autenticación en formato Bearer",
-     *         @OA\Schema(
-     *             type="string",
-     *             example="Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Lista de ofertas cerradas"),
-     * @OA\Response(
-     *         response=403,
-     *         description="Acceso denegado. No tienes permisos para realizar esta acción.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="message", type="string", example="Usuario no autorizado.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Recurso no encontrado.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="error", type="string", example="Recurso no encontrado.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(response=500, description="Error interno del servidor")
+     * path="/api/informes/ofertasCerradas",
+     * summary="Listado de ofertas finalizadas",
+     * description="Devuelve el total y el desglose de ofertas con estado cerrado, incluyendo datos de la empresa.",
+     * tags={"Informes"},
+     * security={{"sanctum": {}}},
+     * @OA\Response(response=200, description="Informe de históricas generado")
      * )
      */
     public function ofertasCerradas()
@@ -143,46 +92,14 @@ class InformeController extends Controller
             ], 500);
         }
     }
-    /**
+   /**
      * @OA\Get(
-     *     path="/api/informes/ofertasAbiertas",
-     *     summary="Obtener ofertas abiertas",
-     *     description="Devuelve el número total y detalles de ofertas abiertas.",
-     *     operationId="ofertasAbiertas",
-     *     tags={"Informes"},
-     *     security={{"sanctum": {}}},
-     *     @OA\Parameter(
-     *         name="Authorization",
-     *         in="header",
-     *         required=true,
-     *         description="Token de autenticación en formato Bearer",
-     *         @OA\Schema(
-     *             type="string",
-     *             example="Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Lista de ofertas abiertas"),
-     * @OA\Response(
-     *         response=403,
-     *         description="Acceso denegado. No tienes permisos para realizar esta acción.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="message", type="string", example="Usuario no autorizado.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Recurso no encontrado.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="error", type="string", example="Recurso no encontrado.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(response=500, description="Error interno del servidor")
+     * path="/api/informes/ofertasAbiertas",
+     * summary="Monitoreo de ofertas activas",
+     * description="Lista todas las ofertas que actualmente están recibiendo candidatos.",
+     * tags={"Informes"},
+     * security={{"sanctum": {}}},
+     * @OA\Response(response=200, description="Lista de ofertas activas recuperada")
      * )
      */
     public function ofertasAbiertas()
@@ -208,46 +125,14 @@ class InformeController extends Controller
             ], 500);
         }
     }
-    /**
+   /**
      * @OA\Get(
-     *     path="/api/informes/totalDemandantes",
-     *     summary="Obtener el total de demandantes registrados",
-     *     description="Devuelve el número total de demandantes registrados en la plataforma.",
-     *     operationId="totalDemandantes",
-     *     tags={"Informes"},
-     *     security={{"sanctum": {}}},
-     *     @OA\Parameter(
-     *         name="Authorization",
-     *         in="header",
-     *         required=true,
-     *         description="Token de autenticación en formato Bearer",
-     *         @OA\Schema(
-     *             type="string",
-     *             example="Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Total de demandantes"),
-     * @OA\Response(
-     *         response=403,
-     *         description="Acceso denegado. No tienes permisos para realizar esta acción.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="message", type="string", example="Usuario no autorizado.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Recurso no encontrado.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="error", type="string", example="Recurso no encontrado.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(response=500, description="Error interno del servidor")
+     * path="/api/informes/totalDemandantes",
+     * summary="Volumen total de usuarios alumnos",
+     * description="Conteo simple de todos los demandantes registrados en el sistema.",
+     * tags={"Informes"},
+     * security={{"sanctum": {}}},
+     * @OA\Response(response=200, description="Cifra total de demandantes obtenida")
      * )
      */
     public function totalDemandantes()
@@ -258,7 +143,7 @@ class InformeController extends Controller
             $totalDemandantes = Demandante::count();
 
             return response()->json([
-                'data' => $totalDemandantes, // Mandamos el número directamente en data
+                'data' => $totalDemandantes, // Mandar el número directamente en data
                 'message' => 'Conteo de demandantes recuperado'
             ], 200);
         } catch (Exception $e) {
@@ -267,46 +152,14 @@ class InformeController extends Controller
             ], 500);
         }
     }
-    /**
+  /**
      * @OA\Get(
-     *     path="/api/informes/totalEmpresas",
-     *     summary="Obtener el total de empresas registradas",
-     *     description="Devuelve el número total de empresas registradas y su estado.",
-     *     operationId="totalEmpresas",
-     *     tags={"Informes"},
-     *     security={{"sanctum": {}}},
-     *     @OA\Parameter(
-     *         name="Authorization",
-     *         in="header",
-     *         required=true,
-     *         description="Token de autenticación en formato Bearer",
-     *         @OA\Schema(
-     *             type="string",
-     *             example="Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Total de empresas y sus detalles"),
-     * @OA\Response(
-     *         response=403,
-     *         description="Acceso denegado. No tienes permisos para realizar esta acción.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="message", type="string", example="Usuario no autorizado.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Recurso no encontrado.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="error", type="string", example="Recurso no encontrado.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(response=500, description="Error interno del servidor")
+     * path="/api/informes/totalEmpresas",
+     * summary="Listado y conteo de empresas",
+     * description="Devuelve el total de empresas registradas y un listado básico con sus nombres.",
+     * tags={"Informes"},
+     * security={{"sanctum": {}}},
+     * @OA\Response(response=200, description="Estadísticas de empresas recuperadas")
      * )
      */
     public function totalEmpresas()
@@ -331,44 +184,12 @@ class InformeController extends Controller
     }
     /**
      * @OA\Get(
-     *     path="/api/informes/titulosEstado",
-     *     summary="Obtener el estado de los títulos",
-     *     description="Devuelve cuántos títulos están activos e inactivos.",
-     *     operationId="titulosEstado",
-     *     tags={"Informes"},      
+     * path="/api/informes/titulosEstado",
+     * summary="Salud del catálogo académico",
+     * description="Muestra el balance entre títulos activos e inactivos en el sistema.",
+     * tags={"Informes"},
      * security={{"sanctum": {}}},
-     *     @OA\Parameter(
-     *         name="Authorization",
-     *         in="header",
-     *         required=true,
-     *         description="Token de autenticación en formato Bearer",
-     *         @OA\Schema(
-     *             type="string",
-     *             example="Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Total de títulos por estado"),
-     * @OA\Response(
-     *         response=403,
-     *         description="Acceso denegado. No tienes permisos para realizar esta acción.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="message", type="string", example="Usuario no autorizado.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Recurso no encontrado.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="error", type="string", example="Recurso no encontrado.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(response=500, description="Error interno del servidor")
+     * @OA\Response(response=200, description="Estado del catálogo recuperado")
      * )
      */
     public function titulosEstado()
@@ -393,46 +214,14 @@ class InformeController extends Controller
             ], 500);
         }
     }
-    /**
+   /**
      * @OA\Get(
-     *     path="/api/informes/empresasSinOfertas",
-     *     summary="Obtener empresas sin ofertas publicadas",
-     *     description="Devuelve la lista de empresas que no tienen ofertas activas.",
-     *     operationId="empresasSinOfertas",
-     *     tags={"Informes"},
+     * path="/api/informes/empresasSinOfertas",
+     * summary="Detectar empresas inactivas",
+     * description="Lista empresas que se registraron pero nunca publicaron una oferta. Incluye email para contacto.",
+     * tags={"Informes"},
      * security={{"sanctum": {}}},
-     *     @OA\Parameter(
-     *         name="Authorization",
-     *         in="header",
-     *         required=true,
-     *         description="Token de autenticación en formato Bearer",
-     *         @OA\Schema(
-     *             type="string",
-     *             example="Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Lista de empresas sin ofertas"),
-     * @OA\Response(
-     *         response=403,
-     *         description="Acceso denegado. No tienes permisos para realizar esta acción.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="message", type="string", example="Usuario no autorizado.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Recurso no encontrado.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="error", type="string", example="Recurso no encontrado.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(response=500, description="Error interno del servidor")
+     * @OA\Response(response=200, description="Informe de empresas sin actividad generado")
      * )
      */
     public function empresasSinOfertas()
@@ -457,46 +246,14 @@ class InformeController extends Controller
             ], 500);
         }
     }
-    /**
+   /**
      * @OA\Get(
-     *     path="/api/informes/ofertasSinPostulantes",
-     *     summary="Obtener ofertas sin postulantes",
-     *     description="Devuelve la lista de ofertas que no tienen demandantes inscritos.",
-     *     operationId="ofertasSinPostulantes",
-     *     tags={"Informes"},
+     * path="/api/informes/ofertasSinPostulantes",
+     * summary="Ofertas con 0 candidatos",
+     * description="Identifica ofertas que no han recibido inscripciones, útil para revisar requisitos demasiado exigentes.",
+     * tags={"Informes"},
      * security={{"sanctum": {}}},
-     *     @OA\Parameter(
-     *         name="Authorization",
-     *         in="header",
-     *         required=true,
-     *         description="Token de autenticación en formato Bearer",
-     *         @OA\Schema(
-     *             type="string",
-     *             example="Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Lista de ofertas sin postulantes"),
-     * @OA\Response(
-     *         response=403,
-     *         description="Acceso denegado. No tienes permisos para realizar esta acción.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="message", type="string", example="Usuario no autorizado.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Recurso no encontrado.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="error", type="string", example="Recurso no encontrado.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(response=500, description="Error interno del servidor")
+     * @OA\Response(response=200, description="Lista de ofertas sin éxito de convocatoria")
      * )
      */
     public function ofertasSinPostulantes()
@@ -506,7 +263,7 @@ class InformeController extends Controller
 
             $ofertas = Oferta::doesntHave('demandantes')
                 ->with('empresa:id,nombre') // Solo lo mínimo
-                ->select('id', 'nombre', 'empresa_id', 'created_at') // Filtramos columnas pesadas
+                ->select('id', 'nombre', 'empresa_id', 'created_at') // Filtrar columnas pesadas
                 ->get();
 
             return response()->json([
@@ -522,13 +279,22 @@ class InformeController extends Controller
             ], 500);
         }
     }
-    /**
-     * Obtener detalle de una empresa específica para el Admin
+  /**
+     * @OA\Get(
+     * path="/api/admin/empresa/{id}",
+     * summary="Detalle completo de una empresa (Admin)",
+     * description="Recupera toda la información de una empresa, incluyendo dirección y datos de usuario.",
+     * tags={"Informes"},
+     * security={{"sanctum": {}}},
+     * @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     * @OA\Response(response=200, description="Detalle de empresa recuperado"),
+     * @OA\Response(response=404, description="Empresa no encontrada")
+     * )
      */
     public function detalleEmpresaAdmin($id)
     {
         try {
-            // Buscamos la empresa por ID con sus relaciones
+            // Buscar empresa por ID con sus relaciones
             $empresa = Empresa::with(['direccion', 'user'])->find($id);
 
             if (!$empresa) {
@@ -547,11 +313,20 @@ class InformeController extends Controller
             ], 500);
         }
     }
-    /**para consultar detalle oferta */
+  /**
+     * @OA\Get(
+     * path="/api/admin/oferta/{id}",
+     * summary="Consultar detalle de una oferta (Admin)",
+     * tags={"Informes"},
+     * security={{"sanctum": {}}},
+     * @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     * @OA\Response(response=200, description="Detalle de oferta recuperado")
+     * )
+     */
     public function detalleOfertaAdmin($id)
     {
         try {
-            // Buscamos la oferta con su relación mínima de empresa
+            // Buscar oferta con su relación mínima de empresa
             $oferta = Oferta::with('empresa:id,nombre')->find($id);
 
             if (!$oferta) {
@@ -573,10 +348,17 @@ class InformeController extends Controller
             ], 500);
         }
     }
-// En InformeController.php (o AdminController)
-
-    /**
-     * Obtener todos los demandantes con sus títulos asociados
+/**
+     * @OA\Get(
+     * path="/api/admin/alumnos",
+     * summary="Listado avanzado de alumnos (Admin)",
+     * description="Permite buscar alumnos por nombre, email, teléfono o título académico. Incluye paginación.",
+     * tags={"Informes"},
+     * security={{"sanctum": {}}},
+     * @OA\Parameter(name="busqueda", in="query", required=false, description="Texto a buscar", @OA\Schema(type="string")),
+     * @OA\Parameter(name="rows", in="query", required=false, description="Filas por página", @OA\Schema(type="integer")),
+     * @OA\Response(response=200, description="Listado de alumnos procesado")
+     * )
      */
     public function getAllAlumnos(Request $request)
     {
@@ -589,7 +371,7 @@ class InformeController extends Controller
               ->where('validado', true);
         });
 
-        // 2. Filtro de búsqueda (Si existe el parámetro search)
+        //  Filtra  búsqueda (Si existe el parámetro search)
         $query->when($busqueda, function ($q) use ($busqueda) {
             $q->where(function ($inner) use ($busqueda) {
                 $inner->where('nombre', 'LIKE', "%{$busqueda}%")
@@ -606,16 +388,16 @@ class InformeController extends Controller
             });
         });
 
-        // 3. Paginación y relaciones
+        // Paginación y relaciones
         $alumnos = $query->with(['titulos', 'user'])->paginate($rows);
         $alumnos->through(function ($alumno) {
             return [
                 'id'        => $alumno->id,
                 'user_id'   => $alumno->user_id,
-                'nombre'    => $alumno->nombre, // Concatenamos si prefieres
+                'nombre'    => $alumno->nombre, 
                 'email'     => $alumno->user->email ?? 'N/A',
                 'telefono'  => $alumno->telefono,
-                // Mapeamos los títulos para enviar solo el nombre y datos del pivot
+                // Mapeo los títulos para enviar solo el nombre y datos del pivot
                 'titulos'   => $alumno->titulos->map(function ($titulo) {
                     return [
                         'id'     => $titulo->id,
@@ -636,7 +418,17 @@ class InformeController extends Controller
     }
 
     /**
-     * Obtener todas las empresas con su estado de cuenta
+     * @OA\Get(
+     * path="/api/admin/empresas",
+     * summary="Listado avanzado de empresas (Admin)",
+     * description="Retorna empresas validadas y activas. Permite búsqueda por nombre, CIF, email o teléfono (ignorando espacios).",
+     * tags={"Informes"},
+     * security={{"sanctum": {}}},
+     * @OA\Parameter(name="busqueda", in="query", required=false, description="Texto a buscar (Nombre, CIF, Email, Teléfono)", @OA\Schema(type="string")),
+     * @OA\Parameter(name="rows", in="query", required=false, description="Cantidad de registros por página", @OA\Schema(type="integer", default=10)),
+     * @OA\Response(response=200, description="Listado de empresas paginado"),
+     * @OA\Response(response=500, description="Error de servidor (Logueado internamente)")
+     * )
      */
     public function getAllEmpresas(Request $request)
     {
@@ -678,7 +470,18 @@ class InformeController extends Controller
             return response()->json(['message' => 'Error al conectar con la API, intentelo mas tarde']);
         }
     }
-
+/**
+     * @OA\Get(
+     * path="/api/admin/alumno/expediente/{id}",
+     * summary="Ver expediente detallado del alumno (Admin)",
+     * description="Obtiene toda la información académica y de contacto de un alumno específico.",
+     * tags={"Informes"},
+     * security={{"sanctum": {}}},
+     * @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     * @OA\Response(response=200, description="Expediente cargado con éxito"),
+     * @OA\Response(response=404, description="Alumno no encontrado")
+     * )
+     */
     public function getDetalleAlumnoAdmin($id)
     {
         try {
@@ -686,7 +489,7 @@ class InformeController extends Controller
             $alumno = Demandante::with([
                 'user:id,email',
                 'titulos' => function ($query) {
-                    // ESPECIFICAMOS LA TABLA EN EL ID: 'titulos.id'
+                    // qeu tabla por ID: 'titulos.id'
                     $query->select('titulos.id', 'titulos.nombre', 'titulos.nivele_id')
                         ->with('nivel:id,nivel');
                 }
@@ -711,8 +514,26 @@ class InformeController extends Controller
             ], 500);
         }
     }
-    //informes especiales para su uso en exportacion excell
-    public function getReportesEspeciales($tipo)
+/**
+     * @OA\Get(
+     * path="/api/informes/especiales/{tipo}",
+     * summary="Generar reportes avanzados para exportación",
+     * description="Obtiene conjuntos de datos complejos según el tipo solicitado. Tipos disponibles: ALU_FULL, EMP_INACTIVAS, OFE_VACIAS, OFE_HISTORICO, ALU_TITULACION, OFE_EXITO, BRECHA_TALENTO, LEAD_TIME.",
+     * tags={"Informes"},
+     * security={{"sanctum": {}}},
+     * @OA\Parameter(
+     * name="tipo",
+     * in="path",
+     * required=true,
+     * description="Código del reporte a generar",
+     * @OA\Schema(type="string", enum={"ALU_FULL", "EMP_INACTIVAS", "OFE_VACIAS", "OFE_HISTORICO", "ALU_TITULACION", "OFE_EXITO", "BRECHA_TALENTO", "LEAD_TIME"})
+     * ),
+     * @OA\Response(response=200, description="Datos del reporte listos para procesar"),
+     * @OA\Response(response=400, description="Tipo de reporte no válido"),
+     * @OA\Response(response=500, description="Error en el procesamiento de datos complejos")
+     * )
+     */
+        public function getReportesEspeciales($tipo)
     {
         try {
             $data = null;
@@ -746,7 +567,7 @@ class InformeController extends Controller
                     break;
 
                 case 'OFE_VACIAS':
-                    // Ajustado para usar estado_id como en tus otros métodos
+                    //  usar estado_id 
                     $data = Oferta::where('estado_id', 1) // 1 = Abierta
                         ->whereDoesntHave('demandantes')
                         ->with(['empresa:id,nombre,localidad'])
@@ -755,15 +576,15 @@ class InformeController extends Controller
                     break;
 
                 case 'OFE_HISTORICO':
-                    // Ajustado para usar estado_id como en tus otros métodos
+                    // usar estado_id
                     $data = Oferta::where('estado_id', 2) // 2 = Cerrada
                         ->with(['empresa:id,nombre'])
-                        ->withCount('demandantes') // Usamos demandantes que es tu relación
+                        ->withCount('demandantes') //  demandantes relacion modelos
                         ->get();
                     $message = "Histórico de ofertas cargado con éxito.";
                     break;
                 case 'ALU_TITULACION':
-                    // Agrupamos alumnos por el nivel de su titulación más alta
+                    // Agrupamos alumnos por el nivel 
                     $data = Demandante::whereHas('user', function ($q) {
                         $q->where('validado', 1);
                     })
@@ -788,7 +609,7 @@ class InformeController extends Controller
                         ->orderByDesc('updated_at')
                         ->get()
                         ->map(function ($oferta) {
-                            // Juntamos los nombres de los alumnos adjudicados
+                            // Juntalos nombres de los alumnos adjudicados
                             $adjudicados = $oferta->demandantes->map(function ($d) {
                                 return $d->nombre . ' ' . $d->apellido;
                             })->implode(', ');
@@ -805,20 +626,20 @@ class InformeController extends Controller
                     $message = "Histórico con detalle de adjudicaciones recuperado.";
                     break;
                 case 'BRECHA_TALENTO':
-                    // 1. Contamos alumnos por título (igual que antes)
+                    // Contar alumnos por título 
                     $demanda = DB::table('titulos')
                         ->join('demandante_titulo', 'titulos.id', '=', 'demandante_titulo.titulo_id')
                         ->select('titulos.id', 'titulos.nombre', DB::raw('count(demandante_titulo.demandante_id) as alumnos_count'))
                         ->groupBy('titulos.id', 'titulos.nombre')
                         ->get();
 
-                    // 2. Contamos ofertas entrando por la tabla intermedia 'ofertas_titulos'
+                    // Contar ofertas con pivot 'ofertas_titulos'
                     $ofertas = DB::table('oferta_titulo')
                         ->select('titulo_id', DB::raw('count(oferta_id) as ofertas_count'))
                         ->groupBy('titulo_id')
                         ->get();
 
-                    // 3. Cruzamos los datos
+                    //  Cruza los datos
                     $data = $demanda->map(function ($d) use ($ofertas) {
                         $o = $ofertas->where('titulo_id', $d->id)->first();
                         $numOfertas = $o ? $o->ofertas_count : 0;
@@ -840,8 +661,7 @@ class InformeController extends Controller
                         ->get()
                         ->map(function ($o) {
                             try {
-                                // Intentamos leer el formato español/personalizado que ya trae tu objeto
-                                // Si ya es un objeto Carbon, lo usamos; si es string, lo parseamos
+                                
                                 $inicio = is_string($o->created_at)
                                     ? Carbon::createFromFormat('d/m/Y', $o->created_at)
                                     : $o->created_at;
@@ -850,7 +670,7 @@ class InformeController extends Controller
                                     ? Carbon::createFromFormat('d/m/Y', $o->updated_at)
                                     : $o->updated_at;
                             } catch (\Exception $e) {
-                                // Si falla (por ejemplo si viene en formato Y-m-d), usamos el parse normal
+               
                                 $inicio = Carbon::parse($o->created_at);
                                 $fin = Carbon::parse($o->updated_at);
                             }

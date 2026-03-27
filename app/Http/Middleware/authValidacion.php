@@ -13,6 +13,11 @@ class authValidacion
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
+    /**
+     * Validar acceso mediante clave de API externa.
+     * * Comprobar que la cabecera 'API-KEY' coincide con el valor configurado en el entorno
+     * para permitir el flujo de la petición hacia el controlador.
+     */
     public function handle(Request $request, Closure $next): Response
     {
         //Obtener api por parte js

@@ -12,77 +12,30 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * @OA\Tag(name="Títulos", description="Endpoints para la gestión de títulos académicos")
+ */
 class TituloController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-
-    /**
+ /**
      * @OA\Get(
-     *     path="/api/titulos",
-     *     summary="Obtener todos los títulos",
-     *     description="Devuelve una lista de todos los títulos con su estado (activo/inactivo) y su nivel correspondiente.",
-     *     tags={"Títulos"},
-     *     security={
-     *         {"sanctum": {}}
-     *     },
-     *  @OA\Parameter(
-     *         name="Authorization",
-     *         in="header",
-     *         required=true,
-     *         description="Token de autenticación en formato Bearer",
-     *         @OA\Schema(
-     *             type="string",
-     *             example="Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Lista de títulos recuperada con éxito.",
-     *         @OA\JsonContent(
-     *             type="array",
-     *             @OA\Items(
-     *                 type="object",
-     *                 properties={
-     *                     @OA\Property(property="titulo", type="string", example="Fontanería"),
-     *                     @OA\Property(property="estado", type="string", enum={"activo", "inactivo"}, example="activo"),
-     *                     @OA\Property(property="nivel", type="string", example="grado básico")
-     *                 }
-     *             )
-     *         )
-     *     ),
+     * path="/api/titulos",
+     * summary="Listar todos los títulos",
+     * tags={"Títulos"},
+     * security={{"sanctum": {}}},
      * @OA\Response(
-     *         response=403,
-     *         description="Acceso denegado. No tienes permisos para realizar esta acción.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="message", type="string", example="Usuario no autorizado.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No estás autenticado. Por favor, inicia sesión para continuar.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="message", type="string", example="Unauthenticated.")
-     *             }
-     *         )
-     *     ),
-     *  *     @OA\Response(
-     *         response=500,
-     *         description="Error interno del servidor.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="error", type="string", example="Error al procesar la solicitud."),
-     *                 @OA\Property(property="message", type="string", example="Detalles del error interno.")
-     *             }
-     *         )
-     *     )
+     * response=200,
+     * description="Lista recuperada con éxito.",
+     * @OA\JsonContent(
+     * @OA\Property(property="message", type="string"),
+     * @OA\Property(property="data", type="array", @OA\Items(
+     * @OA\Property(property="id", type="integer"),
+     * @OA\Property(property="titulo", type="string"),
+     * @OA\Property(property="estado", type="string"),
+     * @OA\Property(property="nivel", type="string"),
+     * @OA\Property(property="familia", type="string")
+     * ))
+     * )
      * )
      * )
      */
@@ -90,7 +43,7 @@ class TituloController extends Controller
     {
 
 
-        //listar todos los titulos
+// Obtenemos títulos con sus relaciones para evitar el problema N+1
         try {
             $titulos = \App\Models\Titulo::with(['nivel', 'familia'])
                 ->orderBy('familia_id') // Agrupar por familia queda más ordenado
@@ -110,71 +63,18 @@ class TituloController extends Controller
                 'data' => $titulos
             ], 200);
         } catch (Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 500);
+            return response()->json(['message' => 'Erro al obtener los datos'], 500);
         }
     }
-    /**
+/**
      * @OA\Get(
-     *     path="/api/titulos/niveles/listado",
-     *     summary="Obtener niveles de títulos",
-     *     description="Devuelve una lista de niveles de títulos almacenados en la base de datos.",
-     *     tags={"Títulos"},
-     *     security={
-     *         {"sanctum": {}}
-     *     },
-     *  @OA\Parameter(
-     *         name="Authorization",
-     *         in="header",
-     *         required=true,
-     *         description="Token de autenticación en formato Bearer",
-     *         @OA\Schema(
-     *             type="string",
-     *             example="Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Lista de niveles de títulos obtenida correctamente.",
-     *         @OA\JsonContent(
-     *             type="array",
-     *             @OA\Items(
-     *                 type="object",
-     *                 @OA\Property(property="id", type="integer", example=1, description="ID del nivel."),
-     *                 @OA\Property(property="nivel", type="string", example="Grado básico", description="Nombre del nivel.")
-     *             )
-     *         )
-     *     ),
-     * @OA\Response(
-     *         response=403,
-     *         description="Acceso denegado. No tienes permisos para realizar esta acción.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="message", type="string", example="Usuario no autorizado.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No estás autenticado. Por favor, inicia sesión para continuar.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="message", type="string", example="Unauthenticated.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error interno del servidor.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="mensaje", type="string", example="Se produjo un error al obtener los niveles.")
-     *         )
-     *     )
+     * path="/api/titulos/niveles/listado",
+     * summary="Obtener niveles educativos",
+     * tags={"Títulos"},
+     * security={{"sanctum": {}}},
+     * @OA\Response(response=200, description="Niveles recuperados.")
      * )
      */
-
     public function nivel()
     {
         try {
@@ -185,82 +85,20 @@ class TituloController extends Controller
             ], 200);
         } catch (Exception $e) {
             return response()->json([
-                'message' => $e->getMessage()
+                'message' => 'Erro al obtener los niveles de los títulos'
             ], 500);
         }
     }
 
-
-    /**
+/**
      * @OA\Get(
-     *     path="/api/titulos/{titulo}",
-     *     summary="Obtener detalles de un título específico",
-     *     description="Devuelve los detalles de un título, incluyendo su nivel y el nombre del centro asociado. Excluye el campo 'activado' y formatea las fechas.",
-     *     tags={"Títulos"},
-     *     security={{"sanctum": {}}},
-     *     @OA\Parameter(
-     *         name="Authorization",
-     *         in="header",
-     *         required=true,
-     *         description="Token de autenticación en formato Bearer",
-     *         @OA\Schema(
-     *             type="string",
-     *             example="Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
-     *         )
-     *     ),
-     *     @OA\Parameter(
-     *         name="titulo",
-     *         in="path",
-     *         required=true,
-     *         description="ID del título a recuperar",
-     *         @OA\Schema(
-     *             type="integer",
-     *             example=1
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Detalles del título recuperados con éxito.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="nombre", type="string", example="Desarrollo de aplicaciones web"),
-     *                 @OA\Property(property="nivel", type="string", example="Grado superior"),
-     *                 @OA\Property(property="centro", type="string", example="Centro de Formación Profesional"),
-     *                 @OA\Property(property="created_at", type="string", example="19-03-2025 07:00:06"),
-     *                 @OA\Property(property="updated_at", type="string", example="19-03-2025 07:00:06")
-     *             }
-     *         )
-     *     ),
-     *  @OA\Response(
-     *         response=401,
-     *         description="No estás autenticado. Por favor, inicia sesión para continuar.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="message", type="string", example="Unauthenticated.")
-     *             }
-     *         )
-     *     ),
-     * @OA\Response(
-     *         response=403,
-     *         description="Acceso denegado. No tienes permisos para realizar esta acción.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="message", type="string", example="Usuario no autorizado.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Recurso no encontrado",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="message", type="string", example="Recurso no encontrado.")
-     *         )
-     *     )
+     * path="/api/titulos/{titulo}",
+     * summary="Ver detalle de un título",
+     * tags={"Títulos"},
+     * security={{"sanctum": {}}},
+     * @OA\Parameter(name="titulo", in="path", required=true, @OA\Schema(type="integer")),
+     * @OA\Response(response=200, description="Detalle obtenido."),
+     * @OA\Response(response=404, description="No encontrado.")
      * )
      */
     public function show(Titulo $titulo)
@@ -295,116 +133,34 @@ class TituloController extends Controller
             ], 200);
         } catch (Exception $e) {
             return response()->json([
-                'mesagge' => $e->getMessage()
+                'mesagge' => 'Error al obtener los datos',
+                'errors'=>'Error'
             ], 500);
         }
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    /**
+   /**
      * @OA\Post(
-     *     path="/api/titulos",
-     *     summary="Crear un nuevo título",
-     *     description="Crea un nuevo título en la base de datos. Requiere autorización mediante Sanctum.",
-     *     tags={"Títulos"},
-     *     security={{"sanctum": {}}},
-     *     @OA\Parameter(
-     *         name="Authorization",
-     *         in="header",
-     *         required=true,
-     *         description="Token de autenticación en formato Bearer",
-     *         @OA\Schema(
-     *             type="string",
-     *             example="Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
-     *         )
-     *     ),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         description="Datos para crear un nuevo título",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="nombre", type="string", example="Ingeniería de software", description="Nombre del título."),
-     *                 @OA\Property(property="nivel", type="integer", example=2, description="ID del nivel asociado. Debe existir en la tabla niveles."),
-     *                 @OA\Property(property="centro", type="integer", example=5, description="ID del centro asociado. Debe existir en la tabla centros.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=201,
-     *         description="Título creado correctamente.",
-     *         @OA\JsonContent(
-     *             type="string",
-     *             example="Titulo creado correctamente"
-     *         )
-     *     ),
-     *  @OA\Response(
-     *         response=401,
-     *         description="No estás autenticado. Por favor, inicia sesión para continuar.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="message", type="string", example="Unauthenticated.")
-     *             }
-     *         )
-     *     ),
-     * @OA\Response(
-     *         response=403,
-     *         description="Acceso denegado. No tienes permisos para realizar esta acción.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="message", type="string", example="Usuario no autorizado.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=409,
-     *         description="Conflicto: el título ya existe.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="mensaje", type="string", example="Título ya existente")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Errores de validación.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(
-     *                     property="errors",
-     *                     type="object",
-     *                     example={
-     *                         "nombre": {"El campo nombre es obligatorio."},
-     *                         "nivel": {"El nivel no existe en la tabla niveles."},
-     *                         "centro": {"El centro no existe en la tabla centros."}
-     *                     }
-     *                 )
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error interno del servidor.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="error", type="string", example="Error al crear el título"),
-     *                 @OA\Property(property="message", type="string", example="Detalles del error interno.")
-     *             }
-     *         )
-     *     )
+     * path="/api/titulos",
+     * summary="Crear nuevo título",
+     * tags={"Títulos"},
+     * security={{"sanctum": {}}},
+     * @OA\RequestBody(
+     * @OA\JsonContent(
+     * required={"nombre","nivel","familia","centro"},
+     * @OA\Property(property="nombre", type="string"),
+     * @OA\Property(property="nivel", type="integer"),
+     * @OA\Property(property="familia", type="integer"),
+     * @OA\Property(property="centro", type="integer")
+     * )
+     * ),
+     * @OA\Response(response=201, description="Creado.")
      * )
      */
     public function store(Request $request)
     {
-        //
-        $existeTitulo = Titulo::where('nombre', $request->nombre)->where('nivele_id', $request->nivel)->exists();
+// Verificar duplicados antes de validar para ahorrar procesamiento   
+     $existeTitulo = Titulo::where('nombre', $request->nombre)->where('nivele_id', $request->nivel)->exists();
         if ($existeTitulo) {
             return response()->json([
                 'mensaje' => 'Título ya existente',
@@ -439,75 +195,19 @@ class TituloController extends Controller
                 ], 422);
             } catch (Exception $e) {
                 return response()->json([
-                    'error' => 'Error al crear el título',
+                    'errors' => 'Error al crear el título',
                     'message' => $e->getMessage()
                 ], 500);
             }
         }
     }
-    /**
+  /**
      * @OA\Get(
-     *     path="/api/titulos/activos",
-     *     summary="Obtener títulos activados ordenados por nombre",
-     *     description="Devuelve una lista de todos los títulos que están activados (activado=1) y ordenados alfabéticamente por su nombre.",
-     *     tags={"Títulos-Activos"},
-     *     security={{"sanctum": {}}},
-     *    @OA\Parameter(
-     *         name="Authorization",
-     *         in="header",
-     *         required=true,
-     *         description="Token de autenticación en formato Bearer",
-     *         @OA\Schema(
-     *             type="string",
-     *             example="Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Títulos activados recuperados con éxito.",
-     *         @OA\JsonContent(
-     *             type="array",
-     *             @OA\Items(
-     *                 type="object",
-     *                 properties={
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="nombre", type="string", example="Fontanería"),
-     *                    
-     *                 }
-     *             )
-     *         )
-     *     ),
-     * 
-     * @OA\Response(
-     *         response=403,
-     *         description="Acceso denegado. No tienes permisos para realizar esta acción.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="message", type="string", example="Usuario no autorizado.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autorizado. Es necesario enviar un token válido.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
-     *         )
-     *     ),
-     *      @OA\Response(
-     *         response=500,
-     *         description="Error interno del servidor.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="error", type="string", example="Error al procesar la solicitud."),
-     *                 @OA\Property(property="message", type="string", example="Detalles del error interno.")
-     *             }
-     *         )
-     *     )
-     * )
+     * path="/api/titulos/activos",
+     * summary="Listar solo títulos activos",
+     * tags={"Títulos"},
+     * security={{"sanctum": {}}},
+     * @OA\Response(response=200, description="Éxito.")
      * )
      */
  public function titulosActivos()
@@ -532,123 +232,14 @@ class TituloController extends Controller
 }
 
 
-    /**
-     * Update the specified resource in storage.
-     */
-    /**
+ /**
      * @OA\Patch(
-     *     path="/api/titulos/{titulo}",
-     *     summary="Actualizar un título",
-     *     description="Actualiza los datos de un título específico, incluyendo el nombre, nivel y centro. Requiere autorización mediante Sanctum.",
-     *     tags={"Títulos"},
-     *     security={{"sanctum": {}}},
-     *     @OA\Parameter(
-     *         name="Authorization",
-     *         in="header",
-     *         required=true,
-     *         description="Token de autenticación en formato Bearer",
-     *         @OA\Schema(
-     *             type="string",
-     *             example="Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
-     *         )
-     *     ),
-     *     @OA\Parameter(
-     *         name="titulo",
-     *         in="path",
-     *         required=true,
-     *         description="ID del título a actualizar",
-     *         @OA\Schema(
-     *             type="integer",
-     *             example=1
-     *         )
-     *     ),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         description="Datos para actualizar el título",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="nombre", type="string", example="Fontanería", description="Nombre del título."),
-     *                 @OA\Property(property="nivel", type="integer", example=1, description="ID del nivel asociado. Debe existir en la tabla niveles."),
-     *                 @OA\Property(property="centro", type="integer", example=1, description="ID del centro asociado. Debe existir en la tabla centros.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=201,
-     *         description="Título actualizado correctamente.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="nombre", type="string", example="Fontanería actualizado"),
-     *                 @OA\Property(property="nivele_id", type="integer", example=2),
-     *                 @OA\Property(property="centro_id", type="integer", example=5),
-     *                 @OA\Property(property="updated_at", type="string", example="19-03-2025 07:30:00")
-     *             }
-     *         )
-     *     ),
-     *  @OA\Response(
-     *         response=401,
-     *         description="No estás autenticado. Por favor, inicia sesión para continuar.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="message", type="string", example="Unauthenticated.")
-     *             }
-     *         )
-     *     ),
-     * @OA\Response(
-     *         response=403,
-     *         description="Acceso denegado. No tienes permisos para realizar esta acción.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="message", type="string", example="Usuario no autorizado.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Recurso no encontrado.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="error", type="string", example="Recurso no encontrado.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Errores de validación.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(
-     *                     property="errores",
-     *                     type="object",
-     *                     example={
-     *                         "id": {"El campo id no está en la lista de valores permitidos"},
-     *                         "nombre": {"El campo nombre es obligatorio."},
-     *                         "nivel": {"El campo nivel no existe."},
-     *                         "centro": {"El campo centro no existe."}
-     *                     }
-     *                 )
-     *             }
-     *         )
-     *     ),
-     *      @OA\Response(
-     *         response=500,
-     *         description="Error interno del servidor.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="error", type="string", example="Error al procesar la solicitud."),
-     *                 @OA\Property(property="message", type="string", example="Detalles del error interno.")
-     *             }
-     *         )
-     *     )
-     * )
+     * path="/api/titulos/{titulo}",
+     * summary="Actualizar título existente",
+     * tags={"Títulos"},
+     * security={{"sanctum": {}}},
+     * @OA\Parameter(name="titulo", in="path", required=true, @OA\Schema(type="integer")),
+     * @OA\Response(response=200, description="Actualizado.")
      * )
      */
     public function update(Request $request, Titulo $titulo)
@@ -663,7 +254,7 @@ class TituloController extends Controller
             ], 403);
         }
 
-        // 2. COMPROBACIÓN DE FAMILIA:
+        //  COMPROBACIÓN DE FAMILIA:
         // Si el request intenta activar el título, verificamos que su familia esté activa.
         if ($request->activado == 1) {
             // Cargamos la relación familia si no está cargada
@@ -713,89 +304,14 @@ class TituloController extends Controller
         }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    /**
+  /**
      * @OA\Delete(
-     *     path="/api/titulos/{titulo}",
-     *     summary="Eliminar un título",
-     *     description="Elimina un título de la base de datos. Si tiene ofertas asociadas abiertas, cambia su estado a inactivo en lugar de borrarlo.",
-     *     tags={"Títulos"},
-     *     security={{"sanctum": {}}},
-     *     @OA\Parameter(
-     *         name="Authorization",
-     *         in="header",
-     *         required=true,
-     *         description="Token de autenticación en formato Bearer",
-     *         @OA\Schema(
-     *             type="string",
-     *             example="Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
-     *         )
-     *     ),
-     *     @OA\Parameter(
-     *         name="titulo",
-     *         in="path",
-     *         required=true,
-     *         description="ID del título a eliminar",
-     *         @OA\Schema(
-     *             type="integer",
-     *             example=1
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=201,
-     *         description="Operación exitosa.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="mensaje", type="string", example="No se puede borrar el título porque tiene ofertas asociadas a él. Se ha pasado a estado inactivo"),
-     *                 @OA\Property(property="mensage", type="string", example="titulo borrado correctamente")
-     *             }
-     *         )
-     *     ),
-     *  @OA\Response(
-     *         response=401,
-     *         description="No estás autenticado. Por favor, inicia sesión para continuar.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="message", type="string", example="Unauthenticated.")
-     *             }
-     *         )
-     *     ),
-     * @OA\Response(
-     *         response=403,
-     *         description="Acceso denegado. No tienes permisos para realizar esta acción.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="message", type="string", example="Usuario no autorizado.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Recurso no encontrado.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="error", type="string", example="Recurso no encontrado."),
-     *                 @OA\Property(property="mensaje", type="string", example="El título especificado no existe.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error interno del servidor.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="error", type="string", example="error al borrar el titulo"),
-     *                 @OA\Property(property="mensaje", type="string", example="Detalles del error.")
-     *             }
-     *         )
-     *     )
+     * path="/api/titulos/{titulo}",
+     * summary="Desactivar título",
+     * tags={"Títulos"},
+     * security={{"sanctum": {}}},
+     * @OA\Parameter(name="titulo", in="path", required=true, @OA\Schema(type="integer")),
+     * @OA\Response(response=200, description="Desactivado.")
      * )
      */
     public function destroy(Titulo $titulo)
@@ -804,11 +320,11 @@ class TituloController extends Controller
 
 
         try {
-            // Marcamos como inactivo en cualquier caso
+            // Marcamor como inactivo en cualquier caso
             $titulo->activado = 0;
-            $titulo->save(); // <--- ¡IMPORTANTE! Sin esto no se guarda en la BD
+            $titulo->save(); 
 
-            // Comprobamos si tenía relaciones solo para personalizar el mensaje del Toast
+            // Comprobamos si tiene relaciones solo para personalizar
             $tieneRelaciones = $titulo->ofertas()->exists() || $titulo->demandantes()->exists();
 
             $message = $tieneRelaciones
@@ -824,106 +340,23 @@ class TituloController extends Controller
         }
     }
 
-    /**
+  /**
      * @OA\Post(
-     *     path="/api/titulos/demandante",
-     *     summary="Asocia títulos al demandante autenticado",
-     *     description="Este endpoint permite asociar uno o varios títulos al demandante actual.",
-     *     tags={"Títulos-Demandante"},
-     *     security={{"sanctum": {}}},
-     *     @OA\Parameter(
-     *         name="Authorization",
-     *         in="header",
-     *         required=true,
-     *         description="Token de autenticación en formato Bearer",
-     *         @OA\Schema(
-     *             type="string",
-     *             example="Bearer 17|n50b7aY4qRRGMhjRyIEMMS5fzmmZapdiyAahoygobe6ca3a3"
-     *         )
-     *     ),
-     *@OA\RequestBody(
-     *    required=true,
-     *    @OA\JsonContent(
-     *        type="object",
-     *        properties={
-     *           @OA\Property(
-     *               property="titulos",
-     *               type="array",
-     *               description="Lista de títulos con sus atributos",
-     *              @OA\Items(
-     *                  type="object",
-     *                  properties={
-     *                      @OA\Property(property="id", type="integer", description="ID del título", example=1),
-     *                      @OA\Property(property="centro", type="integer", description="ID del centro", example=101),
-     *                      @OA\Property(property="anio", type="integer", description="Año de creación del título", example=2020),
-     *                     @OA\Property(property="cursando", type="boolean", description="Si el demandante está cursando el título", example=true)
-     *                 }
-     *             )
-     *         )
-     *     },
+     * path="/api/titulos/demandante",
+     * summary="Vincular títulos a un perfil de demandante",
+     * tags={"Títulos-Demandante"},
+     * security={{"sanctum": {}}},
+     * @OA\RequestBody(
+     * @OA\JsonContent(
+     * @OA\Property(property="titulos", type="array", @OA\Items(
+     * @OA\Property(property="id", type="integer"),
+     * @OA\Property(property="centro", type="string"),
+     * @OA\Property(property="anio", type="integer"),
+     * @OA\Property(property="cursando", type="boolean")
+     * ))
      * )
-     *),
-     *     @OA\Response(
-     *         response=201,
-     *         description="Títulos asociados correctamente",
-     *         @OA\JsonContent(
-     *             example={
-     *                 "mensaje": "Titulo/s creados correctamente"
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=400,
-     *         description="Todos los títulos ya están vinculados al demandante",
-     *         @OA\JsonContent(
-     *             example={
-     *                 "mensaje": "Todos los títulos ya están vinculados al demandante."
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No estás autenticado. Por favor, inicia sesión para continuar.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=403,
-     *         description="Acceso denegado. No tienes permisos para realizar esta acción.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="message", type="string", example="Usuario no autorizado.")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Errores de validación.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(
-     *                     property="errores",
-     *                     type="object",
-     *                     example={
-     *                         "titulos.0.id": {"El id del título no existe en la lista de valores permitidos."},
-     *                         "titulos.1.año": {"El año debe estar entre 1900 y 2025."},
-     *                         "titulos.2.centro": {"El campo centro es obligatorio."}
-     *                     }
-     *                 )
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error del servidor",
-     *         @OA\JsonContent(
-     *             example={
-     *                 "mensaje": "Error interno del servidor."
-     *             }
-     *         )
-     *     )
+     * ),
+     * @OA\Response(response=201, description="Vinculados.")
      * )
      */
     public function agregarTitulos(Request $request)
@@ -937,7 +370,7 @@ class TituloController extends Controller
                 'titulos.*.anio' => 'required|integer|min:1900|max:' . date('Y'), // Cambiar "año" por "anio"
                 'titulos.*.cursando' => 'required|boolean',
             ]);
-
+// Filtrar títulos que el usuario ya tiene para evitar errores de clave duplicada
             $titulosNoDuplicados = collect($validacion['titulos'])->filter(function ($titulo) use ($demandante) {
                 return !DemandanteTitulo::where('demandante_id', $demandante->id)
                     ->where('titulo_id', $titulo['id'])
@@ -967,81 +400,13 @@ class TituloController extends Controller
             ], 500);
         }
     }
-    /**
+  /**
      * @OA\Get(
-     *     path="/api/titulos/demandante",
-     *     summary="Obtener títulos del demandante autenticado",
-     *     description="Devuelve los títulos asociados al demandante actualmente autenticado mediante Sanctum.",
-     *     tags={"Títulos-Demandante"},
-     *     security={{"sanctum": {}}},
-     *     @OA\Parameter(
-     *         name="Authorization",
-     *         in="header",
-     *         required=true,
-     *         description="Token de autenticación en formato Bearer",
-     *         @OA\Schema(
-     *             type="string",
-     *             example="29|nqrBfqXOPVLqKfOwZSa6uvpWMxWwz9UQYHcOzSCgce17c3cf"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Lista de títulos asociados al demandante autenticado.",
-     *         @OA\JsonContent(
-     *             type="array",
-     *             @OA\Items(
-     *                 type="object",
-     *                 properties={
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="nombre", type="string", example="Título 1"),
-     *                     @OA\Property(property="centro", type="string", example="Universidad de Navarra"),
-     *                     @OA\Property(property="año", type="integer", example=2023),
-     *                     @OA\Property(property="cursando", type="boolean", example=1)
-     *                 }
-     *             )
-     *         )
-     *     ),
-     *  @OA\Response(
-     *         response=401,
-     *         description="No estás autenticado. Por favor, inicia sesión para continuar.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="message", type="string", example="Unauthenticated.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=403,
-     *         description="Acceso denegado. No tienes permisos para realizar esta acción.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="message", type="string", example="Usuario no autorizado.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="recurso no encontrado.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="message", type="string", example="El demandante no existe.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error interno del servidor.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="error", type="string", example="Error al procesar la solicitud."),
-     *                 @OA\Property(property="message", type="string", example="Detalles del error interno.")
-     *             }
-     *         )
-     *     )
+     * path="/api/titulos/demandante",
+     * summary="Ver mis títulos (Demandante)",
+     * tags={"Títulos-Demandante"},
+     * security={{"sanctum": {}}},
+     * @OA\Response(response=200, description="Lista.")
      * )
      */
 
@@ -1049,9 +414,10 @@ class TituloController extends Controller
     {
         try {
             $demandante = Auth::user()->demandante;
+            // Transformar la colección para incluir datos de la tabla pivote
             $misTitulos = $demandante->titulos->map(function ($titulo) {
                 return [
-                    'id' => $titulo->pivot->id, // <--- Este ID es vital para el DELETE
+                    'id' => $titulo->pivot->id, // <---  ID  para el DELETE
                     'titulo_id' => $titulo->id,//id real del titulo para el filtrado en front
                     'nombre' => $titulo->nombre,
                     'año' => $titulo->pivot->año,
@@ -1069,87 +435,17 @@ class TituloController extends Controller
             return response()->json(['message' => $e->getMessage()], 500);
         }
     }
-    /**
+    
+/**
      * @OA\Delete(
-     *     path="/api/titulos/demandante/{id}",
-     *     summary="Eliminar un título del demandante autenticado",
-     *     description="Elimina un título asociado al demandante actualmente autenticado mediante Sanctum.",
-     *     tags={"Títulos-Demandante"},
-     *     security={{"sanctum": {}}},
-     *     @OA\Parameter(
-     *         name="Authorization",
-     *         in="header",
-     *         required=true,
-     *         description="Token de autenticación en formato Bearer",
-     *         @OA\Schema(
-     *             type="string",
-     *             example="Bearer 29|nqrBfqXOPVLqKfOwZSa6uvpWMxWwz9UQYHcOzSCgce17c3cf"
-     *         )
-     *     ),
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         required=true,
-     *         description="ID del título que se desea eliminar",
-     *         @OA\Schema(
-     *             type="integer",
-     *             example=1
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=201,
-     *         description="El título ha sido eliminado exitosamente.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="mensaje", type="string", example="El título ha sido eliminado.")
-     *             }
-     *         )
-     *     ),
-     *  @OA\Response(
-     *         response=401,
-     *         description="No estás autenticado. Por favor, inicia sesión para continuar.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="message", type="string", example="Unauthenticated.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="El título no está asociado al demandante.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="mensaje", type="string", example="El título no está asociado al demandante.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=403,
-     *         description="Acceso denegado. No tienes permisos para realizar esta acción.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="message", type="string", example="Usuario no autorizado.")
-     *             }
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Error interno del servidor.",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             properties={
-     *                 @OA\Property(property="error", type="string", example="Error al procesar la solicitud."),
-     *                 @OA\Property(property="message", type="string", example="Detalles del error interno.")
-     *             }
-     *         )
-     *     )
+     * path="/api/titulos/demandante/{id}",
+     * summary="Eliminar un título del demandante",
+     * tags={"Títulos-Demandante"},
+     * security={{"sanctum": {}}},
+     * @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     * @OA\Response(response=201, description="Eliminado.")
      * )
      */
-
     public function tituloDemandante(Request $request)
     {
 
@@ -1176,9 +472,13 @@ class TituloController extends Controller
         }
     }
 
-    //gestion familiar profesionales
-    /**
-     * Obtener listado de familias profesionales para selectores
+  /**
+     * @OA\Get(
+     * path="/api/familias",
+     * summary="Listado familias",
+     * tags={"Configuración"},
+     * @OA\Response(response=200, description="Éxito.")
+     * )
      */
     public function familias()
     {
@@ -1195,8 +495,14 @@ class TituloController extends Controller
             return response()->json(['errors' => $e->getMessage()], 500);
         }
     }
-    /**
-     * Crear una nueva familia profesional
+ /**
+     * @OA\Post(
+     * path="/api/familias",
+     * summary="Crear familia",
+     * tags={"Configuración"},
+     * @OA\RequestBody(@OA\JsonContent(@OA\Property(property="nombre", type="string"))),
+     * @OA\Response(response=201, description="Creada.")
+     * )
      */
     public function storeFamilia(Request $request)
     {
@@ -1223,8 +529,14 @@ class TituloController extends Controller
         }
     }
 
-    /**
-     * Actualizar una familia existente
+  /**
+     * @OA\Put(
+     * path="/api/familias/{id}",
+     * summary="Actualizar familia",
+     * tags={"Configuración"},
+     * @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     * @OA\Response(response=200, description="Éxito.")
+     * )
      */
     public function updateFamilia(Request $request, $id)
     {
@@ -1245,8 +557,8 @@ class TituloController extends Controller
 
         $familia->update($validacion);
 
-        // Lógica de cascada: Si reactivamos la familia, ¿reactivamos los títulos?
-        // Esto es opcional, depende de tu lógica de negocio.
+        // Lógica de cascada: Si reactivamos la familia, no se reactiva titulos
+
         if ($familia->activa) {
             // $familia->titulos()->update(['activo' => true]);
         }
@@ -1260,8 +572,14 @@ class TituloController extends Controller
         }
     }
 
-    /**
-     * Inactivar una familia (Borrado lógico)
+/**
+     * @OA\Delete(
+     * path="/api/familias/{id}",
+     * summary="Inactivar familia",
+     * tags={"Configuración"},
+     * @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     * @OA\Response(response=200, description="Éxito.")
+     * )
      */
     public function destroyFamilia($id)
     {

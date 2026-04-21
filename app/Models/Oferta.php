@@ -99,11 +99,8 @@ class Oferta extends Model
     {
         return $this->belongsTo(Empresa::class);
     }
-    //reacion 1 a mcuhos polimorfica
-    public function notificaciones()
-    {
-        return $this->morphMany(Notificacione::class, 'relacioneable');
-    }
+    
+    
 
 
 public function familia()

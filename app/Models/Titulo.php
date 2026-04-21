@@ -23,10 +23,7 @@ class Titulo extends Model
     public function centro(){
         return $this->belongsTo(Centro::class);
     }
-    public function empresas(){
-        return $this->belongsToMany(Empresa::class)
-        ->withTimestamps();
-    }
+   
     //relacion muchos a muchos
     public function ofertas(){
         return $this->belongsToMany(Oferta::class)
@@ -37,9 +34,7 @@ class Titulo extends Model
         ->withTimestamps();
     }
         //reacion 1 a mcuhos polimorfica
-        public function notificaciones(){
-            return $this->morphMany(Notificacione::class,'relacioneable');
-        }
+       
         public function familia() {
     return $this->belongsTo(Familia::class);
 }

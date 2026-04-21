@@ -283,9 +283,9 @@ class OfertaController extends Controller
         }
     }
 
-// Función auxiliar para no ensuciar el código principal
+    // Función auxiliar para no ensuciar el código principal
     // Controla la privacidad de la ubicación de la empresa
-        private function formatDireccion($dir)
+    private function formatDireccion($dir)
     {
         // Si no hay dirección o está marcada como no visible, devolvemos null
         // Así no aparecerá ni la ciudad ni la provincia 
@@ -301,7 +301,7 @@ class OfertaController extends Controller
             'visible'   => true
         ];
     }
-   /**
+    /**
      * @OA\Post(
      * path="/api/ofertas",
      * summary="Crear nueva oferta",
@@ -394,7 +394,7 @@ class OfertaController extends Controller
             ], 500);
         }
     }
-/**
+    /**
      * @OA\Get(
      * path="/api/ofertas/{id}/edit",
      * summary="Cargar datos para editar",
@@ -491,7 +491,7 @@ class OfertaController extends Controller
     }
 //método para editar la oferta
 
-  /**
+    /**
      * @OA\Patch(
      * path="/api/ofertas/{id}/anonimato",
      * summary="Alternar anonimato",
@@ -523,7 +523,7 @@ class OfertaController extends Controller
             return response()->json(['message' => 'No se pudo cambiar el estado'], 404);
         }
     }
-/**
+    /**
      * @OA\Post(
      * path="/api/ofertas/{oferta}/apuntarse",
      * summary="Inscribir alumno en oferta",
@@ -647,7 +647,7 @@ class OfertaController extends Controller
             ], 500);
         }
     }
-  /**
+    /**
      * @OA\Get(
      * path="/api/ofertas/inscritas/listado",
      * summary="Listado de mis inscripciones",
@@ -674,20 +674,26 @@ class OfertaController extends Controller
 
             //aplicar filtro para pestaña angular
             if ($filtro === 'activas') {
-                $query->wherePivotNotIn('estado_candidato_id', [6, 8, 7])
-                    ->wherePivot('proceso_id', '!=', 3);
+                $query->where('ofertas.estado_id', 1)
+                    ->wherePivotNotIn('estado_candidato_id', [6, 8, 7])
+                    ->wherePivot('proceso_id', '!=', [3, 2]);
             } elseif ($filtro === 'conseguidas') {
                 $query->wherePivot('proceso_id', 3);
             } elseif ($filtro === 'retiradas') {
                 $query->wherePivot('estado_candidato_id', 8);
             } elseif ($filtro === 'finalizadas') {
-                $query->wherePivot('estado_candidato_id', 6);
+                $query->where(function ($q) {
+                    $q->where('demandante_oferta.estado_candidato_id', 6)
+                        ->orWhere('ofertas.estado_id', 2);
+                })
+                    ->wherePivotNotIn('proceso_id', [3, 1])
+                    ->wherePivotNotIn('estado_candidato_id', [7, 8]);
             }
             //  la paginación
             $ofertasPaginadas = $query->orderBy('demandante_oferta.fecha', 'desc')
                 ->paginate(10);
 
-            
+
             if ($ofertasPaginadas->isEmpty()) {
                 // Mandamos los stats aunque esté vacío para que las pestañas no desaparezcan
                 return response()->json([
@@ -799,8 +805,9 @@ class OfertaController extends Controller
         return [
             // Activas: No finalizadas, no retiradas y NO adjudicadas
             'activas' => $demandante->ofertas()
+                ->where('ofertas.estado_id', 1)
                 ->wherePivotNotIn('estado_candidato_id', [6, 8, 7])
-                ->wherePivot('proceso_id', '!=', 3)
+                ->wherePivotNotIn('proceso_id', [3, 2])
                 ->count(),
 
             // Conseguidas: Solo adjudicadas (Proceso 7)
@@ -813,11 +820,21 @@ class OfertaController extends Controller
                 ->count(),
 
             'finalizadas' => $demandante->ofertas()
-                ->wherePivot('estado_candidato_id', 6)
+                ->where(function ($q) {
+                    $q->where('demandante_oferta.estado_candidato_id', 6)
+                        ->orWhere('ofertas.estado_id', 2);
+                })
+                ->where(function ($q) {
+                    $q->where('demandante_oferta.estado_candidato_id', 6)
+                        ->orWhere('ofertas.estado_id', 2);
+                })
+                ->wherePivotNotIn('estado_candidato_id', [7, 8]) 
+                ->wherePivotNotIn('proceso_id', [3, 1])             
                 ->count(),
-        ];
+        ]; //                    
+
     }
-  /**
+    /**
      * @OA\Get(
      * path="/api/ofertas/{oferta}/candidatos",
      * summary="Listar candidatos inscritos en una oferta",
@@ -891,7 +908,7 @@ class OfertaController extends Controller
             ], 500);
         }
     }
-  /**
+    /**
      * @OA\Get(
      * path="/api/ofertas/{oferta}/candidatos/{demandante}",
      * summary="Detalle completo de un candidato",
@@ -1044,7 +1061,7 @@ class OfertaController extends Controller
             ], 500);
         }
     }
-  /**
+    /**
      * @OA\Get(
      * path="/api/ofertas/{oferta}/noInscritos",
      * summary="Candidatos elegibles no inscritos",
@@ -1069,7 +1086,7 @@ class OfertaController extends Controller
         try {
             $perPage = $request->get('per_page', 6);
             $candidatos = Demandante::query()
-            // Solo usuarios que pueden trabajar (Activos y Validados por administración)
+                // Solo usuarios que pueden trabajar (Activos y Validados por administración)
                 ->whereHas('user', function ($q) {
                     $q->where('status', \App\Enums\UserEstado::ACTIVO->value)
                         ->where('validado', true);
@@ -1092,7 +1109,7 @@ class OfertaController extends Controller
             return response()->json(['message' => $e->getMessage()], 500);
         }
     }
-   /**
+    /**
      * @OA\Post(
      * path="/api/ofertas/{oferta}/candidatos/{demandante}/inscribir",
      * summary="Inscribir candidato manualmente",
@@ -1157,7 +1174,7 @@ class OfertaController extends Controller
             ], 500);
         }
     }
-   /**
+    /**
      * @OA\Patch(
      * path="/api/ofertas/{oferta}/cerrar",
      * summary="Cierre manual de oferta",
@@ -1179,7 +1196,7 @@ class OfertaController extends Controller
                 'detalle_motivo_id' => 'required|exists:detalle_motivos,id',
             ]);
             // Evitar procesar una oferta que ya está en estado 'Cerrada' (ID 2)
-            if ($oferta->estado_id == 2) { 
+            if ($oferta->estado_id == 2) {
                 return response()->json([
                     'message' => 'La oferta ya está cerrada'
                 ], 409);
@@ -1210,7 +1227,7 @@ class OfertaController extends Controller
             ], 500);
         }
     }
-   /**
+    /**
      * @OA\Patch(
      * path="/api/ofertas/{oferta}/asignar/{demandante}",
      * summary="Adjudicar plaza a candidato",
@@ -1273,7 +1290,7 @@ class OfertaController extends Controller
             return response()->json(['message' => $e->getMessage()], 500);
         }
     }
-   /**
+    /**
      * @OA\Patch(
      * path="/api/ofertas/{oferta}/candidatos/{demandante}/seguimiento",
      * summary="Gestionar seguimiento de candidato",
@@ -1319,7 +1336,7 @@ class OfertaController extends Controller
             return response()->json(['message' => $e->getMessage()], 500);
         }
     }
-   /**
+    /**
      * @OA\Get(
      * path="/api/ofertas/estados-candidatos",
      * summary="Listar estados posibles de candidatos",

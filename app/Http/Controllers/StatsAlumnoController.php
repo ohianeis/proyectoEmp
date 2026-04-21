@@ -55,9 +55,9 @@ class StatsAlumnoController extends Controller
             // Filtramos: Que la oferta no esté cerrada (2) 
             // y que el alumno no esté Finalizado (6), Adjudicado (7 en estado / 3 en proceso) o Retirado (8)
             $inscripcionesActivas = $demandante->ofertas()
-                ->where('ofertas.estado_id', '!=', 2)
-                ->wherePivotNotIn('estado_candidato_id', [6, 7, 8])
-                ->wherePivot('proceso_id', '!=', 3) // 3 = Adjudicada/Conseguida
+                ->where('ofertas.estado_id', 1)
+                ->wherePivotIn('estado_candidato_id', [1, 2, 3, 4, 5])
+                ->wherePivot('proceso_id', 1) // 3 = Adjudicada/Conseguida
                 ->count();
 
             // 4. NUEVAS OPORTUNIDADES (Ofertas disponibles según su perfil)
@@ -89,7 +89,8 @@ class StatsAlumnoController extends Controller
             $statsGrafico = [
                 // "En proceso": Inscrito pero sin resolución final (ni éxito ni fracaso)
                 'proceso'     => (int) $demandante->ofertas()
-                    ->wherePivotIn('estado_candidato_id', [1, 3, 4, 5])
+                    ->where('ofertas.estado_id', 1)
+                    ->wherePivotIn('estado_candidato_id', [1, 2, 3, 4, 5])
                     ->wherePivot('proceso_id', '!=', 3)
                     ->count(),
 

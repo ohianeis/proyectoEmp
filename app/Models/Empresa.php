@@ -72,12 +72,7 @@ class Empresa extends Model
     {
         return $this->belongsTo(User::class);
     }
-    //relacion muchos a muchos
-    public function titulos()
-    {
-        return $this->belongsToMany(Titulo::class)
-            ->withTimestamps();
-    }
+   
     public function ofertas()
     {
         return $this->hasMany(Oferta::class);

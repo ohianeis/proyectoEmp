@@ -94,7 +94,7 @@ class ValidacionController extends Controller
         try {
             return DB::transaction(function () use ($user) {
     // Registrar el ID del administrador que valida
-                $centro = Auth::user()->id;
+                $centro = \App\Models\Centro::first();
                 // Actualizar estado del usuario
                 $user->validado = true;
                 $user->status = \App\Enums\UserEstado::ACTIVO;
@@ -104,12 +104,12 @@ class ValidacionController extends Controller
                     $empresa = new Empresa();
                     $empresa->nombre = $user->name;
                     $empresa->user_id = $user->id;
-                    $empresa->centro_id = $centro;
+                    $empresa->centro_id = $centro->id;
                     $empresa->save();
                 } else if ($user->role_id == 3) {
                     $demandante = new Demandante();
                     $demandante->nombre = $user->name;
-                    $demandante->centro_id = $centro;
+                    $demandante->centro_id = $centro->id;
                     $demandante->user_id = $user->id;
                     $demandante->save();
                 }
@@ -121,7 +121,7 @@ class ValidacionController extends Controller
             });
         } catch (Exception $e) {
             return response()->json([
-                'data' => null,
+                'data' => $e->getMessage(),
                 'message' => 'Error al validar: '
             ], 500);
         }

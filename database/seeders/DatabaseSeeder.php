@@ -35,16 +35,22 @@ class DatabaseSeeder extends Seeder
       User::create([
     'id' => 1,
     'name' => env('ADMIN_NAME', 'Administrador Sistema'), 
-    'email' => env('ADMIN_EMAIL', 'admin@centro.com'),
-    'password' => bcrypt(env('ADMIN_PASSWORD', 'secret1234')), // Password desde .env
+    'email' => env('ADMIN_EMAIL', 'admin@burlada.com'),
+    'password' => bcrypt(env('ADMIN_PASSWORD', 'administrador')), // Password desde .env
     'role_id' => 1,
     'validado' => 1,
     'status' => UserEstado::ACTIVO,
     'change_pass' => 0, // El superadmin no resetea su pass
 ]);
+      
+
 
         $this->call([CentroSeeder::class]);
 
+
+            //DATOS PARA PRUEBAS //
+
+      /*      
         // 3. Crear Familias y Títulos
         $familiasData = [
             ['nombre' => 'Informática y Comunicaciones'],
@@ -130,6 +136,6 @@ class DatabaseSeeder extends Seeder
     'role_id' => 3,
     'validado' => 0,
     'status' => UserEstado::PENDIENTE_VALIDACION
-]);
+]);*/
     }
 }

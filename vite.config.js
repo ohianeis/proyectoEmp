@@ -10,4 +10,16 @@ export default defineConfig({
         }),
         tailwindcss(),
     ],
+    // ---  sección para el despliegue ---
+    server: {
+        host: '0.0.0.0', // Permite que el servidor sea accesible desde fuera
+        hmr: {
+            host: 'bolsaempleo-burlada.ddns.net', //  dominio
+        },
+        allowedHosts: [
+            'bolsaempleo-burlada.ddns.net', 
+            '.ddns.net', 
+            'localhost'
+        ],
+    },
 });

@@ -67,6 +67,15 @@ Este proyecto incluye documentación interactiva con Swagger.
 
 <img width="2560" height="1239" alt="screenApiSwagger" src="https://github.com/user-attachments/assets/38952d68-fb5e-45c0-aeb9-1866407c3496" />
 
+# 🚀 Instrucciones para Despliegue (Rama: config-vite-prod)
+
+Esta rama incluye la configuración necesaria para que Vite funcione en el dominio `.ddns.net`.
+
+### Pasos en el servidor:
+1. **Cambiar a esta rama:** `git checkout config-vite-prod`
+2. **Instalar dependencias:** `npm install` #si no se instalaron ya
+3. **Compilar para producción:** `npm run build`
+4. **IMPORTANTE:** No es necesario ejecutar `npm run dev`. Laravel usará los archivos generados en `public/build`.
 
 ✨ **Funcionalidades principales**
 

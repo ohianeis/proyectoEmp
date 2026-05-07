@@ -65,7 +65,8 @@ return [
              * Middleware allows to prevent unexpected access to API documentation
              */
             'middleware' => [
-                'api' => [],
+               // Si APP_ENV es 'production', se aplicará un abort(404), si no, no aplica nada extra.
+'api' => [\App\Http\Middleware\HideSwaggerInProduction::class],
                 'asset' => [],
                 'docs' => [],
                 'oauth2_callback' => [],
